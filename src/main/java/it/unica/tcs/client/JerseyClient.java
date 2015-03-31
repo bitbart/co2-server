@@ -33,7 +33,7 @@ public class JerseyClient {
 						+ response.getStatus());
 			}
 
-			QueryPacket output = response.getEntity(QueryPacket.class);
+			//QueryPacket output = response.getEntity(QueryPacket.class);
 
 			//System.out.println(output.getUsername() + "\n");
 
