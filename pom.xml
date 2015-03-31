@@ -22,7 +22,7 @@
                 <configuration>
                     <warSourceDirectory>WebContent</warSourceDirectory>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <outputDirectory>../../</outputDirectory>
+                    <outputDirectory>./</outputDirectory>
                     <warName>middleware</warName>
                 </configuration>
             </plugin>
