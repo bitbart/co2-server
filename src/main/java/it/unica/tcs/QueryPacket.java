@@ -1,23 +1,17 @@
 package it.unica.tcs;
 
-
 public class QueryPacket {
 
 	private String username;
 	private String password;
 	private String firstContract;
 	private String secondContract;
+	private Long randLong;
+	private String contractHash;
 
 	// Must have no-argument constructor
 	public QueryPacket() {
 
-	}
-
-	public QueryPacket(String username, String password, String firstContract, String secondContract) {
-		this.username = username;
-		this.password = password;
-		this.firstContract = firstContract;
-		this.secondContract = secondContract;
 	}
 	
 	public String getUsername() {
@@ -36,6 +30,19 @@ public class QueryPacket {
 		return secondContract;
 	}
 	
+	public Long getRandLong() {
+		return randLong;
+	}
+	
+	public String getContractHash() {
+		return contractHash;
+	}
+	
+	public void setCredentials(String username, String password) {
+		this.username = username;
+		this.password = password;
+	}
+	
 	public void setUsername(String username) {
 		this.username = username;
 	}
@@ -49,6 +56,19 @@ public class QueryPacket {
 	}
 	
 	public void setSecondContract(String secondContract) {
+		this.secondContract = secondContract;
+	}
+	
+	public void setRandLong(Long randLong) {
+		this.randLong = randLong;
+	}
+	
+	public void setContractHash(String contractHash) {
+		this.contractHash = contractHash;
+	}
+	
+	public void setContractPair(String firstContract, String secondContract) {
+		this.firstContract = firstContract;
 		this.secondContract = secondContract;
 	}
 }

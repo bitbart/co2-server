@@ -164,6 +164,7 @@ public class ComplianceChecker {
             otherPreCheckType = rs.getString("type_pre_check");
 
             double preCheckValue = preCheck(preCheckType, otherPreCheckType);
+            
             if (preCheckValue > 0) {
                 queryText = "SELECT reputation FROM " + DatabaseInterface.TABLE_CONTRACT + " JOIN " + DatabaseInterface.TABLE_USER + " ON owner_id = user_id WHERE contract_id = " + otherID;
                 rs2 = db.select(queryText);
@@ -174,6 +175,8 @@ public class ComplianceChecker {
                 }
             }
         }
+        
+        Log.message().fine("Finding a compliant for C1='" + Log.format(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
 
         // 3) Sort the contracts captured by the probability value calculated and the other contract's owner reputation.
         Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String, Integer, Integer>>() {
@@ -189,14 +192,18 @@ public class ComplianceChecker {
                 }
             }
         });
+        
+        Log.message().fine("Precheck list sorted.");
 
         // 4) For each element, it tries if it is compliant with the given contract.
         //    Get a normally distributed index (x' = 0, sigma = 0.2), check if the corresponding contract is compliant.
         //    If it is not, remove the corresponding contract from the list and iterate       
         NormalGenerator ng = new NormalGenerator(0.2);
         
-        do{
+        while(!compliant && !preCheckCalculus.isEmpty()) {
+        	
             int index = ng.next(preCheckCalculus.size());
+            
             Quadruple<Double, String, Integer, Integer> element = preCheckCalculus.get(index);
             
             compliant = localAreCompliant(contractXML, element.getSecond());
@@ -206,7 +213,12 @@ public class ComplianceChecker {
             } else {
                 preCheckCalculus.remove(index);
             }
-        } while(!compliant && !preCheckCalculus.isEmpty());
+            
+            Log.message().fine("New precheck list size: " + preCheckCalculus.size());
+        
+        }
+        
+        Log.message().fine("Compliant search finished, returning the results.");
 
         // If compliant isn't found, return empty data
         return compliantData;

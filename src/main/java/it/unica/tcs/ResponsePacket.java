@@ -9,6 +9,7 @@ public class ResponsePacket {
 
 	private Integer type;
 	private String content;
+	private String hash;
 
 	// Must have no-argument constructor
 	public ResponsePacket() {
@@ -18,6 +19,12 @@ public class ResponsePacket {
 	public ResponsePacket(Integer type, String content) {
 		this.type = type;
 		this.content = content;
+	}
+	
+	public ResponsePacket(Integer type, String content, String hash) {
+		this.type = type;
+		this.content = content;
+		this.hash = hash;
 	}
 	
 	public Integer getType() {
@@ -30,11 +37,20 @@ public class ResponsePacket {
 		return content;
 	}
 	
+	public String getHash() {
+		
+		return hash;
+	}
+	
 	public void setType(Integer type) {
 		this.type = type;
 	}
 	
 	public void setContent(String content) {
 		this.content = content;
+	}
+	
+	public void setHash(String hash) {
+		this.hash = hash;
 	}
 }

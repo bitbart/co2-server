@@ -22,6 +22,10 @@ public class NormalGenerator {
 	 * @return integer value
 	 */
 	public int next(int limit){
+		
+		if (limit == 0)
+			return 0;
+		
 		double standardDeviation = this.standardDeviation;
 		
 		double correctionFactor = Math.log10(limit);
@@ -34,6 +38,7 @@ public class NormalGenerator {
 		double n=-1;		
 		while(n<0 || n>=limit){
 			n = normalGen.nextDouble()*limit;
+			Log.message().fine("Extracted: " + n);
 		}
 		
 		return (int) Math.floor(n);		
