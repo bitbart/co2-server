@@ -5,7 +5,271 @@ import it.unica.tcs.InternalException.ErrorTypes;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
 public class SessionMonitor {
+	
+    @POST
+    @Path(value = "/getServerTime")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket getServerTime() {
+
+        return new ResponsePacket(1, System.currentTimeMillis() + "");
+    }
+    
+    @POST
+    @Path(value = "/getPossibleActions")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket getPossibleActions(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Integer role;
+        Contract c;
+        String fileName, newFileName;
+
+        // 1) Verifies authentication and permissions
+        try {
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+
+            if (!Tools.permissionContract(db, username, contractHash)) {
+
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+
+            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+
+        try {
+            c = new Contract(db).loadFromHash(contractHash);
+            role = c.getRole();
+
+            // Gets a new filename
+            fileName = Tools.getFile(contractHash + role, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
+
+            // Loads the state of the session
+            Tools.loadNetworkFromDB(db, contractHash, fileName);
+                
+            // Gets a second new filename
+            newFileName = Tools.getFile(contractHash + role + 5, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
+            
+            // Updates the state of the session with the delay
+            Tools.callApplication(Tools.PATH_CTU + " -delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
+            
+            // Saves the updated network
+            db.saveNetwork(c.getSessionID(), newFileName);
+         
+            
+            String path = Tools.PATH_CTU + "-pa" + " " + role + " " + newFileName;
+            String ocamlResult = Tools.callApplication(path, null, false);
+            
+            //Tools.callApplication(path, null, true);
+            
+            if (ocamlResult.equals(""))
+                return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+            else
+                return new ResponsePacket(1, ocamlResult); // TODO: output must be formatted and it is necessary to handle the time
+
+        }
+        catch (SQLException e) {
+
+            Log.message().warning(
+                    "Error in loadFromHash while checking if the owner of a contract with HASH="
+                            + Log.format(contractHash) + " is on duty.");
+
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+    }
+    
+    @POST
+    @Path(value = "/isOnDuty")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket isOnDuty(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Integer contractState;
+        Contract c;
+
+        // 1) Verifies authentication and permissions
+        try {
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+
+            if (!Tools.permissionContract(db, username, contractHash)) {
+
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+
+            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+
+        // 2) Does query
+        try {
+            c = new Contract(db).loadFromHash(contractHash);
+            contractState = c.getState();
+            
+            // TODO: does it need to query UPPAAL for checking the state? I think yes!
+
+            if (contractState == DatabaseInterface.CONTRACT_ON_DUTY) {
+                Log.message().info(
+                        "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
+                                + " is on duty: YES!");
+                
+                return new ResponsePacket(1, Messages.PROPERTY_YES);
+            }
+            else {
+                Log.message().info(
+                        "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
+                                + " is on duty: NO!");
+                
+                return new ResponsePacket(0, Messages.PROPERTY_NO);
+            }
+
+        }
+        catch (SQLException e) {
+
+            Log.message().warning(
+                    "Error in loadFromHash while checking if the owner of a contract with HASH="
+                            + Log.format(contractHash) + " is on duty.");
+
+            return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+        }
+    }
+
+    @POST
+    @Path(value = "/isCulpable")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket isCulpable(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Integer contractState;
+        Contract c;
+
+        // 1) Verifies authentication and permissions
+        try {
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+
+            if (!Tools.permissionContract(db, username, contractHash)) {
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+
+        // 2) Does query
+        try {
+
+            c = new Contract(db).loadFromHash(contractHash);
+            contractState = c.getState();
+
+            if (contractState == DatabaseInterface.CONTRACT_CULPABLE) {
+                Log.message().info(
+                        "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
+                                + " is culpable: YES!");
+                
+                return new ResponsePacket(1, Messages.PROPERTY_YES);
+            }
+            else {
+                
+                if (monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE)) { // the user is became culpable (because of time elapsing)
+                    
+                    Log.message().info(
+                            "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
+                                    + " is culpable: YES!");
+                    
+                    return new ResponsePacket(1, Messages.PROPERTY_YES);
+                }
+                
+                Log.message().info(
+                        "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
+                                + " is culpable: NO!");
+                
+                return new ResponsePacket(0, Messages.PROPERTY_NO);
+            }
+        }
+        catch (InternalException e) {
+            
+            Log.message().warning("InternalException in isCulpable: " + e.getMessage());
+            
+            return new ResponsePacket(e.getType(), e.getMessage());
+        }
+        catch (DBException e) {
+            
+            Log.message().warning("DBException in isCulpable: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+        }
+        catch (SQLException e) {
+
+            Log.message().warning(
+                    "Error in loadFromHash while checking if the owner of a contract with HASH="
+                            + Log.format(contractHash) + " is culpable.");
+
+            return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+        }
+    }
 	
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
@@ -78,9 +342,8 @@ public class SessionMonitor {
             return false;
         }
     }
-/*
-	private String executeAction(DatabaseInterface db, String contractHash,
-			String action, String value) throws SQLException {
+
+	private String executeAction(DatabaseInterface db, String contractHash, String action, String value) throws SQLException {
 
 		String beforeFileName, afterFileName, path;
 		Integer sessionID, contextID, c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY, c2_progress = c1_progress;
@@ -266,7 +529,7 @@ public class SessionMonitor {
 		msgs[1] = Messages.SESSION_ACTION_DONE;
 
 		return printMessage(types, msgs);
-	}*/
+	}
 
 	private Float calculateDelay(DatabaseInterface db, Integer sessionID)
 			throws SQLException {
