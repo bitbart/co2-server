@@ -36,7 +36,7 @@ public class SessionHandler {
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String contractXML = postData.getFirstContract();
-    	Long timestamp = postData.getRandLong();
+    	Long timestamp = MainApplication.getRand();
     	
         Integer contractID, compliantID;
         String contractHash, compliantContract, typePreCheck;
@@ -201,7 +201,7 @@ public class SessionHandler {
 
         if (areFused) {
 
-            return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +"." + Messages.SESSION_COMPLIANT_YES, contractHash);
+            return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +". " + Messages.SESSION_COMPLIANT_YES, contractHash);
         }
         else {
             Log.message().warning("Cannot fuse two compliant contracts, unknown cause.");
@@ -227,7 +227,7 @@ public class SessionHandler {
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String originalHash = postData.getContractHash();
-    	Long randLong = postData.getRandLong();
+    	Long randLong = MainApplication.getRand();
 
     	Contract original;
     	Integer originalState;

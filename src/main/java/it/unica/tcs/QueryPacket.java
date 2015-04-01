@@ -6,7 +6,6 @@ public class QueryPacket {
 	private String password;
 	private String firstContract;
 	private String secondContract;
-	private Long randLong;
 	private String contractHash;
 
 	// Must have no-argument constructor
@@ -28,10 +27,6 @@ public class QueryPacket {
 	
 	public String getSecondContract() {
 		return secondContract;
-	}
-	
-	public Long getRandLong() {
-		return randLong;
 	}
 	
 	public String getContractHash() {
@@ -57,10 +52,6 @@ public class QueryPacket {
 	
 	public void setSecondContract(String secondContract) {
 		this.secondContract = secondContract;
-	}
-	
-	public void setRandLong(Long randLong) {
-		this.randLong = randLong;
 	}
 	
 	public void setContractHash(String contractHash) {
