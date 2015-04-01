@@ -281,11 +281,14 @@ public class ComplianceChecker {
             doc.getDocumentElement().normalize();
 
             name = doc.getFirstChild().getFirstChild().getNodeName();
+            Log.message().info("First: " + doc.getFirstChild().getNodeName() + "; Second: " + name + ";");
             switch (name) {
                 case "intchoice":
+                case "intaction":
                     typePreCheck = "1";
                     break;
                 case "extchoice":
+                case "extaction":
                     typePreCheck = "-1";
                     break;
                 default:
