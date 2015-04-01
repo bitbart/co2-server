@@ -474,7 +474,7 @@ public class SessionMonitor {
         // 2) Retrieves contract state and decides if does the action
         try {
             
-            Integer count, dataType, actionID;
+            Integer count, dataType;
             String actionName;
 
             // 2a) Checks timestamp
@@ -494,26 +494,24 @@ public class SessionMonitor {
             }
             
             actionName = rs.getString(2);
-            actionID = rs.getInt(1);
             dataType = rs.getInt(3);
             
             ResponsePacket response = new ResponsePacket(1, "Action received (check the actionName and actionValue fields)");
             response.setActionName(actionName);
             
-            if (actionID == -1) {
+            /*if (actionID == -1) {
                 
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
                 
-                response.setActionName("Action received");
                 return response;
-            }
+            }*/
             
-            if (dataType == 0) {
+            if (dataType == 2) { // TODO: fix the bug when sending values in context free
                 
-                Integer value = rs.getInt(4);
+                String value = rs.getString(5);
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
                 
-                response.setActionValue(value + "");
+                response.setActionValue(value);
                 return response;
             }
             else if (dataType == 1) {
@@ -524,12 +522,12 @@ public class SessionMonitor {
                 response.setActionValue(value);
                 return response;
             }
-            else if (dataType == 2) {
+            else {
                 
-                String value = rs.getString(5);
+                Integer value = rs.getInt(4);
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
                 
-                response.setActionValue(value);
+                response.setActionValue(value + "");
                 return response;
             }
         }
@@ -539,8 +537,6 @@ public class SessionMonitor {
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
-        
-        return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
     }
     
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
