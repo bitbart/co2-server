@@ -38,8 +38,8 @@ public class Messages {
 	public static final String SESSION_ACTION_DENIED = "Action cannot be performed";
 	public static final String SESSION_ACTION_DONE = "Action performed";
 	public static final String SESSION_ACTION_NOT_PERFORMED = "Action is not been performed";
-	public static final String SESSION_MOVE_BEFORE_START = "Can't move after the contract is started";
-	public static final String SESSION_MOVE_AFTER_END = "Can't move after the contract is ended";
+	public static final String SESSION_MOVE_BEFORE_START = "Can't perform actions before that the session is started";
+	public static final String SESSION_MOVE_AFTER_END = "Can't perform actions after that the session is terminated";
 
 	/* Authentication messages */
 	public static final String AUTH_FAILED = "Invalid username or password";

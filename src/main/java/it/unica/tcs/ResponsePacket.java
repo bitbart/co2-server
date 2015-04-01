@@ -10,6 +10,8 @@ public class ResponsePacket {
 	private Integer type;
 	private String content;
 	private String hash;
+	private String actionName;
+	private String actionValue;
 
 	// Must have no-argument constructor
 	public ResponsePacket() {
@@ -42,6 +44,14 @@ public class ResponsePacket {
 		return hash;
 	}
 	
+	public String getActionName() {
+		return actionName;
+	}
+	
+	public String getActionValue() {
+		return actionValue;
+	}
+	
 	public void setType(Integer type) {
 		this.type = type;
 	}
@@ -52,5 +62,13 @@ public class ResponsePacket {
 	
 	public void setHash(String hash) {
 		this.hash = hash;
+	}
+	
+	public void setActionName(String actionName) {
+		this.actionName = actionName;
+	}
+	
+	public void setActionValue(String actionValue) {
+		this.actionValue = actionValue;
 	}
 }

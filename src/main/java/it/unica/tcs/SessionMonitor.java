@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -271,6 +270,278 @@ public class SessionMonitor {
         }
     }
 	
+    @POST
+    @Path(value = "/getSessionStartTime")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket getSessionStartTime(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Contract c;
+        String query;
+        ResultSet rs;
+        Long timestamp;
+
+        // 1) Verifies authentication and permissions
+        try {
+            
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+
+            if (!Tools.permissionContract(db, username, contractHash)) {
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+        
+        try {
+            
+            c = new Contract(db).loadFromHash(contractHash);
+            
+            if (c.getSessionID() == -1)
+                return new ResponsePacket(0, "Contract not fused yet");
+            
+            query = "SELECT start_timestamp FROM session WHERE session_id = " + c.getSessionID();
+            rs = db.select(query);
+            rs.next();
+            timestamp = rs.getLong(1);
+            
+            return new ResponsePacket(1, timestamp + "");
+        }
+        catch (SQLException e) {
+            
+            Log.message().warning("Thrown SQL exception when selecting start_timestamp. SQL says: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+    }
+
+    /** 
+     * Allows participants to execute actions during session.
+     * @param username Client username
+     * @param pass Client password
+     * @param contractHash Xml contract sent by client
+     * @return Xml response that communicates if the move is executed 
+     */
+    @POST
+    @Path(value = "/send")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket send(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+    	String action = postData.getActionName();
+    	String value = postData.getActionValue();
+
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Integer state, sessionID;
+        ResultSet rs;
+        String query;
+        Long timestamp;
+        Contract c;
+
+        // 1) Verifies authentication and permissions
+        try {
+
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return  new ResponsePacket(-1, Messages.AUTH_FAILED);
+
+            }
+            if (!Tools.permissionContract(db, username, contractHash)) {
+
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+        	
+            Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+
+        // 2) Retrieves contract state and decides if can do the action
+        try {
+
+            // 2a) Checks timestamp
+            c = new Contract(db).loadFromHash(contractHash);
+            sessionID = c.getSessionID();
+            query = "SELECT start_timestamp FROM session WHERE session_id = " + sessionID;
+            rs = db.select(query);
+            rs.next();
+            timestamp = rs.getLong(1);
+
+            // 2b) Checks state
+            state = SessionHandler.getContractState(db, username, pass, contractHash);
+
+            if ((state == DatabaseInterface.CONTRACT_LATENT) || (timestamp > System.currentTimeMillis())) {
+                
+                return new ResponsePacket(-1, Messages.SESSION_MOVE_BEFORE_START);
+            }
+
+            if (!Tools.CONF_MOVE_AFTER_CONTRACT_END) {
+            	
+                if ((state == DatabaseInterface.CONTRACT_ON_DUTY) || (state == DatabaseInterface.CONTRACT_OFF_DUTY)) {
+                 
+                    return executeAction(db, contractHash, action, value);
+                }
+                else {
+                	return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
+                }
+            }
+            else {
+            	
+                return executeAction(db, contractHash, action, value);
+            }
+        }
+        catch (DBException | SQLException e) {
+        	
+            Log.message().warning("Database exception thrown when executing DO: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+    }
+    
+    @POST
+    @Path(value = "/receive")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket receive(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Integer sessionID;
+        ResultSet rs;
+        String query;
+        Contract c;
+
+        // 1) Verifies authentication and permissions
+        try {
+
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+
+            }
+            if (!Tools.permissionContract(db, username, contractHash)) {
+
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+            Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+
+        // 2) Retrieves contract state and decides if does the action
+        try {
+            
+            Integer count, dataType, actionID;
+            String actionName;
+
+            // 2a) Checks timestamp
+            c = new Contract(db).loadFromHash(contractHash);
+            sessionID = c.getSessionID();
+            
+            query = "SELECT a.action_id,action_name,data_type,data_int_value,data_string_value,data_file_value,COUNT(*),trace_id "
+                    + "FROM `trace` AS t LEFT JOIN action AS a ON t.action_id = a.action_id WHERE session_id = " + sessionID + " "
+                    + "AND `read`=0 AND role=" + (1 - c.getRole()) + " ORDER BY timestamp;";  // counterparty's role
+            rs = db.select(query);
+            rs.next();
+            count = rs.getInt(7); // returns COUNT(*)
+            
+            if (count < 1) {
+                
+                return new ResponsePacket(0, "Nothing to receive (the buffer is empty)");
+            }
+            
+            actionName = rs.getString(2);
+            actionID = rs.getInt(1);
+            dataType = rs.getInt(3);
+            
+            ResponsePacket response = new ResponsePacket(1, "Action received (check the actionName and actionValue fields)");
+            response.setActionName(actionName);
+            
+            if (actionID == -1) {
+                
+                db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+                
+                response.setActionName("Action received");
+                return response;
+            }
+            
+            if (dataType == 0) {
+                
+                Integer value = rs.getInt(4);
+                db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+                
+                response.setActionValue(value + "");
+                return response;
+            }
+            else if (dataType == 1) {
+                
+                String value = rs.getString(5);
+                db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+                
+                response.setActionValue(value);
+                return response;
+            }
+            else if (dataType == 2) {
+                
+                String value = rs.getString(5);
+                db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+                
+                response.setActionValue(value);
+                return response;
+            }
+        }
+        catch (SQLException e) {
+            
+            Log.message().warning("Can't select data in receive(). SQL says: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+        
+        return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+    }
+    
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
         String path, ocamlResult, fileName = "", newFileName = "", sessionHash = "";
@@ -343,8 +614,9 @@ public class SessionMonitor {
         }
     }
 
-	private String executeAction(DatabaseInterface db, String contractHash, String action, String value) throws SQLException {
+	private ResponsePacket executeAction(DatabaseInterface db, String contractHash, String action, String value) throws SQLException {
 
+		// TODO: I'm not sure that a private method has to build the ResponsePacket, maybe it should be a task of an interface method (the caller)
 		String beforeFileName, afterFileName, path;
 		Integer sessionID, contextID, c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY, c2_progress = c1_progress;
 		boolean allowed, performed, c1_result, c2_result;
@@ -352,28 +624,24 @@ public class SessionMonitor {
 		Contract c1 = new Contract(db).loadFromHash(contractHash);
 		Contract c2 = new Contract(db).loadFromHash(c1.getCompliantHash());
 
-		String[] types, msgs;
-		types = new String[2];
-		msgs = new String[2];
-		types[0] = types[1] = Messages.TYPE_GENERIC_ERROR;
-		msgs[0] = Messages.SESSION_ACTION_DENIED;
-
 		contextID = c1.getContextID();
 
 		if (contextID != DatabaseInterface.CONTEXT_EMPTY_ID) {
 
 			// 1) Checks if action is allowed in this context
 			allowed = Tools.actionAllowed(db, contractHash, action);
+			
 			if (!allowed) {
-				msgs[1] = Messages.CONTRACT_ACTION_CONTEXT;
-				return printMessage(types, msgs);
+				
+				return new ResponsePacket(-1, Messages.CONTRACT_ACTION_CONTEXT);
 			}
 
 			// 2) Checks if action is done
 			performed = Tools.actionPerformed(db, action);
+			
 			if (!performed) {
-				msgs[1] = Messages.SESSION_ACTION_NOT_PERFORMED;
-				return printMessage(types, msgs);
+				
+				return new ResponsePacket(-1, Messages.SESSION_ACTION_NOT_PERFORMED);
 			}
 		}
 
@@ -508,27 +776,21 @@ public class SessionMonitor {
 							+ " and ACTION=" + Log.format(action)
 							+ ". SQL says: " + sqle.getMessage());
 
-			msgs[1] = Messages.ERROR_GENERIC_INTERNAL;
-			return printMessage(types, msgs);
+			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+		
 		} catch (DBException e) {
 
-			msgs[1] = Messages.ERROR_GENERIC_INTERNAL;
-			return printMessage(types, msgs);
+			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+			
 		} catch (InternalException iie) {
 
-			return iie.getResponse();
+			return new ResponsePacket(iie.getType(), iie.getMessage());
 		}
 
 		db.updateContract(contractHash, sessionID, c1.getRole(), c1_progress);
-		db.updateContract(c2.getContractHash(), sessionID, c2.getRole(),
-				c2_progress);
+		db.updateContract(c2.getContractHash(), sessionID, c2.getRole(), c2_progress);
 
-		// 7) Returns results
-		types[0] = types[1] = Messages.TYPE_SUCCESS;
-		msgs[0] = Messages.CONTRACT_FUSED_MESSAGE;
-		msgs[1] = Messages.SESSION_ACTION_DONE;
-
-		return printMessage(types, msgs);
+		return new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
 	}
 
 	private Float calculateDelay(DatabaseInterface db, Integer sessionID)
