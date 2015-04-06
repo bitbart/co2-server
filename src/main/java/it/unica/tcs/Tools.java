@@ -23,15 +23,18 @@ public class Tools {
 	private static Random rng;
     
     public static final String HOME_DIR = "/home/debianadmin";
-    public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
-    //public static final String HOME_DIR = "bart";
+//  public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
 
 	// CTU's (Convert To Uppaal) paths and files
 	public static final String PATH_CTU = HOME_DIR + "/ctu ";
-	public static final String PATH_CONS = CO2_DIR + "/cons";
+//	public static final String PATH_CONS = CO2_DIR + "/cons";
 	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
-	public static final String PATH_NETS = CO2_DIR + "/nets";
+//	public static final String PATH_NETS = CO2_DIR + "/nets";
 	public static final String PATH_CTU_NETS = HOME_DIR + "/tmp/nets/OcamlNetworks_";
+//	public static final String PATH_AUTOMATA = CO2_DIR + "/automata";
+	public static final String PATH_CTU_AUTOMATA = HOME_DIR + "/tmp/nets/OcamlAutomata_";
+//	public static final String PATH_LABELS = CO2_DIR + "/labels";
+	public static final String PATH_CTU_LABELS = HOME_DIR + "/tmp/nets/OcamlLabels_";
 	public static final String CTU_PARAM_TRANSLATE = "-s";
 	public static final String CTU_PARAM_BINDING = "-v";
 	public static final String CTU_PARAM_CULPABLE = "-ic";
@@ -41,7 +44,8 @@ public class Tools {
 	public static final String CTU_PARAM_ADMITS_COMPLIANT = "-da";
 	public static final String CTU_PARAM_KIND_OF = "-dk";
 	public static final String CTU_PARAM_DUAL_OF = "-dd";
-	
+	public static final String CTU_PARAM_BUILD_AUTOMATON = "-ba";
+	public static final String CTU_PARAM_GET_LABELS = "-gl";
 
 	// Uppaal's paths and files
 	public static final String PATH_UPPAAL = HOME_DIR + "/uppaal/bin-Linux/verifyta ";
@@ -56,6 +60,7 @@ public class Tools {
 	// File extensions
 	public static final String EXTENSION_NETS = ".nets";
 	public static final String EXTENSION_XML = ".xml";
+	public static final String EXTENSION_TXT = ".txt";
 
 	// TODO: Configuration properties should be written in a configuration file ...
 	// Configuration

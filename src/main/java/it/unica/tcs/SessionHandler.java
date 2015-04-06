@@ -4,6 +4,7 @@ package it.unica.tcs;
 import it.unica.tcs.InternalException.ErrorTypes;
 
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -32,14 +33,15 @@ public class SessionHandler {
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket tellContract(QueryPacket postData) {
 
-    	// Picking inputs
+    	// 0) Picking inputs
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String contractXML = postData.getFirstContract();
     	Long timestamp = MainApplication.getRand();
     	
         Integer contractID, compliantID;
-        String contractHash, compliantContract, typePreCheck;
+        String contractHash, compliantContract, typePreCheck, firstOutputOcaml, secondOutputOcaml, firstFileName, secondFileName;
+        String[] input = new String[1];
         Integer contextID;
         boolean areFused;
         int userID;
@@ -92,7 +94,7 @@ public class SessionHandler {
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
         
-        // 4) Checking if the contract admits a compliant.
+        // 4) Checking if the contract admits a compliant
         if (!Dualizer.localAdmitsCompliant(contractXML)){
 
             Log.message().info("The contract is not been stored in the middleware because does not admit a compliant");
@@ -100,11 +102,51 @@ public class SessionHandler {
             return new ResponsePacket(0, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }
         
-        // 5) Checking the type of contract for the future PreCheck.
+        // 5) Checking the type of contract for the future PreCheck
         typePreCheck = ComplianceChecker.getContractType(contractXML);
+
+        /** TEST IT BEFORE TO USE IT! */
+/*        
+
+        // 6) Calculating UPPAAL automata to store to database
+        // 6a) Calling CTU
+        input[0] = contractXML + "\n";
+        firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+
+        try {
+            // 6b) Saves XML automata
+            firstFileName = Tools.getFile(contractXML, Tools.PATH_CTU_AUTOMATA, Tools.EXTENSION_XML, true);
+            PrintWriter p = new PrintWriter(firstFileName);
+            p.print(firstOutputOcaml);
+            p.close();
+
+        }
+        catch (FileNotFoundException e) {
+
+            Log.message().severe("File not found exception while trying to save Uppaal's XML automata:" + e.getMessage());
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+        }
         
-        // 6) Adding contracts to database
-        // 6a) Loads owner data
+        // 7) Calculating Labels to store to database
+        // 7a) Calling CTU
+        secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+
+ 		try {
+            // 7b) Saves TXT file
+            secondFileName = Tools.getFile(contractXML, Tools.PATH_CTU_LABELS, Tools.EXTENSION_TXT, true);
+            PrintWriter p = new PrintWriter(secondFileName);
+            p.print(secondOutputOcaml);
+            p.close();
+
+        }
+        catch (FileNotFoundException e) {
+
+            Log.message().severe("File not found exception while trying to save Uppaal's txt labels:" + e.getMessage());
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+        }
+*/
+        // 8) Adding contracts to database
+        // 8a) Loads owner data
         try {
             ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
             rs.next();
@@ -117,7 +159,7 @@ public class SessionHandler {
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
 
-        // 6b) Loads contract data
+        // 8b) Loads contract data
         try {
             contractHash = Tools.hashContract(contractXML, timestamp);
             contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contractXML));
@@ -130,17 +172,16 @@ public class SessionHandler {
             Log.message().warning("Cannot add a contract to DB. SQL says: " + e.getMessage());
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
         }
-        
+                
         boolean endWhile = true;
         areFused = false;
         
         while (endWhile) {
-            // 7) Checking contract compliance
+            // 9) Checking contract compliance
             try {
-    
                 BasicPair<Integer, String> compliantData = ComplianceChecker.getCompliant(db, contractXML, contextID, typePreCheck);
                 
-                // 7a) Checks if compliant ID exists
+                // 9a) Checks if compliant ID exists
                 if (!compliantData.isEmpty()) {
                     
                     compliantID = compliantData.getFirst();
@@ -185,9 +226,9 @@ public class SessionHandler {
                 
                 return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             }
-           
+            
+            // 10) Merging contracts
             if (compliant.getState() == DatabaseInterface.CONTRACT_LATENT) {
-                
                 areFused = fuse(db, contractXML, compliantContract, contractID, compliantID);
                 endWhile = false;
                 
@@ -199,11 +240,11 @@ public class SessionHandler {
             Log.message().fine("Executed a cicle of tellContract.");
         }
 
+        // 11) Returning response
         if (areFused) {
-
             return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +". " + Messages.SESSION_COMPLIANT_YES, contractHash);
         }
-        else {
+        else{
             Log.message().warning("Cannot fuse two compliant contracts, unknown cause.");
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
