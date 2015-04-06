@@ -281,7 +281,8 @@ public class ComplianceChecker {
             doc.getDocumentElement().normalize();
 
             name = doc.getFirstChild().getFirstChild().getNodeName();
-            Log.message().info("First: " + doc.getFirstChild().getNodeName() + "; Second: " + name + ";");
+            Log.message().info("Type PreCheck: FirstElement: " + doc.getFirstChild().getNodeName() + "; SecondElement: " + name + ";");
+
             switch (name) {
                 case "intchoice":
                 case "intaction":
