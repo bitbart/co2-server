@@ -219,6 +219,8 @@ public class ComplianceChecker {
             
             compliant = localAreCompliant(mapping, chanList, element.getSecond()[1], element.getSecond()[2]);
             
+            Log.message().fine("The checked contract has ID=" + element.getThird() + ". The compliance result is " + (compliant ? "yes" : "no") + ".");
+            
             if(compliant){
                 compliantData.set(element.getThird(), element.getSecond()[0]);
             } else {
@@ -244,10 +246,9 @@ public class ComplianceChecker {
     public static boolean localAreCompliant(String mapping1, String chanList1, String mapping2, String chanList2) throws FileNotFoundException {
 
         String fileName, fusedMapping, path, outputUppaal;
-        String input[] = new String[2];
         
-        fusedMapping = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-        				"<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>" +
+        fusedMapping = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+        				"<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>\n" +
         				"<nta>\n<declaration>" + mergeChannels(chanList1, chanList2) + "</declaration>\n<template>\n<name> AnyName1</name>\n" + mapping1 +
         				"</template>\n\n<template>\n<name> AnyName2</name>\n" + mapping2 + "</template>\n<system>\np =  AnyName1();\nq =  AnyName2();\n" +
         				"system p, q;\n</system>\n</nta>";
@@ -263,6 +264,8 @@ public class ComplianceChecker {
         // 2) Saves XML automata (Uppaal software needs an input file)
         fileName = Tools.getFile(mapping1.concat(mapping2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
         Tools.chmod(fileName);
+        
+        Log.message().info("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 
         PrintWriter p = new PrintWriter(fileName);
         p.print(fusedMapping);
@@ -274,7 +277,7 @@ public class ComplianceChecker {
         outputUppaal = Tools.callApplication(path, null, false);
 
         // Remove the temp file
-        Tools.callApplication("rm " + fileName, null, false);
+        //Tools.callApplication("rm " + fileName, null, false);
 
         // 4) Returns XML response
         if (outputUppaal.contains("is satisfied"))
@@ -341,24 +344,27 @@ public class ComplianceChecker {
     	HashSet<String> merged = new HashSet<String>();
     	String result = "";
     	
+    	channels1 = channels1.replace("\n", "").replace("\r", "").replace(" ", "");
+    	channels2 = channels2.replace("\n", "").replace("\r", "").replace(" ", "");
+    	
     	String[] chanList1 = channels1.split(",");
     	String[] chanList2 = channels2.split(",");
     	
     	for (int i=0; i < chanList1.length; i++) {
     		
-    		if (chanList1[i] != "")
+    		if (!chanList1[i].equals(""))
     			merged.add(chanList1[i]);
     	}
     	
     	for (int j=0; j < chanList2.length; j++) {
     		
-    		if (chanList2[j] != "")
+    		if (!chanList2[j].equals(""))
     			merged.add(chanList2[j]);
     	}
     	
     	for (String s : merged) {
     	    
-    		result += "chan " + s + "\n";
+    		result += "chan " + s + ";\n";
     	}
     	
     	return result;

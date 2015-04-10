@@ -563,7 +563,7 @@ public class DatabaseInterface {
 
 		insertQuery = "INSERT INTO `" + DB_NAME + "`.`" + table + "` (" + columns + ") VALUES (" + values + ");";
 		
-	    Log.message().info("Executed query: " + insertQuery);
+	    //Log.message().info("Executed query: " + insertQuery);
 
 		return insertQuery;
 	}
