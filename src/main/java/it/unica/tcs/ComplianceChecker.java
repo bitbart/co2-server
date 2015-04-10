@@ -5,6 +5,7 @@ import it.unica.tcs.Log;
 import it.unica.tcs.Messages;
 import it.unica.tcs.Tools;
 
+import java.util.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -140,19 +141,19 @@ public class ComplianceChecker {
      * 
      * @throws SQLException
      * @throws FileNotFoundException */
-    public static BasicPair<Integer, String> getCompliant(DatabaseInterface db, String contractXML, Integer contextID, String preCheckType)
+    public static BasicPair<Integer, String> getCompliant(DatabaseInterface db, String contractXML, String mapping, String chanList, Integer contextID, String preCheckType)
                 throws SQLException, FileNotFoundException {
 
         boolean compliant = false;
-        String otherContractXML, queryText, otherPreCheckType;
+        String otherContractXML, queryText, otherPreCheckType, otherMapping, otherChanList;
         ResultSet rs, rs2;
         Integer otherID;
 
         BasicPair<Integer, String> compliantData = new BasicPair<Integer, String>();
-        List<Quadruple<Double, String, Integer, Integer>> preCheckCalculus = new ArrayList<Quadruple<Double, String, Integer, Integer>>();
+        List<Quadruple<Double, String[], Integer, Integer>> preCheckCalculus = new ArrayList<Quadruple<Double, String[], Integer, Integer>>();
 
         // 1) Takes all identifiers of the contracts to check
-        queryText = "SELECT contract_id, contract_xml, type_pre_check FROM `" + DatabaseInterface.TABLE_CONTRACT
+        queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux FROM `" + DatabaseInterface.TABLE_CONTRACT
                 + "` WHERE context_id = " + contextID + " AND state = 0 ORDER BY rand();";
         rs = db.select(queryText);
 
@@ -161,6 +162,8 @@ public class ComplianceChecker {
         while (rs.next()) {
             otherID = rs.getInt("contract_id");
             otherContractXML = rs.getString("contract_xml");
+            otherMapping = rs.getString("mapping");
+            otherChanList = rs.getString("aux"); // For TSTs, the channel list is stored in the auxiliary column
             otherPreCheckType = rs.getString("type_pre_check");
 
             double preCheckValue = preCheck(preCheckType, otherPreCheckType);
@@ -170,8 +173,16 @@ public class ComplianceChecker {
                 rs2 = db.select(queryText);
                 
                 if(rs2.next()){
-                    int otherReputation = rs2.getInt("reputation");
-                    preCheckCalculus.add(new Quadruple<Double, String, Integer, Integer>(preCheckValue, otherContractXML, otherID, otherReputation));
+                    
+                	int otherReputation = rs2.getInt("reputation");
+                    
+                	// TODO: change the Quadruple to BasicPair<Double, Contract>, where Contract stores all data like the following, and String contains the precheck value
+                    String[] contractData = new String[3];
+                    contractData[0] = otherContractXML;
+                    contractData[1] = otherMapping;
+                    contractData[2] = otherChanList;
+                    
+                    preCheckCalculus.add(new Quadruple<Double, String[], Integer, Integer>(preCheckValue, contractData, otherID, otherReputation));
                 }
             }
         }
@@ -179,10 +190,10 @@ public class ComplianceChecker {
         Log.message().fine("Finding a compliant for C1='" + Log.format(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
 
         // 3) Sort the contracts captured by the probability value calculated and the other contract's owner reputation.
-        Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String, Integer, Integer>>() {
+        Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String[], Integer, Integer>>() {
 
             @Override
-            public int compare(Quadruple<Double, String, Integer, Integer> t1, Quadruple<Double, String, Integer, Integer> t2) {
+            public int compare(Quadruple<Double, String[], Integer, Integer> t1, Quadruple<Double, String[], Integer, Integer> t2) {
 
                 int preCheckComparison = t1.getFirst().compareTo(t2.getFirst());
                 if (preCheckComparison == 0) {
@@ -204,17 +215,17 @@ public class ComplianceChecker {
         	
             int index = ng.next(preCheckCalculus.size());
             
-            Quadruple<Double, String, Integer, Integer> element = preCheckCalculus.get(index);
+            Quadruple<Double, String[], Integer, Integer> element = preCheckCalculus.get(index);
             
-            compliant = localAreCompliant(contractXML, element.getSecond());
+            compliant = localAreCompliant(mapping, chanList, element.getSecond()[1], element.getSecond()[2]);
             
             if(compliant){
-                compliantData.set(element.getThird(), element.getSecond());
+                compliantData.set(element.getThird(), element.getSecond()[0]);
             } else {
                 preCheckCalculus.remove(index);
             }
             
-            Log.message().fine("New precheck list size: " + preCheckCalculus.size());
+            //Log.message().fine("New precheck list size: " + preCheckCalculus.size());
         
         }
         
@@ -230,23 +241,31 @@ public class ComplianceChecker {
      * @param c2 XML second contract
      * @return True if contracts are compliant or error message
      * @throws FileNotFoundException */
-    public static boolean localAreCompliant(String c1, String c2) throws FileNotFoundException {
+    public static boolean localAreCompliant(String mapping1, String chanList1, String mapping2, String chanList2) throws FileNotFoundException {
 
-        String fileName, outputOcaml, path, outputUppaal;
+        String fileName, fusedMapping, path, outputUppaal;
         String input[] = new String[2];
-
-        // 1) Creates XML automata with Ocaml CTU
-        input[0] = c1 + "\n";
-        input[1] = c2 + "\n";
-
-        outputOcaml = Tools.callApplication(Tools.PATH_CTU, input, false);
+        
+        fusedMapping = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+        				"<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>" +
+        				"<nta>\n<declaration>" + mergeChannels(chanList1, chanList2) + "</declaration>\n<template>\n<name> AnyName1</name>\n" + mapping1 +
+        				"</template>\n\n<template>\n<name> AnyName2</name>\n" + mapping2 + "</template>\n<system>\np =  AnyName1();\nq =  AnyName2();\n" +
+        				"system p, q;\n</system>\n</nta>";
+          
+          /*<queries> --> controllare se UPPAAL accetta la query insieme al sistema. Altrimenti aggiornare UPPAAL 
+            <query>
+              <formula>A[] not deadlock</formula>
+              <comment></comment>
+            </query>
+           </queries>
+        </nta>*/
 
         // 2) Saves XML automata (Uppaal software needs an input file)
-        fileName = Tools.getFile(c1.concat(c2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
+        fileName = Tools.getFile(mapping1.concat(mapping2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
         Tools.chmod(fileName);
 
         PrintWriter p = new PrintWriter(fileName);
-        p.print(outputOcaml);
+        p.print(fusedMapping);
         p.close();
 
         // 3) Tests automata with Uppaal software
@@ -315,5 +334,33 @@ public class ComplianceChecker {
 
         return 0.5 - ((Double.parseDouble(typePreCheckC1) * Double.parseDouble(typePreCheckC2)) / 2); // P(a, b) = 0.5 -
                                                                                                       // (a * b / 2)
+    }
+    
+    private static String mergeChannels(String channels1, String channels2) {
+    	
+    	HashSet<String> merged = new HashSet<String>();
+    	String result = "";
+    	
+    	String[] chanList1 = channels1.split(",");
+    	String[] chanList2 = channels2.split(",");
+    	
+    	for (int i=0; i < chanList1.length; i++) {
+    		
+    		if (chanList1[i] != "")
+    			merged.add(chanList1[i]);
+    	}
+    	
+    	for (int j=0; j < chanList2.length; j++) {
+    		
+    		if (chanList2[j] != "")
+    			merged.add(chanList2[j]);
+    	}
+    	
+    	for (String s : merged) {
+    	    
+    		result += "chan " + s + "\n";
+    	}
+    	
+    	return result;
     }
 }

@@ -4,7 +4,6 @@ package it.unica.tcs;
 import it.unica.tcs.InternalException.ErrorTypes;
 
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -40,7 +39,7 @@ public class SessionHandler {
     	Long timestamp = MainApplication.getRand();
     	
         Integer contractID, compliantID;
-        String contractHash, compliantContract, typePreCheck, firstOutputOcaml, secondOutputOcaml, firstFileName, secondFileName;
+        String contractHash, compliantContract, typePreCheck, firstOutputOcaml, secondOutputOcaml;
         String[] input = new String[1];
         Integer contextID;
         boolean areFused;
@@ -105,46 +104,16 @@ public class SessionHandler {
         // 5) Checking the type of contract for the future PreCheck
         typePreCheck = ComplianceChecker.getContractType(contractXML);
 
-        /** TEST IT BEFORE TO USE IT! */
-/*        
 
-        // 6) Calculating UPPAAL automata to store to database
-        // 6a) Calling CTU
+        // 6) Asking CTU for the partial UPPAAL template/mapping to be stored into the database
         input[0] = contractXML + "\n";
         firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
-
-        try {
-            // 6b) Saves XML automata
-            firstFileName = Tools.getFile(contractXML, Tools.PATH_CTU_AUTOMATA, Tools.EXTENSION_XML, true);
-            PrintWriter p = new PrintWriter(firstFileName);
-            p.print(firstOutputOcaml);
-            p.close();
-
-        }
-        catch (FileNotFoundException e) {
-
-            Log.message().severe("File not found exception while trying to save Uppaal's XML automata:" + e.getMessage());
-            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
-        }
         
-        // 7) Calculating Labels to store to database
-        // 7a) Calling CTU
+        // 7) Asking CTU for the labels to be stored into the database
         secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+        
+        // TODO: tests for the validity of firstOutputOcaml and second
 
- 		try {
-            // 7b) Saves TXT file
-            secondFileName = Tools.getFile(contractXML, Tools.PATH_CTU_LABELS, Tools.EXTENSION_TXT, true);
-            PrintWriter p = new PrintWriter(secondFileName);
-            p.print(secondOutputOcaml);
-            p.close();
-
-        }
-        catch (FileNotFoundException e) {
-
-            Log.message().severe("File not found exception while trying to save Uppaal's txt labels:" + e.getMessage());
-            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
-        }
-*/
         // 8) Adding contracts to database
         // 8a) Loads owner data
         try {
@@ -159,11 +128,11 @@ public class SessionHandler {
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
 
-        // 8b) Loads contract data
+        // 8b) Saves contract data
         try {
             contractHash = Tools.hashContract(contractXML, timestamp);
             contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contractXML));
-            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(timestamp), typePreCheck); 
+            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(timestamp), typePreCheck, firstOutputOcaml, secondOutputOcaml); 
             
             // The contract is under processing (not latent)
             Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
@@ -179,7 +148,7 @@ public class SessionHandler {
         while (endWhile) {
             // 9) Checking contract compliance
             try {
-                BasicPair<Integer, String> compliantData = ComplianceChecker.getCompliant(db, contractXML, contextID, typePreCheck);
+                BasicPair<Integer, String> compliantData = ComplianceChecker.getCompliant(db, contractXML,firstOutputOcaml, secondOutputOcaml, contextID, typePreCheck);
                 
                 // 9a) Checks if compliant ID exists
                 if (!compliantData.isEmpty()) {
@@ -337,8 +306,19 @@ public class SessionHandler {
             Log.message().info("Calling dual");
         	dualXML = Dualizer.getXMLDual(originalXML);
             dualHash = Tools.hashContract(dualXML, randLong);
-            contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(dualXML));            
-            dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "TOFIX");
+            contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(dualXML));  
+            
+            // TODO: is it the following part necessary for dual contracts?
+            
+            // 6) Asking CTU for the partial UPPAAL template/mapping to be stored into the database
+    		String[] input = new String[1];
+    		input[0] = dualXML + "\n";
+            String firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+            
+            // 7) Asking CTU for the labels to be stored into the database
+            String secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+            
+            dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "5", firstOutputOcaml, secondOutputOcaml);
 
             Log.message().info("Added new contract with XML=" + Log.format(dualXML) + ", ID=" + dualID + ", HASH=" + Log.format(dualHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
       

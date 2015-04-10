@@ -130,14 +130,14 @@ public class DatabaseInterface {
 
 	/** @throws SQLException */
 	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID,
-	        Integer role, Integer state, Long timestamp, String typePreCheck) throws SQLException {
+	        Integer role, Integer state, Long timestamp, String typePreCheck, String mapping, String aux) throws SQLException {
 
 		String insertQuery, selectQuery;
 		Integer identifier;
 		ResultSet rs;
 
-		String[] cols = new String[8];
-		String[] vals = new String[8];
+		String[] cols = new String[10];
+		String[] vals = new String[10];
 
 		cols[0] = "contract_hash";
 		cols[1] = "contract_xml";
@@ -147,6 +147,9 @@ public class DatabaseInterface {
 		cols[5] = "state";
 		cols[6] = "timestamp";
 		cols[7] = "type_pre_check";
+		cols[8] = "mapping";
+		cols[9] = "aux";
+
 
 		vals[0] = contractHash;
 		vals[1] = contractXML;
@@ -156,6 +159,8 @@ public class DatabaseInterface {
 		vals[5] = state + "";
 		vals[6] = timestamp.toString();
 		vals[7] = typePreCheck;
+		vals[8] = mapping;
+		vals[9] = aux;
 
 		insertQuery = generateInsertQuery(TABLE_CONTRACT, cols, vals);
 

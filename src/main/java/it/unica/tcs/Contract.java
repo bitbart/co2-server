@@ -29,9 +29,9 @@ public class Contract {
 	}
 
 	public Contract initContract(String contractHash, String contractXML, Integer ownerID, Integer sessionID,
-	        Integer contextID, Integer role, Integer state, Long timestamp, String typePreCheck) throws SQLException {
+	        Integer contextID, Integer role, Integer state, Long timestamp, String typePreCheck, String mapping, String aux) throws SQLException {
 
-		this.contractID = db.insertContract(contractHash, contractXML, ownerID, contextID, role, state, timestamp, typePreCheck);
+		this.contractID = db.insertContract(contractHash, contractXML, ownerID, contextID, role, state, timestamp, typePreCheck, mapping, aux);
 		this.contractHash = contractHash;
 		this.contractXML = contractXML;
 		this.ownerID = ownerID;
