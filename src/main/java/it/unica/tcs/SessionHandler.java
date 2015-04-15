@@ -4,7 +4,6 @@ package it.unica.tcs;
 import it.unica.tcs.InternalException.ErrorTypes;
 
 import java.io.FileNotFoundException;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -409,7 +408,6 @@ public class SessionHandler {
         }
     }
     
-    /*
     @POST
     @Produces(value="text/xml")
     @Path(value = "/depositTell") 
@@ -417,7 +415,7 @@ public class SessionHandler {
             @FormParam("contract") String contractXML, @FormParam("randlong") String randLong, @FormParam("deposit") String deposit) {
         
         return null;
-    }*/
+    }
 
     /** Given a contract and a compliant, fuses the two contracts.
      * 
@@ -582,45 +580,5 @@ public class SessionHandler {
 
             throw new DBException(Messages.DB_CONN_FAILED);
         }
-    }
-
-
-    // TODO: insert comments
-    /** */
-    @POST
-    @Path(value = "/verifyCredentials")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-    public ResponsePacket verifyCredentials(QueryPacket postData){
-    	
-    	// 0) Picking inputs
-    	String username = postData.getUsername();
-    	String pass = postData.getPassword();
-    	
-    	try {
-    		
-			Thread.sleep(2000);
-			
-		} catch (InterruptedException e1) {}
-
-        try {
-            DatabaseInterface db = MainApplication.getDBConnection();
-
-	        if (!Tools.authenticate(db, username, pass)) {
-	        	Log.message().warning(
-	        			"Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
-	                    + Log.format(Tools.hash256(pass)) + "");
-	    
-	            return new ResponsePacket(-1, Messages.AUTH_FAILED);
-	        }
-
-	        return new ResponsePacket(1, "Correct username and password pair.");
-			
-		} catch (SQLException e) {
-			
-            Log.message().warning("SQL Exception thrown when verifying credentials: " + e.getMessage());
-            
-            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
-		}
     }
 }
