@@ -541,11 +541,11 @@ public class SessionMonitor {
     
     
     @POST
-    @Path(value = "/isSuccess")
+    @Path(value = "/isSessionEnded")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     /** */
-    public ResponsePacket isSuccess(QueryPacket postData) {
+    public ResponsePacket isSessionEnded(QueryPacket postData) {
     	
     	// 0) Load input data
     	String username = postData.getUsername();
@@ -601,7 +601,7 @@ public class SessionMonitor {
 			
 			// 4) Deciding contract state
 			if(c1_culpable || c2_culpable){
-		        return new ResponsePacket(1, Messages.TYPE_YES);
+		        return new ResponsePacket(2, Messages.TYPE_YES);
 		        
 			} else if(!c1_duty && !c2_duty){
 		        return new ResponsePacket(1, Messages.TYPE_YES);
