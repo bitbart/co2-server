@@ -639,5 +639,21 @@ public class DatabaseInterface {
 		
 		return rs;
 	}
+	
+	public Integer deleteContracts() throws SQLException {
+
+	    this.open(); // Re-creates the connection, if lost
+	    
+		Statement stmt = null;
+		Integer rs = null;
+		
+		stmt = connection.createStatement();
+		rs = stmt.executeUpdate("DELETE FROM " + TABLE_CONTRACT);
+		rs = stmt.executeUpdate("DELETE FROM " + TABLE_SESSION);
+		
+		return rs;
+	}
+	
+	
 }
 
