@@ -4,6 +4,7 @@ package it.unica.tcs;
 import it.unica.tcs.InternalException.ErrorTypes;
 
 import java.io.FileNotFoundException;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -580,5 +581,38 @@ public class SessionHandler {
 
             throw new DBException(Messages.DB_CONN_FAILED);
         }
+    }
+
+
+    // TODO: insert comments
+    /** */
+    @POST
+    @Path(value = "/verifyCredential")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket verifyCredentials(QueryPacket postData){
+    	
+    	// 0) Picking inputs
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+
+        try {
+            DatabaseInterface db = MainApplication.getDBConnection();
+
+	        if (!Tools.authenticate(db, username, pass)) {
+	        	Log.message().warning(
+	        			"Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
+	                    + Log.format(Tools.hash256(pass)) + "");
+	    
+	            return new ResponsePacket(-1, Messages.AUTH_FAILED);
+	        }
+
+	        return new ResponsePacket(1, "Correct user and password");
+			
+		} catch (SQLException e) {
+			
+            Log.message().warning("Database exception thrown when verify credentials: " + e.getMessage());
+            return new ResponsePacket(-1, e.getMessage());
+		}
     }
 }
