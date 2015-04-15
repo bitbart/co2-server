@@ -566,6 +566,86 @@ public class SessionMonitor {
         }
     }
     
+    
+    @POST
+    @Path(value = "/isSuccess")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    /** */
+    public ResponsePacket isSuccess(QueryPacket postData) {
+    	
+    	// 0) Load input data
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+    	
+        DatabaseInterface db = MainApplication.getDBConnection();
+        Boolean c1_duty, c2_duty, c1_culpable, c2_culpable;
+        String compliantHash;
+        Contract c1, c2;
+    	
+    	
+        // 1) Verifies authentication and permissions
+        try {
+
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return  new ResponsePacket(-1, Messages.AUTH_FAILED);
+
+            }
+            if (!Tools.permissionContract(db, username, contractHash)) {
+
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+        	
+            Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+
+        try {
+            // 2) Loading contracts data
+			c1 = new Contract(db).loadFromHash(contractHash);
+			c2 = new Contract(db).loadFromHash(c1.getCompliantHash());
+			compliantHash = c2.getContractHash();
+			
+			
+			// 3) Calculating culpable and onDuty
+			c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
+			c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
+			c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
+			c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
+		
+			
+			// 4) Deciding contract state
+			if(c1_culpable || c2_culpable){
+		        return new ResponsePacket(1, Messages.TYPE_YES);
+		        
+			} else if(!c1_duty && !c2_duty){
+		        return new ResponsePacket(1, Messages.TYPE_YES);
+		        
+			} else {
+		        return new ResponsePacket(0, Messages.TYPE_NO);
+			}
+        
+        } catch (SQLException | DBException e) {
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+		} catch (InternalException e) {
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+		}
+    }
+    
+    
+    // TODO: add comments
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
         String path, ocamlResult, fileName = "", newFileName = "", sessionHash = "";
