@@ -98,7 +98,7 @@ public class SessionHandler {
 
             Log.message().info("The contract is not been stored in the middleware because does not admit a compliant");
             
-            return new ResponsePacket(0, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
+            return new ResponsePacket(-1, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }
         
         // 5) Checking the type of contract for the future PreCheck
