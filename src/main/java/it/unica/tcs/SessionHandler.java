@@ -409,6 +409,7 @@ public class SessionHandler {
         }
     }
     
+    /*
     @POST
     @Produces(value="text/xml")
     @Path(value = "/depositTell") 
@@ -416,7 +417,7 @@ public class SessionHandler {
             @FormParam("contract") String contractXML, @FormParam("randlong") String randLong, @FormParam("deposit") String deposit) {
         
         return null;
-    }
+    }*/
 
     /** Given a contract and a compliant, fuses the two contracts.
      * 
@@ -587,7 +588,7 @@ public class SessionHandler {
     // TODO: insert comments
     /** */
     @POST
-    @Path(value = "/verifyCredential")
+    @Path(value = "/verifyCredentials")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket verifyCredentials(QueryPacket postData){
@@ -595,6 +596,12 @@ public class SessionHandler {
     	// 0) Picking inputs
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
+    	
+    	try {
+    		
+			Thread.sleep(2000);
+			
+		} catch (InterruptedException e1) {}
 
         try {
             DatabaseInterface db = MainApplication.getDBConnection();
@@ -607,12 +614,13 @@ public class SessionHandler {
 	            return new ResponsePacket(-1, Messages.AUTH_FAILED);
 	        }
 
-	        return new ResponsePacket(1, "Correct user and password");
+	        return new ResponsePacket(1, "Correct username and password pair.");
 			
 		} catch (SQLException e) {
 			
-            Log.message().warning("Database exception thrown when verify credentials: " + e.getMessage());
-            return new ResponsePacket(-1, e.getMessage());
+            Log.message().warning("SQL Exception thrown when verifying credentials: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}
     }
 }
