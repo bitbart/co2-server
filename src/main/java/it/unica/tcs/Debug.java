@@ -42,24 +42,22 @@ public class Debug {
         input[0] = firstXml + "\n";
         String firstMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
         String firstLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
-        String firstHash = Tools.hashContract(firstXml, MainApplication.getRand());
         
         input[0] = "?pay{;t}.(?ok & ?dispute{t<9; t}.!refund{t<7} & ?abort)"; // not compliant
 		
 		String secondXml = Tools.callApplication(path, input, false);
         
-        input[0] = firstXml + "\n";
+        input[0] = secondXml + "\n";
         String secondMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
         String secondLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
-        String secondHash = Tools.hashContract(firstXml, MainApplication.getRand());
         
         try {
 	        for (int i=0; i<N; i++) {
 	        	
 	        	if (Math.random() < K/N) 
-	        		db.insertContract(firstHash, firstXml, 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(firstXml), firstMapping, firstLabels); 
+	        		db.insertContract(Tools.hashContract(firstXml, MainApplication.getRand()), firstXml, 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(firstXml), firstMapping, firstLabels); 
 	        	else
-	        		db.insertContract(secondHash, secondXml, 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(secondXml), secondMapping, secondLabels);
+	        		db.insertContract(Tools.hashContract(secondXml, MainApplication.getRand()), firstXml, 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(secondXml), secondMapping, secondLabels);
 	        }
         }
         catch (SQLException s) {
