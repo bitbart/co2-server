@@ -1,6 +1,7 @@
 package it.unica.tcs;
 
 
+import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
 import it.unica.tcs.InternalException.ErrorTypes;
 
 import java.io.FileNotFoundException;
@@ -96,7 +97,7 @@ public class SessionHandler {
         // 4) Checking if the contract admits a compliant
         if (!Dualizer.localAdmitsCompliant(contractXML)){
 
-            Log.message().info("The contract is not been stored in the middleware because does not admit a compliant");
+            Log.message().warning("The contract C1= " + escapeHtml(contractXML.replaceAll("\n", "")) + " does not admit a compliant");
             
             return new ResponsePacket(-1, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }

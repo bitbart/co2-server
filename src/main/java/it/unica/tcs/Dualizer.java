@@ -129,12 +129,18 @@ public class Dualizer {
 	}
 	
 	public static boolean localAdmitsCompliant(String contract) {
+		
 		String path, standardOutputOcaml;
 		String[] input = new String[1];	
 
 		path = Tools.PATH_CTU + Tools.CTU_PARAM_ADMITS_COMPLIANT;
 		input[0] = contract;
 		standardOutputOcaml = Tools.callApplication(path, input, false);
+		
+		// TODO: check this when CTU won't return a result
+		if (standardOutputOcaml.equals("")) {
+			return true;
+		}
 		
 		if(standardOutputOcaml.contains("yes")) 
 			return true;
@@ -143,12 +149,14 @@ public class Dualizer {
 	}
 	
 	public String localDualOf(String contract) {
+		
 		String path, standardOutputOcaml;
 		String[] input = new String[1];	
 
 		path = Tools.PATH_CTU + Tools.CTU_PARAM_DUAL_OF;
 		input[0] = contract;
 		standardOutputOcaml = Tools.callApplication(path, input, false);
+
 
         // Returns valid dual
 		return standardOutputOcaml;
