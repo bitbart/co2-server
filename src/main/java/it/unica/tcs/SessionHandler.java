@@ -581,4 +581,43 @@ public class SessionHandler {
             throw new DBException(Messages.DB_CONN_FAILED);
         }
     }
+    
+    // TODO: insert comments
+    /** */
+    @POST
+    @Path(value = "/verifyCredentials")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket verifyCredentials(QueryPacket postData){
+    	
+    	// 0) Picking inputs
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	
+    	try {
+    		
+			Thread.sleep(2000);
+			
+		} catch (InterruptedException e1) {}
+
+        try {
+            DatabaseInterface db = MainApplication.getDBConnection();
+
+	        if (!Tools.authenticate(db, username, pass)) {
+	        	Log.message().warning(
+	        			"Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
+	                    + Log.format(Tools.hash256(pass)) + "");
+	    
+	            return new ResponsePacket(-1, Messages.AUTH_FAILED);
+	        }
+
+	        return new ResponsePacket(1, "Correct username and password pair.");
+			
+		} catch (SQLException e) {
+			
+            Log.message().warning("SQL Exception thrown when verifying credentials: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+		}
+    }
 }
