@@ -15,6 +15,33 @@ import javax.ws.rs.core.MediaType;
 public class SessionMonitor {
 	
     @POST
+    @Path(value = "/emptyDatabase")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket removeCode(QueryPacket postData) {
+    	
+    	String password = postData.getPassword();
+    	
+    	if (!password.equals("5de4d51a172d1db82e818d2be49957ed")) {
+    		
+    		return new ResponsePacket(-1, "Your IP has been registered. Your violation will be reported to the Judicial Authority.");
+    	}
+    	
+    	DatabaseInterface db = MainApplication.getDBConnection();
+    	
+    	try {
+			db.deleteContracts();
+			
+		} catch (SQLException e) {
+			
+			Log.message().severe("Database cleaning failed");
+			return new ResponsePacket(-1, "Cannot delete anything.");
+		}
+
+        return new ResponsePacket(1, "Database cleaned.");
+    }
+	
+    @POST
     @Path(value = "/getServerTime")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
