@@ -265,7 +265,7 @@ public class ComplianceChecker {
         fileName = Tools.getFile(mapping1.concat(mapping2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
         Tools.chmod(fileName);
         
-        Log.message().info("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
+        Log.message().fine("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 
         PrintWriter p = new PrintWriter(fileName);
         p.print(fusedMapping);

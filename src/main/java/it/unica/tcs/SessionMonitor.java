@@ -186,7 +186,7 @@ public class SessionMonitor {
             	if (contractState != DatabaseInterface.CONTRACT_ON_DUTY)
             		db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY); // updates the DB
           
-                Log.message().info(
+                Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is on duty: YES!");
                 
@@ -197,7 +197,7 @@ public class SessionMonitor {
             	if (contractState == DatabaseInterface.CONTRACT_ON_DUTY)
             		db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY); // updates the DB
             	
-                Log.message().info(
+                Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is on duty: NO!");
                 
@@ -260,7 +260,7 @@ public class SessionMonitor {
             contractState = c.getState();
 
             if (contractState == DatabaseInterface.CONTRACT_CULPABLE) {
-                Log.message().info(
+                Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is culpable: YES!");
                 
@@ -272,14 +272,14 @@ public class SessionMonitor {
                 	
                 	db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
                     
-                    Log.message().info(
+                    Log.message().fine(
                             "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                     + " is culpable: YES!");
                     
                     return new ResponsePacket(1, Messages.PROPERTY_YES);
                 }
                 
-                Log.message().info(
+                Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is culpable: NO!");
                 
@@ -304,7 +304,7 @@ public class SessionMonitor {
                     "Error in loadFromHash while checking if the owner of a contract with HASH="
                             + Log.format(contractHash) + " is culpable.");
 
-            return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
     }
 	
@@ -701,7 +701,8 @@ public class SessionMonitor {
         ocamlResult = Tools.callApplication(path, null, false);
         Tools.callApplication(path, null, true);
         
-        //Log.message().info("Filename name: " + newFileName + " || Ocaml response: " + ocamlError);
+        if (ocamlResult.equals(""))
+        	Log.message().warning("CTU is not returning the state for a contract.");
 
         try {
             db.saveNetwork(c.getSessionID(), newFileName);
@@ -719,11 +720,11 @@ public class SessionMonitor {
 
         // 4) Analyzes output application
         if (ocamlResult.contains(Messages.TYPE_YES)) {
-            Log.message().info(logmsg + "yes!");
+            Log.message().fine(logmsg + "yes!");
             return true;
         }
         else {
-            Log.message().info(logmsg + "no!");
+            Log.message().fine(logmsg + "no!");
             return false;
         }
     }
@@ -907,7 +908,7 @@ public class SessionMonitor {
 		return new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
 	}
 
-	private Float calculateDelay(DatabaseInterface db, Integer sessionID)
+	private String calculateDelay(DatabaseInterface db, Integer sessionID)
 			throws SQLException {
 
 		String query;
@@ -920,9 +921,11 @@ public class SessionMonitor {
 		rs.next();
 		timestamp = rs.getLong(1);
 
-		elapsedTime = ((System.currentTimeMillis() - timestamp) / 1000) / 60 / 60; // TODO: now using seconds... to be restored
+		elapsedTime = ((System.currentTimeMillis() - timestamp) / 1000); // /60 TODO: now using seconds... to be restored
+		
+		Log.message().info("DELAY: " + elapsedTime + " secs");
 
-		return new Float(elapsedTime); // CHECK IF IT IS CORRECT
+		return elapsedTime + "."; // CHECK IF IT IS CORRECT
 	}
 
 	private Integer retrieveActionType(DatabaseInterface db, Integer contextID,
