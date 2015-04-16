@@ -648,8 +648,8 @@ public class DatabaseInterface {
 		Integer rs = null;
 		
 		stmt = connection.createStatement();
-		rs = stmt.executeUpdate("DELETE FROM " + TABLE_CONTRACT);
-		rs = stmt.executeUpdate("DELETE FROM " + TABLE_SESSION);
+		rs = stmt.executeUpdate("DELETE FROM " + TABLE_CONTRACT + " WHERE context_id<>4");
+		rs = stmt.executeUpdate("DELETE FROM " + TABLE_SESSION + " WHERE context_id<>4");
 		
 		return rs;
 	}

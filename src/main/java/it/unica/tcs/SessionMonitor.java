@@ -179,9 +179,13 @@ public class SessionMonitor {
             c = new Contract(db).loadFromHash(contractHash);
             contractState = c.getState();
             
-            // TODO: does it need to query UPPAAL for checking the state? I think yes!
+			boolean c1_result = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
 
-            if (contractState == DatabaseInterface.CONTRACT_ON_DUTY) {
+            if (c1_result == true) {
+            	
+            	if (contractState != DatabaseInterface.CONTRACT_ON_DUTY)
+            		db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY); // updates the DB
+          
                 Log.message().info(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is on duty: YES!");
@@ -189,6 +193,10 @@ public class SessionMonitor {
                 return new ResponsePacket(1, Messages.PROPERTY_YES);
             }
             else {
+            	
+            	if (contractState == DatabaseInterface.CONTRACT_ON_DUTY)
+            		db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY); // updates the DB
+            	
                 Log.message().info(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is on duty: NO!");
@@ -197,13 +205,13 @@ public class SessionMonitor {
             }
 
         }
-        catch (SQLException e) {
+        catch (SQLException | InternalException | DBException e) {
 
             Log.message().warning(
                     "Error in loadFromHash while checking if the owner of a contract with HASH="
                             + Log.format(contractHash) + " is on duty.");
 
-            return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
     }
 
@@ -261,6 +269,8 @@ public class SessionMonitor {
             else {
                 
                 if (monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE)) { // the user is became culpable (because of time elapsing)
+                	
+                	db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
                     
                     Log.message().info(
                             "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
@@ -910,7 +920,7 @@ public class SessionMonitor {
 		rs.next();
 		timestamp = rs.getLong(1);
 
-		elapsedTime = ((System.currentTimeMillis() - timestamp) / 1000) / 60;
+		elapsedTime = ((System.currentTimeMillis() - timestamp) / 1000) / 60 / 60; // TODO: now using seconds... to be restored
 
 		return new Float(elapsedTime); // CHECK IF IT IS CORRECT
 	}
