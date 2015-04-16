@@ -2,6 +2,7 @@ package it.unica.tcs;
 
 import java.sql.SQLException;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -13,7 +14,15 @@ public class Debug {
 	@POST
 	@Path("/tellStandard")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	public ResponsePacket tellStandard(QueryPacket postData) {
+		
+    	String password = postData.getPassword();
+    	
+    	if (!password.equals("5de4d51a172d1db82e818d2be49957ed")) {
+    		
+    		return new ResponsePacket(-1, "Your IP has been registered. Your violation will be reported to the Judicial Authority.");
+    	}
 		
 		DatabaseInterface db = MainApplication.getDBConnection();
     	
