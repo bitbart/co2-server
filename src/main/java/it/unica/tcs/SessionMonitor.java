@@ -817,9 +817,13 @@ public class SessionMonitor {
 			if (c1_result && c2_result) {
 				c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
 				c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
+				
+				return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
 			} else if (c1_result) {
 				c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
 				c2_progress = DatabaseInterface.CONTRACT_INNOCENT;
+				
+				return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
 			} else if (c2_result) {
 				c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
 				c1_progress = DatabaseInterface.CONTRACT_INNOCENT;
