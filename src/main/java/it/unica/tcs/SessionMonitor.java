@@ -2,8 +2,11 @@ package it.unica.tcs;
 
 import it.unica.tcs.InternalException.ErrorTypes;
 
+import java.security.Timestamp;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -533,6 +536,9 @@ public class SessionMonitor {
             actionName = rs.getString(2);
             dataType = rs.getInt(3);
             
+            if (rs.getInt(1) == -1)
+            	dataType = 1;
+            
             ResponsePacket response = new ResponsePacket(1, "Action received (check the actionName and actionValue fields)");
             response.setActionName(actionName);
             
@@ -543,7 +549,7 @@ public class SessionMonitor {
                 return response;
             }*/
             
-            if (dataType == 2) { // TODO: fix the bug when sending values in context free
+            if (dataType == 2) {
                 
                 String value = rs.getString(5);
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
@@ -873,7 +879,7 @@ public class SessionMonitor {
 				break;
 
 			case -1:
-				db.insertTrace(actionID, action, c1.getRole(), sessionID);
+				db.insertTrace(actionID, action, c1.getRole(), sessionID, value, false);
 				break;
 
 			default:
@@ -908,24 +914,26 @@ public class SessionMonitor {
 		return new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
 	}
 
-	private String calculateDelay(DatabaseInterface db, Integer sessionID)
+	private Float calculateDelay(DatabaseInterface db, Integer sessionID)
 			throws SQLException {
 
 		String query;
 		ResultSet rs;
-		Long timestamp, elapsedTime;
+		Long timestamp;
+		Float elapsedTime;
 
-		query = "SELECT start_timestamp FROM session WHERE session_id="
+		query = "SELECT last_timestamp FROM session WHERE session_id="
 				+ sessionID + ";"; // counterparty's role
 		rs = db.select(query);
 		rs.next();
 		timestamp = rs.getLong(1);
 
-		elapsedTime = ((System.currentTimeMillis() - timestamp) / 1000); // /60 TODO: now using seconds... to be restored
+		elapsedTime = (new Long(System.currentTimeMillis() - timestamp).floatValue()) / 1000; // /60 TODO: now using seconds... to be restored
 		
-		Log.message().info("DELAY: " + elapsedTime + " secs");
+		Log.message().fine("DELAY: " + elapsedTime + " secs (last timestamp was " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(new Long(rs.getLong(1)))) + 
+				", current time is " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(System.currentTimeMillis())) + ").");
 
-		return elapsedTime + "."; // CHECK IF IT IS CORRECT
+		return elapsedTime; // CHECK IF IT IS CORRECT
 	}
 
 	private Integer retrieveActionType(DatabaseInterface db, Integer contextID,

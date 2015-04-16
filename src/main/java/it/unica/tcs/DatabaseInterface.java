@@ -285,20 +285,22 @@ public class DatabaseInterface {
 		ResultSet rs;
 		Integer identifier;
 
-		String[] cols = new String[5];
-		String[] vals = new String[5];
+		String[] cols = new String[6];
+		String[] vals = new String[6];
 
 		cols[0] = "session_hash";
 		cols[1] = "state";
 		cols[2] = "context_id";
 		cols[3] = "start_timestamp";
-		cols[4] = "last_state"; // A "load_file" column must be the last in the string array
+		cols[4] = "last_timestamp";
+		cols[5] = "last_state"; // A "load_file" column must be the last in the string array
 
 		vals[0] = sessionHash;
 		vals[1] = state + "";
 		vals[2] = contextID + "";
 		vals[3] = (System.currentTimeMillis() + SESSION_STARTING_DELAY) + "";
-		vals[4] = lastState;
+		vals[4] = (System.currentTimeMillis() + SESSION_STARTING_DELAY) + "";
+		vals[5] = lastState;
 
 		insertQuery = generateInsertQuery(TABLE_SESSION, cols, vals, true);
 
@@ -364,12 +366,14 @@ public class DatabaseInterface {
 
 		String updateQuery, condition;
 
-		String[] cols = new String[1];
-		String[] vals = new String[1];
+		String[] cols = new String[2];
+		String[] vals = new String[2];
 
-		cols[0] = "last_state"; // A "load_file" column must be the last in the string array
+		cols[0] = "last_timestamp";
+		cols[1] = "last_state"; // A "load_file" column must be the last in the string array
 
-		vals[0] = last_state;
+		vals[0] = Long.toString(System.currentTimeMillis());
+		vals[1] = last_state;
 
 		condition = "session_id = '" + sessionID + "'";
 
@@ -378,7 +382,7 @@ public class DatabaseInterface {
 		this.throwUpdate(updateQuery);
 	}
 
-	/** @throws SQLException */
+	/* WRONG METHOD (do not use last_timestamp)
 	public void updateSession(Integer sessionID, Integer state, String last_state, Integer contextID)
 	        throws SQLException {
 
@@ -400,7 +404,7 @@ public class DatabaseInterface {
 		updateQuery = generateUpdateQuery(TABLE_SESSION, cols, vals, condition, true);
 
 		this.throwUpdate(updateQuery);
-	}
+	} */
 
 	/** @throws SQLException */
 	public void updateParticipant(Integer participantID, Integer userID, Integer state) throws SQLException {
