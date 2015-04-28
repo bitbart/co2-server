@@ -767,88 +767,96 @@ public class SessionMonitor {
 				return new ResponsePacket(-1, Messages.SESSION_ACTION_NOT_PERFORMED);
 			}
 		}
-
-		// 3) Loads data from db to do the action
-		beforeFileName = Tools.getFile(contractHash + action,
-				Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
-		Tools.loadNetworkFromDB(db, contractHash, beforeFileName);
-		afterFileName = Tools.getFile(contractHash + action,
-				Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
-
-		// 4) Calls CTU and does action
-
+		
 		sessionID = c1.getSessionID();
-		path = Tools.PATH_CTU + Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
-				+ action + " " + calculateDelay(db, sessionID) + " " // TODO:
-																		// Check
-																		// if
-																		// delay
-																		// works
-				+ beforeFileName + " " + afterFileName + " " + 0;
-		Tools.callApplication(path, null, false);
 
-		// 5) Saves new network in db.
-		db.saveNetwork(sessionID, afterFileName);
-
+		if (SessionMonitor.MONITOR_ENABLED) {
+			
+			// 3) Loads data from db to do the action
+			beforeFileName = Tools.getFile(contractHash + action,
+					Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
+			Tools.loadNetworkFromDB(db, contractHash, beforeFileName);
+			afterFileName = Tools.getFile(contractHash + action,
+					Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
+	
+			// 4) Calls CTU and does action
+	
+			
+			path = Tools.PATH_CTU + Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
+					+ action + " " + calculateDelay(db, sessionID) + " " // TODO:
+																			// Check
+																			// if
+																			// delay
+																			// works
+					+ beforeFileName + " " + afterFileName + " " + 0;
+			Tools.callApplication(path, null, false);
+	
+			// 5) Saves new network in db.
+			db.saveNetwork(sessionID, afterFileName);
+		}
+	
 		// 6) Update state of contract and compliant contract.
 		try {
 
-			// if user became culpable with the current action, network must be
-			// rebuilt to avoid extaction
-			// from the counterparty (otherwise, both participant will be
-			// culpable)
-			if (monitorContractProgress(db, contractHash,
-					Tools.CTU_PARAM_CULPABLE)) {
-
-				path = Tools.PATH_CTU + Tools.CTU_PARAM_STEP + " "
-						+ c1.getRole() + " " + action + " " + 0 + " "
-						+ beforeFileName + " " + afterFileName + " " + 1; // note
-																			// the
-																			// 1
-				Tools.callApplication(path, null, false);
-
-				db.saveNetwork(sessionID, afterFileName);
-			}
-
-			// 6a) Checks culpability
-			c1_result = monitorContractProgress(db, contractHash,
-					Tools.CTU_PARAM_CULPABLE);
-			c2_result = monitorContractProgress(db, c2.getContractHash(),
-					Tools.CTU_PARAM_CULPABLE);
-
-			if (c1_result && c2_result) {
-				c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
-				c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
+			if (SessionMonitor.MONITOR_ENABLED) {
 				
-				return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
-			} else if (c1_result) {
-				c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
-				c2_progress = DatabaseInterface.CONTRACT_INNOCENT;
-				
-				return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
-			} else if (c2_result) {
-				c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
-				c1_progress = DatabaseInterface.CONTRACT_INNOCENT;
-			} else {
-
-				// 6b) Checks who is on duty
+				// if user became culpable with the current action, network must be
+				// rebuilt to avoid extaction
+				// from the counterparty (otherwise, both participant will be
+				// culpable)
+				if (monitorContractProgress(db, contractHash,
+						Tools.CTU_PARAM_CULPABLE)) {
+	
+					path = Tools.PATH_CTU + Tools.CTU_PARAM_STEP + " "
+							+ c1.getRole() + " " + action + " " + 0 + " "
+							+ beforeFileName + " " + afterFileName + " " + 1; // note
+																				// the
+																				// 1
+					Tools.callApplication(path, null, false);
+	
+					db.saveNetwork(sessionID, afterFileName);
+				}
+	
+				// 6a) Checks culpability
 				c1_result = monitorContractProgress(db, contractHash,
-						Tools.CTU_PARAM_DUTY);
+						Tools.CTU_PARAM_CULPABLE);
 				c2_result = monitorContractProgress(db, c2.getContractHash(),
-						Tools.CTU_PARAM_DUTY);
-
-				if (c1_result) {
-					c1_progress = DatabaseInterface.CONTRACT_ON_DUTY;
-					c2_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
+						Tools.CTU_PARAM_CULPABLE);
+	
+				if (c1_result && c2_result) {
+					c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
+					c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
+					
+					return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
+				} else if (c1_result) {
+					c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
+					c2_progress = DatabaseInterface.CONTRACT_INNOCENT;
+					
+					return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
 				} else if (c2_result) {
-					c2_progress = DatabaseInterface.CONTRACT_ON_DUTY;
-					c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
-				} else if (!c1_result && !c2_result) {
-					c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
-					c2_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
+					c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
+					c1_progress = DatabaseInterface.CONTRACT_INNOCENT;
 				} else {
-
-					Log.message().severe("Two participants found on duty!");
+	
+					// 6b) Checks who is on duty
+					c1_result = monitorContractProgress(db, contractHash,
+							Tools.CTU_PARAM_DUTY);
+					c2_result = monitorContractProgress(db, c2.getContractHash(),
+							Tools.CTU_PARAM_DUTY);
+	
+					if (c1_result) {
+						c1_progress = DatabaseInterface.CONTRACT_ON_DUTY;
+						c2_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
+					} else if (c2_result) {
+						c2_progress = DatabaseInterface.CONTRACT_ON_DUTY;
+						c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
+					} else if (!c1_result && !c2_result) {
+						c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
+						c2_progress = DatabaseInterface.CONTRACT_OFF_DUTY;
+					} else {
+	
+						Log.message().severe("Two participants found on duty!");
+					}
 				}
 			}
 
