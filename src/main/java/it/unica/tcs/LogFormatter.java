@@ -10,24 +10,24 @@ public class LogFormatter extends Formatter {
     @Override
     public String format(LogRecord record) {
     	
-    	String logmsg = new String();
+    	String logmsg = new String(), info = new String();
     	
-    	logmsg = "<div style=\"font-family:Arial; font-size:12pt; margin-bottom:15px; padding:0px;\">";
+    	info = "<div class=\"summary\">" + new Date(record.getMillis()) + " | "  + record.getSourceClassName() + " &raquo; "  + record.getSourceMethodName() +  "()</div>";
     	
-    	logmsg += "<span style=\"font-size:8pt; color:#666666\">" + new Date(record.getMillis()) + " | "  + record.getSourceClassName() + " &raquo; "  + record.getSourceMethodName() +  "()</span>\n";
-    	
-    	if (record.getLevel() == Level.INFO && record.getMessage().contains("*** New"))
-    		logmsg += "<span style=\"color:#333333\"><b>&middot;</b> " + record.getLevel() + ": <span style=\"color:#0000CC\">" + record.getMessage() + "</span>";
+    	if (record.getLevel() == Level.INFO && record.getMessage().contains("New .WAR"))
+    		logmsg = "<tr class=\"newtr\"><td class=\"new\">" + record.getLevel() + "</td><td class=\"newmsg\">" + info + "<span class=\"newspan\">" + record.getMessage() + "</span></td>";
     	else if (record.getLevel() == Level.INFO)
-    		logmsg += "<span style=\"color:#333333\"><b>&middot;</b> " + record.getLevel() + ": " + record.getMessage()+ "</span>";
+    		logmsg = "<tr class=\"infotr\"><td class=\"info\">" + record.getLevel() + "</td><td class=\"infomsg\">" + info + "<span class=\"infospan\">" + record.getMessage()+ "</span></td>";
     	else if (record.getLevel() == Level.FINE)
-            logmsg += "<span style=\"color:#04B404\"><b>&middot;</b> " + record.getLevel() + ": " + record.getMessage()+ "</span>";
+            logmsg = "<tr class=\"finetr\"><td class=\"fine\">MINOR</td><td class=\"finemsg\">" + info + "<span class=\"finespan\">" + record.getMessage()+ "</span></td>";
+    	else if (record.getLevel() == Level.FINEST)
+            logmsg = "<tr class=\"finetr\"><td class=\"fine\">TEMP</td><td class=\"finemsg\">" + info + "<span class=\"finespan\">" + record.getMessage()+ "</span></td>";
     	else if (record.getLevel() == Level.WARNING)
-    		logmsg += "<span style=\"color:#CC0000\"><b>&middot; " + record.getLevel() + ": " + record.getMessage()+ "</b></span>";
+    		logmsg = "<tr class=\"warningtr\"><td class=\"warning\">" + record.getLevel() + "</td><td class=\"warningmsg\">" + info + "<span class=\"warningspan\">" + record.getMessage()+ "</b></span></td>";
     	else if (record.getLevel() == Level.SEVERE)
-    		logmsg += "<span style=\"color:#990000\"><b>&middot; " + record.getLevel() + ": " + record.getMessage()+ "</b></span>";
+    		logmsg = "<tr class=\"severetr\"><td class=\"severe\">ERROR</td><td class=\"severemsg\">" + info + "<span class=\"severespan\">" + record.getMessage()+ "</b></span></td>";
     	
-    	logmsg += "</div>";
+    	logmsg += "</tr><tr class=\"spacer\"></tr>";
     	
         return logmsg;
     }

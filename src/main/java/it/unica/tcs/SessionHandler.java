@@ -48,7 +48,7 @@ public class SessionHandler {
         
         if (Tools.isNotValid(username, Tools.USERNAME_REGEX) || Tools.isNotValid(pass, Tools.PASSWORD_REGEX) || Tools.isNotValid(contractXML, Tools.XML_CONTRACT_REGEX)) {// TODO: to be completed
             
-            Log.message().warning("TellContract() called with wrong parameters.");
+            Log.message().warning("The tellContract() was called with wrong parameters.");
             return new ResponsePacket(-1, "The TELLCONTRACT api was called with wrong parameters.");
         }
 
@@ -66,7 +66,7 @@ public class SessionHandler {
             }
         }catch (SQLException e) {
 
-            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -77,19 +77,19 @@ public class SessionHandler {
         try {
             if (!Validator.localValidateXML(contractXML)) {
          
-                Log.message().warning("Invalid contract passed to tell.");
+                Log.message().warning("Invalid contract passed to tell().");
                 return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
             }
         }
         catch (InternalException iie) {
 
-            Log.message().warning("IllegalInputException thrown in localValidateXML: " + iie.getMessage());
+            Log.message().severe("IllegalInputException thrown in localValidateXML: " + iie.getMessage());
             
             return new ResponsePacket(iie.getType(), iie.getMessage());
         }
         catch (FileNotFoundException e) {
 
-            Log.message().warning("FileNotFoundException in localValidateXML: " + e.getMessage());
+            Log.message().severe("FileNotFoundException thrown in localValidateXML: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -97,7 +97,7 @@ public class SessionHandler {
         // 4) Checking if the contract admits a compliant
         if (!Dualizer.localAdmitsCompliant(contractXML)){
 
-            Log.message().warning("The contract C1= " + escapeHtml(contractXML.replaceAll("\n", "")) + " does not admit a compliant");
+            Log.message().info("The contract C1= " + escapeHtml(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
             
             return new ResponsePacket(-1, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }
@@ -139,6 +139,7 @@ public class SessionHandler {
             Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
         }
         catch (SQLException e) {
+        	
             Log.message().warning("Cannot add a contract to DB. SQL says: " + e.getMessage());
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
         }
@@ -162,20 +163,20 @@ public class SessionHandler {
                 	
                     db.updateContractState(contractID, DatabaseInterface.CONTRACT_LATENT); // Now it is really latent
     
-                    Log.message().info("No compliant contract found for C1=" + contractID + "");
+                    Log.message().fine("No compliant contract found for C1=" + contractID + "");
                     
                     return new ResponsePacket(0, Messages.CONTRACT_REGISTERED + ". " + Messages.SESSION_COMPLIANT_NO, contractHash);
                 }
             }
             catch (SQLException sqle) {
     
-                Log.message().warning("Cannot find compliant contract. SQL says: " + sqle.getMessage());
+                Log.message().warning("Cannot find a compliant contract. SQL says: " + sqle.getMessage());
                 
                 return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             }
             catch (FileNotFoundException fnfe) {
     
-                Log.message().severe("FileNotFoundException: " + fnfe.getMessage());
+                Log.message().severe("FileNotFoundException thrown in tell(): " + fnfe.getMessage());
                 
                 return new ResponsePacket(-1, Messages.TYPE_GENERIC_ERROR);
             }
@@ -192,7 +193,7 @@ public class SessionHandler {
             catch (SQLException sqle) {
     
                 MainApplication.mutexRelease(compliantID);
-                Log.message().warning("Cannot retrieve compliant contract data. SQL says: " + sqle.getMessage());
+                Log.message().severe("Cannot retrieve compliant contract data. SQL says: " + sqle.getMessage());
                 
                 return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             }
@@ -206,8 +207,6 @@ public class SessionHandler {
             
             // RELEASES THE MUTEX (end critical section)
             MainApplication.mutexRelease(compliantID);
-            
-            Log.message().fine("Executed a cicle of tellContract.");
         }
 
         // 11) Returning response
@@ -215,7 +214,7 @@ public class SessionHandler {
             return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +". " + Messages.SESSION_COMPLIANT_YES, contractHash);
         }
         else{
-            Log.message().warning("Cannot fuse two compliant contracts, unknown cause.");
+            Log.message().severe("Cannot fuse two compliant contracts, unknown cause.");
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -259,7 +258,7 @@ public class SessionHandler {
             }
         }catch (SQLException e) {
             
-            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }

@@ -90,7 +90,7 @@ public class DatabaseInterface {
         }
         catch (SQLException e) {
             
-            //Log.message().warning("Can't close a opened connection. SQL says: " + e); TODO: uncomment this
+            Log.message().warning("Can't close a opened connection. SQL says: " + e);
         }
 		
 		connection = null;
@@ -567,7 +567,7 @@ public class DatabaseInterface {
 
 		insertQuery = "INSERT INTO `" + DB_NAME + "`.`" + table + "` (" + columns + ") VALUES (" + values + ");";
 		
-	    //Log.message().info("Executed query: " + insertQuery);
+	    Log.message().finest("Executed query: " + insertQuery);
 
 		return insertQuery;
 	}

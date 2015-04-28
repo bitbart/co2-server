@@ -18,6 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -40,7 +41,7 @@ public class Dualizer {
 		}
 		catch (InternalException iie) {
 			
-			Log.message().warning("InternalException thrown in localValidateXML: " + iie.getMessage());
+			Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
 
 			return new ResponsePacket(iie.getType(), iie.getMessage());			
 		}
@@ -78,7 +79,7 @@ public class Dualizer {
 		}
 		catch (InternalException iie) {
 			
-			Log.message().warning("InternalException thrown in localValidateXML: " + iie.getMessage());
+			Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
 			
 			return new ResponsePacket(iie.getType(), iie.getMessage());	
 		}
@@ -113,7 +114,7 @@ public class Dualizer {
 		}
 		catch (InternalException iie) {
 			
-			Log.message().warning("InternalException thrown in localValidateXML: " + iie.getMessage());
+			Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
 			
 			return new ResponsePacket(iie.getType(), iie.getMessage());	
 		}
@@ -195,7 +196,7 @@ public class Dualizer {
 			return out.toString();
 
 		} catch (Exception e) {
-			Log.message().warning("A dual building was aborted because the passed contract (" + contract + ") have an error: " + e.getMessage());
+			Log.message().warning("A dual building was aborted because the passed contract (" + Log.format(StringEscapeUtils.escapeHtml(contract)) + ") has an error: " + e.getMessage());
 		}
 
 		return result;

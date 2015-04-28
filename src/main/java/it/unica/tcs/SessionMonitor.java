@@ -17,6 +17,8 @@ import javax.ws.rs.core.MediaType;
 @Path(value = "/monitoring")
 public class SessionMonitor {
 	
+	static final boolean MONITOR_ENABLED = false;
+	
     @POST
     @Path(value = "/emptyDatabase")
 	@Consumes(MediaType.APPLICATION_JSON)

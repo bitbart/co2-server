@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -61,7 +62,7 @@ public class ComplianceChecker {
         }
         catch (InternalException iie) {
 
-            Log.message().warning("InternalException thrown in localValidateXML: " + iie.getMessage());
+            Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
 
             return new ResponsePacket(-1, iie.getMessage());
         }
@@ -97,33 +98,27 @@ public class ComplianceChecker {
 
         // 4) Returns XML response
         if (outputUppaal.contains("is satisfied")) {
-            Log.message().info(
-                    "Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2)
-                            + ": they are compliant!");
+            Log.message().fine("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": they are compliant!");
 
             return new ResponsePacket(1, Messages.PROPERTY_YES);
         }
         else if (outputUppaal.contains("is NOT satisfied")) {
-            Log.message().info(
-                    "Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2)
-                            + ": they aren't compliant!");
+            Log.message().fine("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": they aren't compliant!");
 
             return new ResponsePacket(0, Messages.PROPERTY_NO);
         }
         else {
-            Log.message().severe(
-                    "Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2)
-                            + ": unknown response from Uppaal, more details below.");
+            Log.message().severe("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": unknown response from Uppaal, more details below.");
 
             if (outputUppaal.isEmpty()) {
 
                 outputUppaal_error = Tools.callApplication(Tools.PATH_CTU, input, true);
-                Log.message().info("Command executed: " + path);
-                Log.message().info("Uppaal response: " + outputUppaal_error);
+                Log.message().warning("Command executed: " + path);
+                Log.message().warning("Uppaal response: " + outputUppaal_error);
             }
             else {
-                Log.message().info("Command executed: " + path);
-                Log.message().info("Uppaal response: " + outputUppaal);
+                Log.message().warning("Command executed: " + path);
+                Log.message().warning("Uppaal response: " + outputUppaal);
             }
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
@@ -187,7 +182,7 @@ public class ComplianceChecker {
             }
         }
         
-        Log.message().fine("Finding a compliant for C1='" + Log.format(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
+        Log.message().finest("Searching a compliant for C1='" + Log.format(StringEscapeUtils.escapeHtml(contractXML)) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
 
         // 3) Sort the contracts captured by the probability value calculated and the other contract's owner reputation.
         Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String[], Integer, Integer>>() {
@@ -204,7 +199,7 @@ public class ComplianceChecker {
             }
         });
         
-        Log.message().fine("Precheck list sorted.");
+        Log.message().finest("Precheck list sorted.");
 
         // 4) For each element, it tries if it is compliant with the given contract.
         //    Get a normally distributed index (x' = 0, sigma = 0.2), check if the corresponding contract is compliant.
@@ -219,7 +214,7 @@ public class ComplianceChecker {
             
             compliant = localAreCompliant(mapping, chanList, element.getSecond()[1], element.getSecond()[2]);
             
-            Log.message().fine("The checked contract has ID=" + element.getThird() + ". The compliance result is " + (compliant ? "yes" : "no") + ".");
+            Log.message().finest("The checked contract has ID=" + element.getThird() + ". The compliance result is " + (compliant ? "yes" : "no") + ".");
             
             if(compliant){
                 compliantData.set(element.getThird(), element.getSecond()[0]);
@@ -231,7 +226,7 @@ public class ComplianceChecker {
         
         }
         
-        Log.message().fine("Compliant search finished, returning the results.");
+        Log.message().finest("Compliant search finished, returning the results.");
 
         // If compliant isn't found, return empty data
         return compliantData;
@@ -265,7 +260,7 @@ public class ComplianceChecker {
         fileName = Tools.getFile(mapping1.concat(mapping2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
         Tools.chmod(fileName);
         
-        Log.message().fine("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
+        Log.message().finest("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 
         PrintWriter p = new PrintWriter(fileName);
         p.print(fusedMapping);
@@ -277,7 +272,7 @@ public class ComplianceChecker {
         outputUppaal = Tools.callApplication(path, null, false);
 
         // Remove the temp file
-        //Tools.callApplication("rm " + fileName, null, false);
+        Tools.callApplication("rm " + fileName, null, false);
 
         // 4) Returns XML response
         if (outputUppaal.contains("is satisfied"))
@@ -303,7 +298,7 @@ public class ComplianceChecker {
             doc.getDocumentElement().normalize();
 
             name = doc.getFirstChild().getFirstChild().getNodeName();
-            Log.message().info("Type PreCheck: FirstElement: " + doc.getFirstChild().getNodeName() + "; SecondElement: " + name + ";");
+            Log.message().finest("Type pre_check: FirstElement: " + doc.getFirstChild().getNodeName() + "; SecondElement: " + name + ";");
 
             switch (name) {
                 case "intchoice":
@@ -322,7 +317,7 @@ public class ComplianceChecker {
         }
         catch (ParserConfigurationException | IOException | SAXException e) {
 
-            Log.message().warning("Unknow error while analyzing DOM: " + e.getMessage());
+            Log.message().severe("Unknow error while analyzing DOM: " + e.getMessage());
 
             return Messages.ERROR_GENERIC_INTERNAL;
         }
