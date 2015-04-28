@@ -21,6 +21,7 @@ public class Debug {
     	
     	if (!password.equals("5de4d51a172d1db82e818d2be49957ed")) {
     		
+    		Log.message().severe("Someone try to access the tellStandard() with a bad password.");
     		return new ResponsePacket(-1, "Your IP has been registered. Your violation will be reported to the Judicial Authority.");
     	}
 		
@@ -31,14 +32,17 @@ public class Debug {
 			
 		} catch (SQLException e) {
 			
-			Log.message().severe("Database cleaning failed");
+			Log.message().severe("Database cleaning failed: " + e.getMessage());
 			return new ResponsePacket(-1, "Cannot delete anything from the DB.");
 		}
 		
 		Double N = Double.valueOf(postData.getFirstContract());
 		Double K = Double.valueOf(postData.getSecondContract());
 		
-		Log.message().warning("Populating the DB with N=" + N + " and K=" + K + ".");
+		if (N == 0 && K == 0)
+			Log.message().warning("Cleaning the database (except for CoRe sessions and contracts).");
+		else
+			Log.message().warning("Populating the DB with N=" + N + " and K=" + K + ".");
 		
         String[] input = new String[1];
         String path;

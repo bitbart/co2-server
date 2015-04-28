@@ -70,8 +70,6 @@ public class SessionHandler {
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
-        
-        Log.message().info("Authentication passed without problems.");
 
         // 3) Checking if contract is valid
         try {
@@ -375,27 +373,27 @@ public class SessionHandler {
 
             switch (state) {
                 case DatabaseInterface.CONTRACT_LATENT:
-                    Log.message().info(logmsg + "LATENT");
+                    Log.message().fine(logmsg + "LATENT");
                     return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_ON_DUTY:
-                    Log.message().info(logmsg + "ON_DUTY");
+                    Log.message().fine(logmsg + "ON_DUTY");
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_OFF_DUTY:
-                    Log.message().info(logmsg + "OFF_DUTY");
+                    Log.message().fine(logmsg + "OFF_DUTY");
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_INNOCENT:
-                    Log.message().info(logmsg + "INNOCENT");
+                    Log.message().fine(logmsg + "INNOCENT");
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_CULPABLE:
-                    Log.message().info(logmsg + "CULPABLE");
+                    Log.message().fine(logmsg + "CULPABLE");
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 default:
-                    Log.message().info(logmsg + "ERROR");
+                    Log.message().fine(logmsg + "ERROR");
                     return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
             }
 
@@ -436,7 +434,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().warning(
+            Log.message().severe(
                     "Cannot retrieve data for C1=" + contractID + " and C2=" + compliantID + ". SQL says: "
                             + e.getMessage());
 
@@ -465,9 +463,9 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().warning(
+            Log.message().severe(
                     "Cannot insert new session in database (when fusing), SQL says: " + e.getMessage());
-            Log.message().info("Ocaml filename: " + fileName);
+            Log.message().fine("Ocaml filename: " + fileName);
             return false;
         }
 
@@ -481,9 +479,9 @@ public class SessionHandler {
 
             // 6b) Checks who is on duty
             c1_result = new SessionMonitor().monitorContractProgress(db, c1.getContractHash(), Tools.CTU_PARAM_DUTY);
-            Log.message().info("First monitorContractProgress() completed without problems.");
+            Log.message().finest("First monitorContractProgress() completed without problems.");
             c2_result = new SessionMonitor().monitorContractProgress(db, c2.getContractHash(), Tools.CTU_PARAM_DUTY);
-            Log.message().info("Second monitorContractProgress() completed without problems.");
+            Log.message().finest("Second monitorContractProgress() completed without problems.");
             
             if (c1_result) {
                 c1_progress = DatabaseInterface.CONTRACT_ON_DUTY;
@@ -515,12 +513,12 @@ public class SessionHandler {
         }
         catch (DBException e) {
 
-            Log.message().warning(
+            Log.message().severe(
                     "Error while checking participant status in monitorContractProgress: " + e.getMessage());
         }
         catch (SQLException e) {
 
-            Log.message().warning("Failed updating a contract. SQL says: " + e.getMessage());
+            Log.message().severe("Failed updating a contract. SQL says: " + e.getMessage());
         }
 
         return false;
@@ -548,7 +546,7 @@ public class SessionHandler {
             }
         } catch (SQLException e) {
         
-            Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
             
             throw new DBException(Messages.AUTH_FAILED);
         }
@@ -574,7 +572,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().warning(
+            Log.message().severe(
                     "Cannot retrieve 'state' from contract with CONTRACT_HASH=" + contractHash + ". SQL says: "
                             + e.getMessage());
 
@@ -615,7 +613,7 @@ public class SessionHandler {
 			
 		} catch (SQLException e) {
 			
-            Log.message().warning("SQL Exception thrown when verifying credentials: " + e.getMessage());
+            Log.message().severe("SQL Exception thrown when verifying credentials: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}

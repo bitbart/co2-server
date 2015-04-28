@@ -23,7 +23,7 @@ public class Translator {
         String path;
         input[0] = postData.getFirstContract(); // TODO: check the input
         
-        Log.message().info("Starting translator module.");
+        Log.message().finest("Starting translator module.");
 
         try {
             // 1) Creates Ocaml process
@@ -43,7 +43,7 @@ public class Translator {
             
             if (translated == null) {
                 
-                Log.message().warning("Unknown response from CTU while translating contract C1=" + Log.format(input[0]) + ": response is empty.");
+                Log.message().severe("Unknown response from CTU while translating contract C1=" + Log.format(input[0]) + ": response is empty.");
 
                 return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
             }
@@ -51,7 +51,7 @@ public class Translator {
                 
                 translated = Tools.callApplication(path, input, true);
 
-                Log.message().warning("Unknown response from CTU while translating contract C1=" + Log.format(input[0]) + ": " + translated);
+                Log.message().severe("Unknown response from CTU while translating contract C1=" + Log.format(input[0]) + ": " + translated);
 
                 return new ResponsePacket(-1, translated);
             }
@@ -59,13 +59,12 @@ public class Translator {
         }
         catch (Exception e) {
 
-            Log.message().warning(
-                    "Unknown error while translating contract C1=" + Log.format(input[0]) + ": " + e.getMessage());
+            Log.message().severe("Unknown error while translating contract C1=" + Log.format(input[0]) + ": " + e.getMessage());
 
             return new ResponsePacket(-1, Messages.ERROR_TRANSLATION);
         }
         
-        Log.message().info("Translating step passed without errors!");
+        Log.message().finest("Translation step passed without errors!");
 
         try {
             // 2) Checks XML input
@@ -75,19 +74,18 @@ public class Translator {
         }
         catch (InternalException iie) {
 
-            Log.message().warning("IllegalInputException thrown when calling localValidateXML: " + iie.getMessage());
+            Log.message().severe("IllegalInputException thrown when calling localValidateXML: " + iie.getMessage());
 
             return new ResponsePacket(iie.getType(), iie.getMessage());
         }
         catch (FileNotFoundException fnfe) {
 
-            Log.message().severe(
-                    "File not found exception while validating a translated contract: " + fnfe.getMessage());
+            Log.message().severe("File not found exception while validating a translated contract: " + fnfe.getMessage());
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
         
-        Log.message().info("Validating step passed without errors. Returning translated contract!");
+        Log.message().fine("Validating step passed without errors. Returning translated contract!");
 
         // Returns valid contract
         return new ResponsePacket(1, translated);

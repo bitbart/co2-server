@@ -49,7 +49,7 @@ public class Validator {
 		}
 		catch (InternalException iie) {
 
-			Log.message().warning("Illegal input in validateXML: " + iie.getMessage());
+			Log.message().severe("Illegal input in validateXML: " + iie.getMessage());
 
 			return new ResponsePacket(iie.getType(), iie.getMessage());
 
@@ -109,7 +109,7 @@ public class Validator {
 		}
 		catch (Exception e) {
 
-			Log.message().severe("Substring length exception: " + e.getMessage());
+			Log.message().severe("Substring length exception in localValidateXML(): " + e.getMessage());
 			return false;
 		}
 
@@ -162,9 +162,7 @@ public class Validator {
 		}
 		catch (SQLException e) {
 
-			Log.message().warning(
-			        "Cannot open database or select 'context_id' with NAME=" + Log.format(contextNameDeclared)
-			                + ". SQL says: " + e.getMessage());
+			Log.message().severe("Cannot open database or select 'context_id' with NAME=" + Log.format(contextNameDeclared) + ". SQL says: " + e.getMessage());
 
 			return Messages.DB_SELECT_FAILED;
 		}
@@ -187,7 +185,7 @@ public class Validator {
 			}
 			catch (ParserConfigurationException | IOException | SAXException e) {
 
-				Log.message().warning("Unknow error while analyzing DOM: " + e.getMessage());
+				Log.message().severe("Unknow error while analyzing DOM: " + e.getMessage());
 
 				return Messages.ERROR_GENERIC_INTERNAL;
 			}
@@ -220,7 +218,7 @@ public class Validator {
 			}
 			catch (SQLException e) {
 
-				Log.message().warning(
+				Log.message().severe(
 				        "Failed SELECT for checking if an action belong to a context. SQL says: " + e.getMessage());
 				return Messages.CONTRACT_ACTION_CONTEXT;
 			}
