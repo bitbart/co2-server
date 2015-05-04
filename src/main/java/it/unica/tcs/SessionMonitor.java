@@ -2,7 +2,6 @@ package it.unica.tcs;
 
 import it.unica.tcs.InternalException.ErrorTypes;
 
-import java.security.Timestamp;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -17,7 +16,7 @@ import javax.ws.rs.core.MediaType;
 @Path(value = "/monitoring")
 public class SessionMonitor {
 	
-	static final boolean MONITOR_ENABLED = false;
+	static final boolean MONITOR_ENABLED = true;
 	
     @POST
     @Path(value = "/emptyDatabase")
