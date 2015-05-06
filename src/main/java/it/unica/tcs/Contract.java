@@ -22,13 +22,14 @@ public class Contract {
     private String typePreCheck;
 	private boolean initialized;
 
-	public Contract(DatabaseInterface db) {
+	public Contract() {
 
-		this.db = db;
+		this.db = MainApplication.getDBConnection();
 		this.initialized = false;
 	}
 
-	public Contract initContract(String contractHash, String contractXML, Integer ownerID, Integer sessionID,
+	/*
+	public Contract initCkontract(String contractHash, String contractXML, Integer ownerID, Integer sessionID,
 	        Integer contextID, Integer role, Integer state, Long timestamp, String typePreCheck, String mapping, String aux) throws SQLException {
 
 		this.contractID = db.insertContract(contractHash, contractXML, ownerID, contextID, role, state, timestamp, typePreCheck, mapping, aux);
@@ -44,7 +45,7 @@ public class Contract {
 		this.initialized = true;
 
 		return this;
-	}
+	} */
 
 	public Contract loadFromID(Integer contractID) throws SQLException {
 

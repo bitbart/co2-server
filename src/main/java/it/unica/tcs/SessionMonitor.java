@@ -97,7 +97,7 @@ public class SessionMonitor {
         }
 
         try {
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
             role = c.getRole();
 
             // Gets a new filename
@@ -180,7 +180,7 @@ public class SessionMonitor {
 
         // 2) Does query
         try {
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
             contractState = c.getState();
             
 			boolean c1_result = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
@@ -260,7 +260,7 @@ public class SessionMonitor {
         // 2) Does query
         try {
 
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
             contractState = c.getState();
 
             if (contractState == DatabaseInterface.CONTRACT_CULPABLE) {
@@ -355,7 +355,7 @@ public class SessionMonitor {
         
         try {
             
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
             
             if (c.getSessionID() == -1)
                 return new ResponsePacket(0, "Contract not fused yet");
@@ -432,7 +432,7 @@ public class SessionMonitor {
         try {
 
             // 2a) Checks timestamp
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
             sessionID = c.getSessionID();
             query = "SELECT start_timestamp FROM session WHERE session_id = " + sessionID;
             rs = db.select(query);
@@ -519,7 +519,7 @@ public class SessionMonitor {
             String actionName;
 
             // 2a) Checks timestamp
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
             sessionID = c.getSessionID();
             
             query = "SELECT a.action_id,action_name,data_type,data_int_value,data_string_value,data_file_value,COUNT(*),trace_id "
@@ -631,8 +631,8 @@ public class SessionMonitor {
 
         try {
             // 2) Loading contracts data
-			c1 = new Contract(db).loadFromHash(contractHash);
-			c2 = new Contract(db).loadFromHash(c1.getCompliantHash());
+			c1 = new Contract().loadFromHash(contractHash);
+			c2 = new Contract().loadFromHash(c1.getCompliantHash());
 			compliantHash = c2.getContractHash();
 			
 			
@@ -671,7 +671,7 @@ public class SessionMonitor {
 
         // 1) Verifies contract
         try {
-            c = new Contract(db).loadFromHash(contractHash);
+            c = new Contract().loadFromHash(contractHash);
 
         }
         catch (SQLException e) {
@@ -743,8 +743,8 @@ public class SessionMonitor {
 		Integer sessionID, contextID, c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY, c2_progress = c1_progress;
 		boolean allowed, performed, c1_result, c2_result;
 
-		Contract c1 = new Contract(db).loadFromHash(contractHash);
-		Contract c2 = new Contract(db).loadFromHash(c1.getCompliantHash());
+		Contract c1 = new Contract().loadFromHash(contractHash);
+		Contract c2 = new Contract().loadFromHash(c1.getCompliantHash());
 
 		contextID = c1.getContextID();
 

@@ -179,7 +179,7 @@ public class SessionHandler {
                 return new ResponsePacket(-1, Messages.TYPE_GENERIC_ERROR);
             }
             
-            Contract compliant = new Contract(db);
+            Contract compliant = new Contract();
             
             // ACQUIRES THE MUTEX ON THE COMPLIANT CONTRACT
             MainApplication.mutexAcquire(compliantID);
@@ -264,7 +264,7 @@ public class SessionHandler {
         // 3) Checking if requested contract exists and is latent.
         try {
         	// Load original contract data
-			original = new Contract(db).loadFromHash(originalHash);
+			original = new Contract().loadFromHash(originalHash);
 	        originalState = original.getState();
             originalID = original.getContractID();
             originalXML = original.getContractXML();
@@ -429,8 +429,8 @@ public class SessionHandler {
         
         Contract c1, c2;
         try {
-            c1 = new Contract(db).loadFromID(contractID);
-            c2 = new Contract(db).loadFromID(compliantID);
+            c1 = new Contract().loadFromID(contractID);
+            c2 = new Contract().loadFromID(compliantID);
         }
         catch (SQLException e) {
 

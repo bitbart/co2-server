@@ -301,7 +301,7 @@ public class Tools {
 		Integer contractOwner, userClient;
 
 		try {
-			contractOwner = new Contract(db).loadFromHash(contractHash).getOwnerID();
+			contractOwner = new Contract().loadFromHash(contractHash).getOwnerID();
 
 			rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
 			rs.next();
@@ -427,7 +427,7 @@ public class Tools {
 		
 		// 2) Retrieves contract context
 		try {
-			contextID = new Contract(db).loadFromHash(contractHash).getContextID();
+			contextID = new Contract().loadFromHash(contractHash).getContextID();
 
 			// 3) Checks if action is allowed in context
 			query = "SELECT COUNT(*) FROM context_action AS ca JOIN action AS a ON ca.action_id = a.action_id WHERE context_id='" + contextID + "' AND name='" + action + "';";
