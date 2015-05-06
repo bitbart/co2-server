@@ -44,12 +44,15 @@ public class UserManagement {
 	}
 	
 	public static boolean isValidEmailAddress(String email) {
+		
 	   boolean result = true;
-	   try {
-	      InternetAddress emailAddr = new InternetAddress(email);
-	      emailAddr.validate();
+	   
+	   try {   
+		   InternetAddress emailAddr = new InternetAddress(email);
+		   emailAddr.validate();
+	   
 	   } catch (AddressException ex) {
-	      result = false;
+		   result = false;
 	   }
 	   return result;
 	}

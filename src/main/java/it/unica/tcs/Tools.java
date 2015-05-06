@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
@@ -453,28 +455,49 @@ public class Tools {
 	 * @param action Name of the action
 	 * @return True if the action is done, false otherwise
 	 * @throws SQLException */
-	public static boolean actionPerformed(DatabaseInterface db, String action) throws SQLException {
+	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID) throws SQLException {
 
-		//String selectQuery;
-		//ResultSet rs;
+		String query, verificationURL, verifierResponse;
+		ResultSet rs;
+		Integer actionID;
 
-		// 1) Checks if action exists
-		//query = "SELECT action_id FROM action WHERE name='" + action + "';";
-		//rs = db.select(query);
-		//rs.next();
-		//actionID = rs.getInt(1);
-
-		/* 2) Retrieves action link
-		query = "SELECT verification_link FROM action WHERE action_id='" + actionID + "';";
+		// Checks if action exists
+		query = "SELECT A.action_id, verification_link FROM action AS A LEFT JOIN context_action AS CA ON A.action_id = CA.action_id WHERE name='" + action + "' AND context_id='" + contextID + "';";
 		rs = db.select(query);
 		rs.next();
-		verificationLink = rs.getString(1);
+		actionID = rs.getInt(1);
+		verificationURL = rs.getString(2);
+		
+		if (verificationURL.equals("true"))
+			return true;
+		
+		verifierResponse = null;
 
 		// 3) Calls verificationLink
-		// TODO: Implements the real call of the verification link
-		/* try { done = sendRequest(verificationLink, null); } catch (IOException e) {
-		 * Log.message().warning("Impossibile contattare il link di verifica azione."); return false; } */
+		try {
+			URL url = new URL(verificationURL + "?value=" + value + "&action=" + action);
+			URLConnection connection = url.openConnection();
+			connection.connect();
+			
+			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			verifierResponse = in.readLine();
+			in.close();
+		}
+		catch (Exception e) {
+			
+			Log.message().severe("The verifier cannot check if it is possible to perform ACTION=" + actionID + " with VALUE=" + Log.format("") + ". The returned exception is: " + e.getMessage());
+			return false;
+		}
 		
-		return true;
+		if (verifierResponse == null) {
+			
+			Log.message().severe("The verifier returned a <i>null</i> response when validating the ACTION=" + actionID + " with VALUE=" + Log.format("") + ".");
+			return false;
+		}
+		
+		if (verifierResponse.equals("true"))
+			return true;
+		
+		return false;
 	}
 }
