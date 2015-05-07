@@ -111,13 +111,31 @@ public class User {
 		this.reputation += REP_SUCCESS;
 	}
 	
+	public void rewardAndStore() throws SQLException {
+		
+		reward();
+		store();
+	}
+	
 	public void penalize() {
 		
 		this.reputation += REP_CULPABLE;
 	}
 	
+	public void penalizeAndStore() throws SQLException {
+		
+		penalize();
+		store();
+	}
+	
 	public void decrementRep() {
 		
 		this.reputation += REP_TELL;
+	}
+	
+	public void decrementRepAndStore() throws SQLException {
+		
+		decrementRep();
+		store();
 	}
 }
