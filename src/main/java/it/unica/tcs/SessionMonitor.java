@@ -468,6 +468,10 @@ public class SessionMonitor {
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
+        
+        // 3) Checks the sessions states and updates the users' reputation accordingly
+        
+      
     }
     
     @POST
