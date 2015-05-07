@@ -206,8 +206,15 @@ public class SessionHandler {
             // RELEASES THE MUTEX (end critical section)
             MainApplication.mutexRelease(compliantID);
         }
+        
+        // 11) Decrements the user's reputation
+        try {
+			User.build(username).decrementRepAndStore();
+		} catch (SQLException sqle) {
+			Log.message().severe("SQLException thrown while decrementing the reputation in tell(): " + sqle.getMessage());
+		}
 
-        // 11) Returning response
+        // 12) Returning response
         if (areFused) {
             return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +". " + Messages.SESSION_COMPLIANT_YES, contractHash);
         }
