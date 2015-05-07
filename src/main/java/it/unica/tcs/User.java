@@ -4,6 +4,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class User {
+	
+	public static final Integer REP_TELL = -1;
+	public static final Integer REP_SUCCESS = 2;
+	public static final Integer REP_CULPABLE = -8;
 
 	private DatabaseInterface db;
 	private Integer userID;
@@ -13,15 +17,21 @@ public class User {
 	private String password;
 	private Integer credit;
 	private Integer reputation;
-    private boolean initialized;
 
-	public User() {
+	private User() {
 
 		this.db = MainApplication.getDBConnection();
-		this.initialized = false;
+	}
+	
+	public static User build(String username) throws SQLException {
+
+		User tmp = new User();
+		tmp.loadFromUsername(username);
+		
+		return tmp;
 	}
 
-	public User loadFromUsername(String username) throws SQLException {
+	private void loadFromUsername(String username) throws SQLException {
 
 		String query = "SELECT * FROM contract WHERE email = '" + userID + "';";
 		ResultSet result;
@@ -36,17 +46,13 @@ public class User {
 		this.password = result.getString("password");
 		this.credit = result.getInt("credit");
 		this.reputation = result.getInt("reputation");
-
-		this.initialized = true;
-
-		return this;
 	}
-
-	public boolean isInitialized() {
-
-		return this.initialized;
+	
+	public void store() throws SQLException {		
+		
+		db.updateUser(userID, firstName, lastName, username, password);
 	}
-
+	
 	public Integer getUserID() {
 
 		return this.userID;
@@ -98,5 +104,20 @@ public class User {
 
 	public void setReputation(Integer reputation) {
 		this.reputation = reputation;
+	}
+	
+	public void reward() {
+		
+		this.reputation += REP_SUCCESS;
+	}
+	
+	public void penalize() {
+		
+		this.reputation += REP_CULPABLE;
+	}
+	
+	public void decrementRep() {
+		
+		this.reputation += REP_TELL;
 	}
 }
