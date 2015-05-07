@@ -30,6 +30,31 @@ public class User {
 		
 		return tmp;
 	}
+	
+	public static User build(Integer userID) throws SQLException {
+
+		User tmp = new User();
+		tmp.loadFromUserID(userID);
+		
+		return tmp;
+	}
+	
+	private void loadFromUserID(Integer userID) throws SQLException {
+
+		String query = "SELECT * FROM contract WHERE user_id = '" + userID + "';";
+		ResultSet result;
+
+		result = db.select(query);
+		result.next();
+
+		this.userID = result.getInt("user_id");
+		this.firstName = result.getString("first_name");
+		this.lastName = result.getString("last_name");
+		this.username = result.getString("email");
+		this.password = result.getString("password");
+		this.credit = result.getInt("credit");
+		this.reputation = result.getInt("reputation");
+	}
 
 	private void loadFromUsername(String username) throws SQLException {
 
