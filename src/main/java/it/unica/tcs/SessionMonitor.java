@@ -400,6 +400,7 @@ public class SessionMonitor {
         String query;
         Long timestamp;
         Contract c;
+        ResponsePacket response;
 
         // 1) Verifies authentication and permissions
         try {
@@ -427,7 +428,7 @@ public class SessionMonitor {
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
-
+        
         // 2) Retrieves contract state and decides if can do the action
         try {
 
@@ -444,33 +445,36 @@ public class SessionMonitor {
 
             if ((state == DatabaseInterface.CONTRACT_LATENT) || (timestamp > System.currentTimeMillis())) {
                 
-                return new ResponsePacket(-1, Messages.SESSION_MOVE_BEFORE_START);
+                response = new ResponsePacket(-1, Messages.SESSION_MOVE_BEFORE_START);
             }
 
             if (!Tools.CONF_MOVE_AFTER_CONTRACT_END) {
             	
                 if ((state == DatabaseInterface.CONTRACT_ON_DUTY) || (state == DatabaseInterface.CONTRACT_OFF_DUTY)) {
                  
-                    return executeAction(db, contractHash, action, value);
+                	response = executeAction(db, contractHash, action, value);
                 }
                 else {
-                	return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
+                	response = new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
                 }
             }
             else {
             	
-                return executeAction(db, contractHash, action, value);
+            	response = executeAction(db, contractHash, action, value);
             }
+            
+            
+            // 2c) Checks the sessions states and updates the users' reputation accordingly            
+            handleSessionEnding(c, db);
+            
+            return response;
         }
-        catch (DBException | SQLException e) {
+        catch (DBException | SQLException | InternalException e) {
         	
             Log.message().warning("Database exception thrown when executing DO: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
-        
-        // 3) Checks the sessions states and updates the users' reputation accordingly
-        
       
     }
     
@@ -985,5 +989,39 @@ public class SessionMonitor {
 		rs.next();
 
 		return rs.getInt(1);
+	}
+	
+	private void handleSessionEnding(Contract c1, DatabaseInterface db) throws DBException, SQLException, InternalException{
+		
+		Contract c2;
+		Boolean c1_duty, c2_duty, c1_culpable, c2_culpable;
+		String compliantHash, contractHash;
+
+        	// 1) load compliant contract data
+        	c2 = new Contract().loadFromHash(c1.getCompliantHash());
+        	compliantHash = c2.getContractHash();
+        	contractHash = c1.getContractHash();
+			
+			
+			// 2) Calculating culpable and onDuty
+			c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
+			c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
+			c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
+			c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
+			
+			// 3) update the reputation
+			if(c1_culpable){
+				User.build(c1.getOwnerID()).penalizeAndStore();
+				User.build(c2.getOwnerID()).rewardAndStore();
+				
+			} else if(c2_culpable){
+				User.build(c1.getOwnerID()).rewardAndStore();
+				User.build(c2.getOwnerID()).penalizeAndStore();
+				
+			} else if(!c1_duty && !c2_duty){
+				User.build(c1.getOwnerID()).rewardAndStore();
+				User.build(c2.getOwnerID()).rewardAndStore();
+			}
+
 	}
 }
