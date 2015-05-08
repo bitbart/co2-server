@@ -40,42 +40,42 @@ public class User {
 	}
 	
 	private void loadFromUserID(Integer userID) throws SQLException {
+		
+			String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
+			ResultSet result;
 
-		String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
-		ResultSet result;
+			result = db.select(query);
+			result.next();
 
-		result = db.select(query);
-		result.next();
-
-		this.userID = result.getInt("user_id");
-		this.firstName = result.getString("first_name");
-		this.lastName = result.getString("last_name");
-		this.username = result.getString("email");
-		this.password = result.getString("password");
-		this.credit = result.getInt("credit");
-		this.reputation = result.getInt("reputation");
+			this.userID = result.getInt("user_id");
+			this.firstName = result.getString("first_name");
+			this.lastName = result.getString("last_name");
+			this.username = result.getString("email");
+			this.password = result.getString("password");
+			this.credit = result.getInt("credit");
+			this.reputation = result.getInt("reputation");
 	}
 
 	private void loadFromUsername(String username) throws SQLException {
-
+		
 		String query = "SELECT * FROM user WHERE email = '" + userID + "';";
-		ResultSet result;
+			ResultSet result;
 
-		result = db.select(query);
-		result.next();
+			result = db.select(query);
+			result.next();
 
-		this.userID = result.getInt("user_id");
-		this.firstName = result.getString("first_name");
-		this.lastName = result.getString("last_name");
-		this.username = result.getString("email");
-		this.password = result.getString("password");
-		this.credit = result.getInt("credit");
-		this.reputation = result.getInt("reputation");
+			this.userID = result.getInt("user_id");
+			this.firstName = result.getString("first_name");
+			this.lastName = result.getString("last_name");
+			this.username = result.getString("email");
+			this.password = result.getString("password");
+			this.credit = result.getInt("credit");
+			this.reputation = result.getInt("reputation");
 	}
 	
 	public void store() throws SQLException {		
 		
-		db.updateUser(userID, firstName, lastName, username, password, reputation, credit);
+		db.updateUser(userID, firstName, lastName, username, password, reputation + "", credit + "");
 	}
 	
 	public Integer getUserID() {
