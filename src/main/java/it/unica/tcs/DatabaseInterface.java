@@ -428,7 +428,7 @@ public class DatabaseInterface {
 		this.throwUpdate(updateQuery);
 	}
 
-	/** @throws SQLException */
+	/** @throws SQLException  */
 	public void updateContract(Integer contractID, Integer sessionID, Integer role, Integer state) throws SQLException {
 
 		String updateQuery, condition;
