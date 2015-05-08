@@ -163,6 +163,16 @@ public class SessionHandler {
     
                     Log.message().fine("No compliant contract found for C1=" + contractID + "");
                     
+                    // 9b) Decrements the user's reputation
+                    try {
+            			User tmp = User.build(username);
+            			tmp.decrementRepAndStore();
+            			
+            		} catch (SQLException sqle) {
+            			
+            			Log.message().severe("SQLException thrown while decrementing the reputation in 'tell()': " + sqle.getMessage());
+            		}
+                    
                     return new ResponsePacket(0, Messages.CONTRACT_REGISTERED + ". " + Messages.SESSION_COMPLIANT_NO, contractHash);
                 }
             }
