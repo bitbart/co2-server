@@ -40,37 +40,45 @@ public class User {
 	}
 	
 	private void loadFromUserID(Integer userID) throws SQLException {
+		
+		try {
+			String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
+			ResultSet result;
 
-		String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
-		ResultSet result;
+			result = db.select(query);
+			result.next();
 
-		result = db.select(query);
-		result.next();
-
-		this.userID = result.getInt("user_id");
-		this.firstName = result.getString("first_name");
-		this.lastName = result.getString("last_name");
-		this.username = result.getString("email");
-		this.password = result.getString("password");
-		this.credit = result.getInt("credit");
-		this.reputation = result.getInt("reputation");
+			this.userID = result.getInt("user_id");
+			this.firstName = result.getString("first_name");
+			this.lastName = result.getString("last_name");
+			this.username = result.getString("email");
+			this.password = result.getString("password");
+			this.credit = result.getInt("credit");
+			this.reputation = result.getInt("reputation");
+		} catch (Exception e) {
+			Log.message().severe("Exception loadFromUserID(int): " + e.getMessage());
+		}
 	}
 
 	private void loadFromUsername(String username) throws SQLException {
 
-		String query = "SELECT * FROM user WHERE email = '" + userID + "';";
-		ResultSet result;
+		try {
+			String query = "SELECT * FROM user WHERE email = '" + userID + "';";
+			ResultSet result;
 
-		result = db.select(query);
-		result.next();
+			result = db.select(query);
+			result.next();
 
-		this.userID = result.getInt("user_id");
-		this.firstName = result.getString("first_name");
-		this.lastName = result.getString("last_name");
-		this.username = result.getString("email");
-		this.password = result.getString("password");
-		this.credit = result.getInt("credit");
-		this.reputation = result.getInt("reputation");
+			this.userID = result.getInt("user_id");
+			this.firstName = result.getString("first_name");
+			this.lastName = result.getString("last_name");
+			this.username = result.getString("email");
+			this.password = result.getString("password");
+			this.credit = result.getInt("credit");
+			this.reputation = result.getInt("reputation");
+		} catch (Exception e) {
+			Log.message().severe("Exception loadFromUserID(int): " + e.getMessage());
+		}
 	}
 	
 	public void store() throws SQLException {		
