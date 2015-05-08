@@ -316,7 +316,7 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, Integer reputation, Integer credit)
+	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, String reputation, String credit)
 	        throws SQLException {
 
 		String updateQuery, condition;
@@ -335,8 +335,8 @@ public class DatabaseInterface {
 		vals[1] = lastName;
 		vals[2] = email;
 		vals[3] = password;
-		vals[4] = reputation + "";
-		vals[5] = credit + "";
+		vals[4] = reputation;
+		vals[5] = credit;
 
 		condition = "user_id = '" + userID + "'";
 

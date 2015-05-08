@@ -165,8 +165,7 @@ public class SessionHandler {
                     
                     // 9b) Decrements the user's reputation
                     try {
-            			User tmp = User.build(username);
-            			tmp.decrementRepAndStore();
+            			User.build(userID).decrementRepAndStore();
             			
             		} catch (SQLException sqle) {
             			
@@ -219,8 +218,7 @@ public class SessionHandler {
         
         // 11) Decrements the user's reputation
         try {
-			User tmp = User.build(username);
-			tmp.decrementRepAndStore();
+			User.build(userID).decrementRepAndStore();
 			
 		} catch (SQLException sqle) {
 			

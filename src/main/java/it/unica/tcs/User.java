@@ -41,7 +41,6 @@ public class User {
 	
 	private void loadFromUserID(Integer userID) throws SQLException {
 		
-		try {
 			String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
 			ResultSet result;
 
@@ -55,15 +54,11 @@ public class User {
 			this.password = result.getString("password");
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
-		} catch (Exception e) {
-			Log.message().severe("Exception loadFromUserID(int): " + e.getMessage());
-		}
 	}
 
 	private void loadFromUsername(String username) throws SQLException {
-
-		try {
-			String query = "SELECT * FROM user WHERE email = '" + userID + "';";
+		
+		String query = "SELECT * FROM user WHERE email = '" + userID + "';";
 			ResultSet result;
 
 			result = db.select(query);
@@ -76,14 +71,11 @@ public class User {
 			this.password = result.getString("password");
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
-		} catch (Exception e) {
-			Log.message().severe("Exception loadFromUserID(int): " + e.getMessage());
-		}
 	}
 	
 	public void store() throws SQLException {		
 		
-		db.updateUser(userID, firstName, lastName, username, password, reputation, credit);
+		db.updateUser(userID, firstName, lastName, username, password, reputation + "", credit + "");
 	}
 	
 	public Integer getUserID() {
