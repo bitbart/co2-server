@@ -75,7 +75,7 @@ public class User {
 	
 	public void store() throws SQLException {		
 		
-		db.updateUser(userID, firstName, lastName, username, password);
+		db.updateUser(userID, firstName, lastName, username, password, reputation, credit);
 	}
 	
 	public Integer getUserID() {

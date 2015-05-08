@@ -316,23 +316,27 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public void updateUser(Integer userID, String firstName, String lastName, String email, String password)
+	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, Integer reputation, Integer credit)
 	        throws SQLException {
 
 		String updateQuery, condition;
 
-		String[] cols = new String[4];
-		String[] vals = new String[4];
+		String[] cols = new String[6];
+		String[] vals = new String[6];
 
 		cols[0] = "first_name";
 		cols[1] = "last_name";
 		cols[2] = "email";
 		cols[3] = "password";
+		cols[4] = "reputation";
+		cols[5] = "credit";
 
 		vals[0] = firstName;
 		vals[1] = lastName;
 		vals[2] = email;
 		vals[3] = password;
+		vals[4] = reputation + "";
+		vals[5] = credit + "";
 
 		condition = "user_id = '" + userID + "'";
 
