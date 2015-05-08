@@ -471,7 +471,7 @@ public class SessionMonitor {
         }
         catch (DBException | SQLException | InternalException e) {
         	
-            Log.message().warning("Database exception thrown when executing DO: " + e.getMessage());
+            Log.message().severe("A database exception was thrown when executing DO: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }

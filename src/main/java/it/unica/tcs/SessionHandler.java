@@ -209,9 +209,12 @@ public class SessionHandler {
         
         // 11) Decrements the user's reputation
         try {
-			User.build(username).decrementRepAndStore();
+			User tmp = User.build(username);
+			tmp.decrementRepAndStore();
+			
 		} catch (SQLException sqle) {
-			Log.message().severe("SQLException thrown while decrementing the reputation in tell(): " + sqle.getMessage());
+			
+			Log.message().severe("SQLException thrown while decrementing the reputation in 'tell()': " + sqle.getMessage());
 		}
 
         // 12) Returning response

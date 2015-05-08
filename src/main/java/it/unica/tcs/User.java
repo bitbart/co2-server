@@ -41,7 +41,7 @@ public class User {
 	
 	private void loadFromUserID(Integer userID) throws SQLException {
 
-		String query = "SELECT * FROM contract WHERE user_id = '" + userID + "';";
+		String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
 		ResultSet result;
 
 		result = db.select(query);
@@ -58,7 +58,7 @@ public class User {
 
 	private void loadFromUsername(String username) throws SQLException {
 
-		String query = "SELECT * FROM contract WHERE email = '" + userID + "';";
+		String query = "SELECT * FROM user WHERE email = '" + userID + "';";
 		ResultSet result;
 
 		result = db.select(query);
