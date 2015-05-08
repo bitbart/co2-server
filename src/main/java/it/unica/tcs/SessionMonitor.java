@@ -188,7 +188,7 @@ public class SessionMonitor {
             if (c1_result == true) {
             	
             	if (contractState != DatabaseInterface.CONTRACT_ON_DUTY)
-            		db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY); // updates the DB
+            		db.setContractState(c.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY); // updates the DB
           
                 Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
@@ -199,7 +199,7 @@ public class SessionMonitor {
             else {
             	
             	if (contractState == DatabaseInterface.CONTRACT_ON_DUTY)
-            		db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY); // updates the DB
+            		db.setContractState(c.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY); // updates the DB
             	
                 Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
@@ -274,7 +274,7 @@ public class SessionMonitor {
                 
                 if (monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE)) { // the user is became culpable (because of time elapsing)
                 	
-                	db.updateContractState(c.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
+                	db.setContractState(c.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
                     
                     Log.message().fine(
                             "Checked if the owner of the contract with HASH=" + Log.format(contractHash)

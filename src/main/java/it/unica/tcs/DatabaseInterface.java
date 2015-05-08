@@ -39,6 +39,7 @@ public class DatabaseInterface {
 	public final static int CONTRACT_OFF_DUTY = 2;
 	public final static int CONTRACT_INNOCENT = 3;
 	public final static int CONTRACT_CULPABLE = 4;
+	public final static int CONTRACT_COMPLETED = 5;
 
 	// Roles of participants during interaction
 	public final static int CONTRACT_ROLE_LATENT = -1;
@@ -51,7 +52,8 @@ public class DatabaseInterface {
 
 	// Session states
 	public final static int SESSION_ACTIVE = 0;
-	public final static int SESSION_COMPLETED = 1;
+	public final static int SESSION_COMPLETED_CORRECTLY = 1;
+	public final static int SESSION_COMPLETED_UNCORRECTLY = 2;
 
 	// Timestamp
 	public final static int SESSION_STARTING_DELAY = 0; // 0 secs
@@ -385,30 +387,25 @@ public class DatabaseInterface {
 
 		this.throwUpdate(updateQuery);
 	}
-
-	/* WRONG METHOD (do not use last_timestamp)
-	public void updateSession(Integer sessionID, Integer state, String last_state, Integer contextID)
+	
+	public void setSessionState(Integer sessionID, Integer state)
 	        throws SQLException {
 
 		String updateQuery, condition;
 
-		String[] cols = new String[3];
-		String[] vals = new String[3];
+		String[] cols = new String[1];
+		String[] vals = new String[1];
 
 		cols[0] = "state";
-		cols[1] = "context_id";
-		cols[2] = "last_state"; // A "load_file" column must be the last in the string array
 
 		vals[0] = state + "";
-		vals[1] = contextID + "";
-		vals[2] = last_state;
 
 		condition = "session_id = '" + sessionID + "'";
 
-		updateQuery = generateUpdateQuery(TABLE_SESSION, cols, vals, condition, true);
+		updateQuery = generateUpdateQuery(TABLE_SESSION, cols, vals, condition);
 
 		this.throwUpdate(updateQuery);
-	} */
+	}
 
 	/** @throws SQLException */
 	public void updateParticipant(Integer participantID, Integer userID, Integer state) throws SQLException {
@@ -454,7 +451,7 @@ public class DatabaseInterface {
 		this.throwUpdate(updateQuery);
 	}
 	
-	public void updateContractState(Integer contractID, Integer state) throws SQLException {
+	public void setContractState(Integer contractID, Integer state) throws SQLException {
 
 		String updateQuery, condition;
 

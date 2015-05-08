@@ -159,7 +159,7 @@ public class SessionHandler {
                 // Else, no compliant is found
                 else {
                 	
-                    db.updateContractState(contractID, DatabaseInterface.CONTRACT_LATENT); // Now it is really latent
+                    db.setContractState(contractID, DatabaseInterface.CONTRACT_LATENT); // Now it is really latent
     
                     Log.message().fine("No compliant contract found for C1=" + contractID + "");
                     
@@ -508,8 +508,8 @@ public class SessionHandler {
             else
                 throw new InternalException(ErrorTypes.TYPE_TOO_ONDUTY);
 
-            db.updateContractState(contractID, c1_progress);
-            db.updateContractState(compliantID, c2_progress);
+            db.setContractState(contractID, c1_progress);
+            db.setContractState(compliantID, c2_progress);
 
             Log.message().info(
                     "Contract with ID=" + contractID + " and contract with ID=" + compliantID
