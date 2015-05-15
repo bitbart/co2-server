@@ -6,8 +6,8 @@ import java.sql.SQLException;
 public class User {
 	
 	public static final Integer REP_TELL = -1;
-	public static final Integer REP_SUCCESS = 2;
-	public static final Integer REP_CULPABLE = -8;
+	public static final Integer REP_SUCCESS = 3;
+	public static final Integer REP_CULPABLE = -10;
 
 	private DatabaseInterface db;
 	private Integer userID;
