@@ -142,7 +142,7 @@ public class SessionHandler {
 			} catch (InterruptedException e) {}
         	
         	// Second attempt
-        	secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        	secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
         	
             if (secondOutputOcaml.equals("")) {
             		
