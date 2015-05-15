@@ -20,6 +20,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -140,6 +141,8 @@ public class Validator {
 	 * @param contract Contract that needs to validate
 	 * @return Message success or message error */
 	public static String validateContext(DatabaseInterface db, String contract) {
+		
+		Log.message().fine("ValidateContext of: " + StringEscapeUtils.escapeHtml(contract));
 
 		Set<String> elementsFound = new HashSet<>();
 		Set<String> elementsAllowed = new HashSet<>();

@@ -108,8 +108,48 @@ public class SessionHandler {
         input[0] = contractXML + "\n";
         firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
         
+        
+        // Sanity check of the CTU's response
+        if (firstOutputOcaml.equals("")) {
+        	
+        	Log.message().warning("CTU returns an empty mapping for a contract. Retrying.");
+        	
+        	try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {}
+        	
+        	// Second attempt
+        	firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        	
+            if (firstOutputOcaml.equals("")) {
+            		
+            	Log.message().severe("CTU still returns an empty mapping for a contract. Rejecting tell.");
+            	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+            }
+        }
+        
         // 7) Asking CTU for the labels to be stored into the database
         secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+        
+        
+        // Sanity check of the CTU's response
+        if (secondOutputOcaml.equals("")) {
+        	
+        	Log.message().warning("CTU returns an empty getLabel for a contract. Retrying.");
+        	
+        	try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {}
+        	
+        	// Second attempt
+        	secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        	
+            if (secondOutputOcaml.equals("")) {
+            		
+            	Log.message().severe("CTU still returns an empty getLabel for a contract. Rejecting tell.");
+            	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+            }
+        }
         
         // TODO: tests for the validity of firstOutputOcaml and second
 
