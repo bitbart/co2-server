@@ -76,7 +76,7 @@ public class ComplianceChecker {
         // 2) Creates XML automata with Ocaml CTU
         input[0] = c1 + "\n";
         input[1] = c2 + "\n";
-        outputOcaml = Tools.callApplication(Tools.PATH_CTU, input, false);
+        outputOcaml = Tools.callApplication(Tools.getCtuPath(), input, false);
 
         try {
             // 2b) Saves XML automata (Uppaal software needs an input file)
@@ -112,7 +112,7 @@ public class ComplianceChecker {
 
             if (outputUppaal.isEmpty()) {
 
-                outputUppaal_error = Tools.callApplication(Tools.PATH_CTU, input, true);
+                outputUppaal_error = Tools.callApplication(Tools.getCtuPath(), input, true);
                 Log.message().warning("Command executed: " + path);
                 Log.message().warning("Uppaal response: " + outputUppaal_error);
             }

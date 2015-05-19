@@ -43,7 +43,7 @@ public class Log {
 			
 			log.addHandler(myFileHandler);
 			log.setUseParentHandlers(false);
-			log.setLevel(Level.FINE);
+			log.setLevel(Level.INFO);
 			
 			init = true;
 		}

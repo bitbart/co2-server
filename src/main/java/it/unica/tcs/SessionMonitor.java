@@ -110,13 +110,13 @@ public class SessionMonitor {
             newFileName = Tools.getFile(contractHash + role + 5, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
             
             // Updates the state of the session with the delay
-            Tools.callApplication(Tools.PATH_CTU + " -delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
+            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
             
             // Saves the updated network
             db.saveNetwork(c.getSessionID(), newFileName);
          
             
-            String path = Tools.PATH_CTU + "-pa" + " " + role + " " + newFileName;
+            String path = Tools.getCtuPath()+ "-pa" + " " + role + " " + newFileName;
             String ocamlResult = Tools.callApplication(path, null, false);
             
             //Tools.callApplication(path, null, true);
@@ -701,7 +701,7 @@ public class SessionMonitor {
             
             // Updates network with time elapsed ... TODO: handle granularity different from 0
             newFileName = Tools.getFile(sessionHash + role + 5, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
-            Tools.callApplication(Tools.PATH_CTU + " -delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
+            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
             //Log.message().info("CTU Output: " + output);
 
         }
@@ -712,7 +712,7 @@ public class SessionMonitor {
         }
       
         // 3) Creates Ocaml process
-        path = Tools.PATH_CTU + queryType + " " + role + " " + newFileName;
+        path = Tools.getCtuPath()+ queryType + " " + role + " " + newFileName;
         ocamlResult = Tools.callApplication(path, null, false);
         Tools.callApplication(path, null, true);
         
@@ -789,7 +789,7 @@ public class SessionMonitor {
 			// 4) Calls CTU and does action
 	
 			
-			path = Tools.PATH_CTU + Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
+			path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
 					+ action + " " + calculateDelay(db, sessionID) + " " // TODO:
 																			// Check
 																			// if
@@ -814,7 +814,7 @@ public class SessionMonitor {
 				if (monitorContractProgress(db, contractHash,
 						Tools.CTU_PARAM_CULPABLE)) {
 	
-					path = Tools.PATH_CTU + Tools.CTU_PARAM_STEP + " "
+					path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " "
 							+ c1.getRole() + " " + action + " " + 0 + " "
 							+ beforeFileName + " " + afterFileName + " " + 1; // note
 																				// the

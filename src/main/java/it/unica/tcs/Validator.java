@@ -98,7 +98,7 @@ public class Validator {
 		}
 
 		// 3) Checks binding variables
-		path = Tools.PATH_CTU + Tools.CTU_PARAM_BINDING;
+		path = Tools.getCtuPath()+ Tools.CTU_PARAM_BINDING;
 		input[0] = contract;
 		standardOutputOcaml = Tools.callApplication(path, input, false);
 

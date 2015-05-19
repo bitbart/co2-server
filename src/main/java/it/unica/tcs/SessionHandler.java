@@ -106,7 +106,7 @@ public class SessionHandler {
 
         // 6) Asking CTU for the partial UPPAAL template/mapping to be stored into the database
         input[0] = contractXML + "\n";
-        firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        firstOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
         
         
         // Sanity check of the CTU's response
@@ -119,7 +119,7 @@ public class SessionHandler {
 			} catch (InterruptedException e) {}
         	
         	// Second attempt
-        	firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        	firstOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
         	
             if (firstOutputOcaml.equals("")) {
             		
@@ -129,7 +129,7 @@ public class SessionHandler {
         }
         
         // 7) Asking CTU for the labels to be stored into the database
-        secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+        secondOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input, false);
         
         
         // Sanity check of the CTU's response
@@ -142,7 +142,7 @@ public class SessionHandler {
 			} catch (InterruptedException e) {}
         	
         	// Second attempt
-        	secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+        	secondOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input, false);
         	
             if (secondOutputOcaml.equals("")) {
             		
@@ -369,10 +369,10 @@ public class SessionHandler {
             // 6) Asking CTU for the partial UPPAAL template/mapping to be stored into the database
     		String[] input = new String[1];
     		input[0] = dualXML + "\n";
-            String firstOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+            String firstOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
             
             // 7) Asking CTU for the labels to be stored into the database
-            String secondOutputOcaml = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+            String secondOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input, false);
             
             dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "5", firstOutputOcaml, secondOutputOcaml);
 
@@ -504,7 +504,7 @@ public class SessionHandler {
         fileName = Tools.getFile(Tools.CTU_PARAM_START + compliant + contract, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, true);
 
         // 1b) Creates process
-        path = Tools.PATH_CTU + Tools.CTU_PARAM_START + " " + fileName;
+        path = Tools.getCtuPath()+ Tools.CTU_PARAM_START + " " + fileName;
         input[0] = compliant + "\n";
         input[1] = contract;
         Tools.callApplication(path, input, false);

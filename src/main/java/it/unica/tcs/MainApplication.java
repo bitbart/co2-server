@@ -30,6 +30,11 @@ public class MainApplication implements ServletContextListener {
 	    return rng.nextLong();
 	}
 	
+	public static String getCtuID() {
+	    
+	    return (rng.nextInt(4) + 1) + "";
+	}
+	
 	public static DatabaseInterface getDBConnection() {
 	    
 	    return db;
