@@ -18,7 +18,7 @@ public class Log {
 		if (init == false) {
 			
 			// Removes log files of previous WAR versions
-			Tools.callApplication("rm " + Tools.HOME_DIR + "/logs/new/*", null, false);
+			Tools.callApplication("rm " + Tools.HOME_DIR + "/logs/new/*", null);
 			
 			FileHandler myFileHandler = null;
 			

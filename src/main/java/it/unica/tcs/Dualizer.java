@@ -69,7 +69,8 @@ public class Dualizer {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResponsePacket kindOf(QueryPacket postData) {
 		
-		String path, standardOutputOcaml;
+		String path;
+		AppResponse standardOutputOcaml;
 		String[] input = new String[1];	
 		
 		try {
@@ -93,9 +94,9 @@ public class Dualizer {
 		path = Tools.PATH_CTU + Tools.CTU_PARAM_KIND_OF;
 		
 		input[0] = postData.getFirstContract();
-		standardOutputOcaml = Tools.callApplication(path, input, false);
+		standardOutputOcaml = Tools.callApplication(path, input);
 		
-		return new ResponsePacket(1, standardOutputOcaml);
+		return new ResponsePacket(1, standardOutputOcaml.getOutput());
 	}
 
 	@POST
@@ -131,19 +132,20 @@ public class Dualizer {
 	
 	public static boolean localAdmitsCompliant(String contract) {
 		
-		String path, standardOutputOcaml;
+		String path;
+		AppResponse standardOutputOcaml;
 		String[] input = new String[1];	
 
 		path = Tools.PATH_CTU + Tools.CTU_PARAM_ADMITS_COMPLIANT;
 		input[0] = contract;
-		standardOutputOcaml = Tools.callApplication(path, input, false);
+		standardOutputOcaml = Tools.callApplication(path, input);
 		
 		// TODO: check this when CTU won't return a result
-		if (standardOutputOcaml.equals("")) {
+		if (standardOutputOcaml.isEmpty()) {
 			return true;
 		}
 		
-		if(standardOutputOcaml.contains("yes")) 
+		if(standardOutputOcaml.getOutput().contains("yes")) 
 			return true;
 		else 
 			return false;
@@ -151,16 +153,17 @@ public class Dualizer {
 	
 	public String localDualOf(String contract) {
 		
-		String path, standardOutputOcaml;
+		String path;
+		AppResponse standardOutputOcaml;
 		String[] input = new String[1];	
 
 		path = Tools.PATH_CTU + Tools.CTU_PARAM_DUAL_OF;
 		input[0] = contract;
-		standardOutputOcaml = Tools.callApplication(path, input, false);
+		standardOutputOcaml = Tools.callApplication(path, input);
 
 
         // Returns valid dual
-		return standardOutputOcaml;
+		return standardOutputOcaml.getOutput();
 	}
 
 	/** Given a contract, returns its deual.

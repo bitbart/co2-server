@@ -95,28 +95,28 @@ public class Tools {
 	/* Chmods a file/dir */
 	public static void chmod(String path) {
 	    
-	    callApplication("chmod 777 " + path, null, false);
+	    callApplication("chmod 777 " + path, null);
 	}
 	
 	/* Creates a directory in the server */
 	public static void mkdir(String dir) {
 	    
-	    callApplication("mkdir " + dir, null, false);
+	    callApplication("mkdir " + dir, null);
 	}
 	
 	/* Deletes all files and folders inside a specified directory */
 	public static void rm(String dir) {
         
-        callApplication("rm " + dir, null, false);
+        callApplication("rm " + dir, null);
 	}
-
+	/* OLD 
 	/** Launches a new process on server and returns process response. 
 	 * Throws a TimeExpiredException if process takes too much time.
 	 * 
 	 * @param path Path and name of the process to be executed
 	 * @param input Arguments array needed by the process.
 	 * @param errorStream If set as true then the method returns the errorStream; otherwise returns the outputStream
-	 * @return Process response */
+	 * @return Process response *
 	public static String callApplication(String path, String[] input, boolean errorStream) {
 
 		StringBuffer outputApplication = new StringBuffer();
@@ -178,9 +178,9 @@ public class Tools {
 		}
 
 		return output;
-	}
+	}*/
 	
-	public static String[] callApplicationNew(String path, String input[], boolean errorStream) {
+	public static AppResponse callApplication(String path, String input[]) {
 		
 		String line;
 	    OutputStream stdin = null;
@@ -232,7 +232,9 @@ public class Tools {
 			Log.message().warning("Exception message: " + e.getMessage());
 		}
 	    
-	    return response;
+	    AppResponse ar = new AppResponse(response[0], response[1]);
+	    
+	    return ar;
 	}
 
 	/** Creates a new filename. To avoid collisions, it uses random values (where the seed is an input param) and current

@@ -72,7 +72,9 @@ public class Validator {
 	 * @throws FileNotFoundException */
 	public static boolean localValidateXML(String contract) throws FileNotFoundException, InternalException {
 
-		String fileName, path, context, standardErrorXmllint, standardOutputOcaml, contextMessage;
+		String fileName, path, context, contextMessage;
+		
+		AppResponse outputOcaml, outputXmllint;
 		DatabaseInterface db = new DatabaseInterface();
 		String[] input = new String[1];
 
@@ -100,11 +102,11 @@ public class Validator {
 		// 3) Checks binding variables
 		path = Tools.getCtuPath()+ Tools.CTU_PARAM_BINDING;
 		input[0] = contract;
-		standardOutputOcaml = Tools.callApplication(path, input, false);
+		outputOcaml = Tools.callApplication(path, input);
 
 		try {
 
-			if ((standardOutputOcaml.equals("")) || (!standardOutputOcaml.substring(0, 17).equals("Contract is valid")))
+			if ((outputOcaml.isEmpty()) || (!outputOcaml.getOutput().substring(0, 17).equals("Contract is valid")))
 			    return false;
 
 		}
@@ -124,12 +126,13 @@ public class Validator {
 
 		// 4b) Creates xmllint process
 		path = Tools.PATH_VALIDATOR + Tools.PATH_VALIDATOR_SCHEMA + " " + fileName;
-		standardErrorXmllint = Tools.callApplication(path, null, true);
+		outputXmllint = Tools.callApplication(path, null); // Pay attention. It uses the errorStream as output
 
 		// Remove the temp file
-		Tools.callApplication("rm " + fileName, null, false);
-
-		if (standardErrorXmllint.equals(fileName + " validates\n")) 
+		//Tools.callApplication("rm " + fileName, null);
+		Tools.rm(fileName);
+		
+		if (outputXmllint.getErrors().equals(fileName + " validates\n")) 
 			return true;
 
 		return false;

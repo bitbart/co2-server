@@ -50,20 +50,21 @@ public class Debug {
         
         input[0] = "?pay{;t}.(?ok & ?dispute{t<10; t}.!refund{t<7} & ?abort)"; // compliant
 		
-		String firstXml = Tools.callApplication(path, input, false);
+		AppResponse firstXml = Tools.callApplication(path, input);
         
-        input[0] = firstXml + "\n";
-        String firstMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
-        String firstLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+        input[0] = firstXml.getOutput() + "\n";
+        AppResponse firstMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input);
+        AppResponse firstLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input);
         
         input[0] = "?pay{;t}.(?ok & ?dispute{t<9; t}.!refund{t<7} & ?abort)"; // not compliant
 		
-		String secondXml = Tools.callApplication(path, input, false);
+		AppResponse secondXml = Tools.callApplication(path, input);
         
-        input[0] = secondXml + "\n";
-        String secondMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
-        String secondLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input, false);
+        input[0] = secondXml.getOutput() + "\n";
+        AppResponse secondMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input);
+        AppResponse secondLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input);
         
+        /*
         try {
 	        for (int i=0; i<N; i++) {
 	        	
@@ -77,6 +78,7 @@ public class Debug {
         	
         	Log.message().severe("SQL error when populating the DB: " + s.getMessage());
         }
+        */
 		return new ResponsePacket(1, "Done!");
 	}
 }

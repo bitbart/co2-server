@@ -40,7 +40,7 @@ public class ComplianceChecker {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResponsePacket areCompliant(QueryPacket postData) {
 
-		String outputOcaml = "", outputUppaal, outputUppaal_error;
+		AppResponse outputOcaml, outputUppaal;
         String[] input = new String[2];
         String path, fileName;
         
@@ -76,13 +76,13 @@ public class ComplianceChecker {
         // 2) Creates XML automata with Ocaml CTU
         input[0] = c1 + "\n";
         input[1] = c2 + "\n";
-        outputOcaml = Tools.callApplication(Tools.getCtuPath(), input, false);
+        outputOcaml = Tools.callApplication(Tools.getCtuPath(), input);
 
         try {
             // 2b) Saves XML automata (Uppaal software needs an input file)
             fileName = Tools.getFile(c1.concat(c2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
             PrintWriter p = new PrintWriter(fileName);
-            p.print(outputOcaml);
+            p.print(outputOcaml.getOutput());
             p.close();
 
         }
@@ -94,15 +94,15 @@ public class ComplianceChecker {
 
         // 3) Tests automata with Uppaal software
         path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
-        outputUppaal = Tools.callApplication(path, null, false);
+        outputUppaal = Tools.callApplication(path, null);
 
         // 4) Returns XML response
-        if (outputUppaal.contains("is satisfied")) {
+        if (outputUppaal.getOutput().contains("is satisfied")) {
             Log.message().fine("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": they are compliant!");
 
             return new ResponsePacket(1, Messages.PROPERTY_YES);
         }
-        else if (outputUppaal.contains("is NOT satisfied")) {
+        else if (outputUppaal.getOutput().contains("is NOT satisfied")) {
             Log.message().fine("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": they aren't compliant!");
 
             return new ResponsePacket(0, Messages.PROPERTY_NO);
@@ -110,15 +110,14 @@ public class ComplianceChecker {
         else {
             Log.message().severe("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": unknown response from Uppaal, more details below.");
 
-            if (outputUppaal.isEmpty()) {
+            if (!outputUppaal.hasErrors()) {
 
-                outputUppaal_error = Tools.callApplication(Tools.getCtuPath(), input, true);
                 Log.message().warning("Command executed: " + path);
-                Log.message().warning("Uppaal response: " + outputUppaal_error);
+                Log.message().warning("Uppaal response: " + outputUppaal.getErrors());
             }
             else {
                 Log.message().warning("Command executed: " + path);
-                Log.message().warning("Uppaal response: " + outputUppaal);
+                Log.message().warning("Uppaal response: " + outputUppaal.getOutput());
             }
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
@@ -240,7 +239,8 @@ public class ComplianceChecker {
      * @throws FileNotFoundException */
     public static boolean localAreCompliant(String mapping1, String chanList1, String mapping2, String chanList2) throws FileNotFoundException {
 
-        String fileName, fusedMapping, path, outputUppaal;
+        String fileName, fusedMapping, path;
+        AppResponse outputUppaal;
         
         fusedMapping = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
         				"<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>\n" +
@@ -269,13 +269,13 @@ public class ComplianceChecker {
         // 3) Tests automata with Uppaal software
         path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
 
-        outputUppaal = Tools.callApplication(path, null, false);
+        outputUppaal = Tools.callApplication(path, null);
 
         // Remove the temp file
-        Tools.callApplication("rm " + fileName, null, false);
+        Tools.rm(fileName); // TODO: check if it is working
 
         // 4) Returns XML response
-        if (outputUppaal.contains("is satisfied"))
+        if (outputUppaal.getOutput().contains("is satisfied"))
             return true;
         else
             return false;
