@@ -110,21 +110,21 @@ public class SessionMonitor {
             newFileName = Tools.getFile(contractHash + role + 5, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
             
             // Updates the state of the session with the delay
-            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
+            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
             
             // Saves the updated network
             db.saveNetwork(c.getSessionID(), newFileName);
          
             
             String path = Tools.getCtuPath()+ "-pa" + " " + role + " " + newFileName;
-            String ocamlResult = Tools.callApplication(path, null, false);
+            AppResponse ocamlResult = Tools.callApplication(path, null);
             
             //Tools.callApplication(path, null, true);
             
-            if (ocamlResult.equals(""))
+            if (ocamlResult.isEmpty())
                 return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
             else
-                return new ResponsePacket(1, ocamlResult); // TODO: output must be formatted and it is necessary to handle the time
+                return new ResponsePacket(1, ocamlResult.getOutput()); // TODO: output must be formatted and it is necessary to handle the time
 
         }
         catch (SQLException e) {

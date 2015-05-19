@@ -109,13 +109,13 @@ public class SessionHandler {
         
         
         // TODO: new part: check it
-        String[] outputCTU;
+        AppResponse outputCTU;
         
-        outputCTU = Tools.callApplicationNew(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        outputCTU = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input);
         
         
         // Sanity check of the CTU's response
-        if (outputCTU[0].equals("")) {
+        if (outputCTU.isEmpty()) {
         	
         	Log.message().warning("CTU returns an empty mapping for a contract. Retrying.");
         	
@@ -124,9 +124,9 @@ public class SessionHandler {
 			} catch (InterruptedException e) {}
         	
         	// Second attempt
-        	outputCTU = Tools.callApplicationNew(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+        	outputCTU = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input);
         	
-            if (outputCTU[0].equals("")) {
+            if (outputCTU.isEmpty()) {
             		
             	Log.message().severe("CTU still returns an empty mapping for a contract. Rejecting tell.");
             	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
@@ -135,12 +135,12 @@ public class SessionHandler {
         
         // 7) Asking CTU for the labels to be stored into the database
         
-        String[] outputCTU_second;
-        outputCTU_second = Tools.callApplicationNew(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input, false);
+        AppResponse outputCTU_second;
+        outputCTU_second = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input);
         
         
         // Sanity check of the CTU's response
-        if (outputCTU_second[0].equals("")) {
+        if (outputCTU_second.isEmpty()) {
         	
         	Log.message().warning("CTU returns an empty getLabel for a contract. Retrying.");
         	
@@ -149,17 +149,17 @@ public class SessionHandler {
 			} catch (InterruptedException e) {}
         	
         	// Second attempt
-        	outputCTU_second = Tools.callApplicationNew(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input, false);
+        	outputCTU_second = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input);
         	
-            if (outputCTU_second[0].equals("")) {
+            if (outputCTU_second.isEmpty()) {
             		
             	Log.message().severe("CTU still returns an empty getLabel for a contract. Rejecting tell.");
             	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
             }
         }
         
-        firstOutputOcaml = outputCTU[0];
-        secondOutputOcaml = outputCTU_second[0];
+        firstOutputOcaml = outputCTU.getOutput();
+        secondOutputOcaml = outputCTU_second.getOutput();
         
         // TODO: tests for the validity of firstOutputOcaml and second
 
@@ -311,6 +311,8 @@ public class SessionHandler {
         Integer contextID, originalID, dualID;
         boolean areFused;
         int userID;
+        
+        AppResponse firstOutput, secondOutput;
 
         // 1) Connecting to db
         DatabaseInterface db = MainApplication.getDBConnection();
@@ -379,10 +381,13 @@ public class SessionHandler {
             // 6) Asking CTU for the partial UPPAAL template/mapping to be stored into the database
     		String[] input = new String[1];
     		input[0] = dualXML + "\n";
-            String firstOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input, false);
+            firstOutput = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input);
             
             // 7) Asking CTU for the labels to be stored into the database
-            String secondOutputOcaml = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input, false);
+            secondOutput = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_GET_LABELS, input);
+            
+            String firstOutputOcaml = firstOutput.getOutput();
+            String secondOutputOcaml = secondOutput.getOutput();
             
             dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "5", firstOutputOcaml, secondOutputOcaml);
 
@@ -517,9 +522,9 @@ public class SessionHandler {
         path = Tools.getCtuPath()+ Tools.CTU_PARAM_START + " " + fileName;
         input[0] = compliant + "\n";
         input[1] = contract;
-        Tools.callApplication(path, input, false);
+        Tools.callApplication(path, input);
         
-        Tools.callApplication("chown mysql " + fileName, null, false); // Change the proprietary of the file (mysql) due to an error bug
+        Tools.callApplication("chown mysql " + fileName, null); // Change the proprietary of the file (mysql) due to an error bug
 
         sessionHash = Tools.hash256(c1.getContractHash() + c2.getContractHash());
 

@@ -23,7 +23,9 @@ public class Translator {
         String path;
         input[0] = postData.getFirstContract(); // TODO: check the input
         
-        Log.message().finest("Starting translator module.");
+        AppResponse ar;
+        
+        //Log.message().finest("Starting translator module.");
 
         try {
             // 1) Creates Ocaml process
@@ -33,7 +35,9 @@ public class Translator {
             
             while (attempts > 0 && (translated == null)) {
                 
-                translated = Tools.callApplication(path, input, false) + Tools.callApplication(path, input, true); // TODO: split
+                ar = Tools.callApplication(path, input); // TODO: split
+                
+                translated = ar.getOutput() + ar.getErrors();
                 
                 if (translated.equals(""))
                     translated = null;
@@ -43,15 +47,17 @@ public class Translator {
             
             if (translated == null) {
                 
-                Log.message().severe("Unknown response from CTU while translating contract C1=" + Log.format(input[0]) + ": response is empty.");
+                Log.message().severe("Error from CTU while translating contract C1=" + Log.format(input[0]) + ": response is empty.");
 
                 return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
             }
             else if (!translated.startsWith("<contract")) {
                 
-                translated = Tools.callApplication(path, input, true);
+                ar = Tools.callApplication(path, input);
+                
+                translated = ar.getErrors();
 
-                Log.message().severe("Unknown response from CTU while translating contract C1=" + Log.format(input[0]) + ": " + translated);
+                Log.message().fine("Error from CTU while translating contract C1=" + Log.format(input[0]) + ": " + translated);
 
                 return new ResponsePacket(-1, translated);
             }
