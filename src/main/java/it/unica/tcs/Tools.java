@@ -3,6 +3,7 @@ package it.unica.tcs;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
@@ -177,6 +178,61 @@ public class Tools {
 		}
 
 		return output;
+	}
+	
+	public static String[] callApplicationNew(String path, String input[], boolean errorStream) {
+		
+		String line;
+	    OutputStream stdin = null;
+	    InputStream stderr = null;
+	    InputStream stdout = null;
+	    
+	    String[] response = new String[2];
+	    response[0] = "";
+	    response[1] = "";
+
+	      // launch EXE and grab stdin/stdout and stderr
+	    Process process = null;
+		
+	    try {
+			process = Runtime.getRuntime ().exec (path);
+
+	    
+		    stdin = process.getOutputStream ();
+		    stderr = process.getErrorStream ();
+		    stdout = process.getInputStream ();
+	
+		    // "write" the parms into stdin
+		    for (int i=0; i<input.length; i++) {
+		    	
+			    line = input[i] + "\n";
+			    stdin.write(line.getBytes() );
+			    stdin.flush();
+		    }
+		    stdin.close();
+	
+		    // clean up if any output in stdout
+		    BufferedReader brCleanUp = new BufferedReader (new InputStreamReader (stdout));
+		    
+		    while ((line = brCleanUp.readLine ()) != null) {
+		    	response[0] += line;
+		    }
+		    brCleanUp.close();
+	
+		    // clean up if any output in stderr
+		    brCleanUp = new BufferedReader (new InputStreamReader (stderr));
+		    while ((line = brCleanUp.readLine ()) != null) {
+		    	response[1] += line;
+		    }
+		    brCleanUp.close();
+		    
+		} catch (IOException e) {
+			
+			Log.message().severe("Cannot execute the process: " + path);
+			Log.message().warning("Exception message: " + e.getMessage());
+		}
+	    
+	    return response;
 	}
 
 	/** Creates a new filename. To avoid collisions, it uses random values (where the seed is an input param) and current

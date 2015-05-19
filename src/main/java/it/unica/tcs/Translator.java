@@ -27,7 +27,7 @@ public class Translator {
 
         try {
             // 1) Creates Ocaml process
-            path = Tools.PATH_CTU + Tools.CTU_PARAM_TRANSLATE;
+            path = Tools.getCtuPath()+ Tools.CTU_PARAM_TRANSLATE;
             
             Integer attempts = 10;
             

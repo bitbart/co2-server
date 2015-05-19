@@ -4,6 +4,9 @@
   <listener>
     <listener-class>it.unica.tcs.MainApplication</listener-class>
   </listener>
+    <listener>
+        <listener-class>it.unica.tcs.SessionListener</listener-class>
+    </listener>
   <servlet>
     <servlet-name>jersey-XMLExample-serlvet</servlet-name>
     <servlet-class>
