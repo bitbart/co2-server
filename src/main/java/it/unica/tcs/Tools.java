@@ -52,7 +52,7 @@ public class Tools {
 
 	// Uppaal's paths and files
 	public static final String PATH_UPPAAL = HOME_DIR + "/uppaal/bin-Linux/verifyta ";
-	public static final String UPPAAL_PARAMS = " " + HOME_DIR + "/uppaal/bin-Linux/test_compliance.q | grep -e '--' | cut -d'-' -f 3"; // do not remove the initial space
+	public static final String UPPAAL_PARAMS = " " + HOME_DIR + "/uppaal/bin-Linux/test_compliance.q"; // | grep -e '--' | cut -d'-' -f 3"; // do not remove the initial space
 
 	// Xmllint's path and files
 	public static final String PATH_VALIDATOR = "xmllint --schema ";

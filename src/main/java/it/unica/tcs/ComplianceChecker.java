@@ -270,6 +270,8 @@ public class ComplianceChecker {
         path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
 
         outputUppaal = Tools.callApplication(path, null);
+        
+        // Log.message().warning("OUTPUT: " + outputUppaal.getOutput() + " | ERRORS: " + outputUppaal.getErrors());
 
         // Remove the temp file
         Tools.rm(fileName); // TODO: check if it is working
