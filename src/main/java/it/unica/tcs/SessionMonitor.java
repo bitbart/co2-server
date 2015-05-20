@@ -673,7 +673,8 @@ public class SessionMonitor {
     // TODO: add comments
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
-        String path, ocamlResult, fileName = "", newFileName = "", sessionHash = "";
+        String path, fileName = "", newFileName = "", sessionHash = "";
+        AppResponse ocamlResult;
         Integer role;
         Contract c;
 
@@ -701,7 +702,7 @@ public class SessionMonitor {
             
             // Updates network with time elapsed ... TODO: handle granularity different from 0
             newFileName = Tools.getFile(sessionHash + role + 5, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
-            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null, true);
+            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
             //Log.message().info("CTU Output: " + output);
 
         }
@@ -713,28 +714,28 @@ public class SessionMonitor {
       
         // 3) Creates Ocaml process
         path = Tools.getCtuPath()+ queryType + " " + role + " " + newFileName;
-        ocamlResult = Tools.callApplication(path, null, false);
-        Tools.callApplication(path, null, true);
+        ocamlResult = Tools.callApplication(path, null);
+        //Tools.callApplication(path, null, true);
         
-        if (ocamlResult.equals(""))
+        if (ocamlResult.isEmpty())
         	Log.message().warning("CTU is not returning the state for a contract.");
 
         try {
             db.saveNetwork(c.getSessionID(), newFileName);
         }
         catch (SQLException e) {
-            
+          
             throw new DBException("Cannot save the updated network. SQL says: " + e.getMessage());
         }
         
         // Remove the temp file
-        Tools.callApplication("rm " + fileName, null, false);
-        Tools.callApplication("rm " + newFileName, null, false);
+        Tools.callApplication("rm " + fileName, null);
+        Tools.callApplication("rm " + newFileName, null);
         String logmsg = "Checked if contract with HASH=" + Log.format(contractHash);
         logmsg += queryType.equals(Tools.CTU_PARAM_CULPABLE) ? " is culpable: " : " is on duty: ";
 
         // 4) Analyzes output application
-        if (ocamlResult.contains(Messages.TYPE_YES)) {
+        if (ocamlResult.getOutput().contains(Messages.TYPE_YES)) {
             Log.message().fine(logmsg + "yes!");
             return true;
         }
@@ -796,7 +797,7 @@ public class SessionMonitor {
 																			// delay
 																			// works
 					+ beforeFileName + " " + afterFileName + " " + 0;
-			Tools.callApplication(path, null, false);
+			Tools.callApplication(path, null);
 	
 			// 5) Saves new network in db.
 			db.saveNetwork(sessionID, afterFileName);
@@ -819,7 +820,7 @@ public class SessionMonitor {
 							+ beforeFileName + " " + afterFileName + " " + 1; // note
 																				// the
 																				// 1
-					Tools.callApplication(path, null, false);
+					Tools.callApplication(path, null);
 	
 					db.saveNetwork(sessionID, afterFileName);
 				}
