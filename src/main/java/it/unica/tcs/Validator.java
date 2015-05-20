@@ -106,7 +106,7 @@ public class Validator {
 
 		try {
 
-			if ((outputOcaml.isEmpty()) || (!outputOcaml.getOutput().substring(0, 17).equals("Contract is valid")))
+			if ((outputOcaml.isEmpty()) || (!outputOcaml.getOutput().contains("Contract is valid")))
 			    return false;
 
 		}
@@ -127,12 +127,14 @@ public class Validator {
 		// 4b) Creates xmllint process
 		path = Tools.PATH_VALIDATOR + Tools.PATH_VALIDATOR_SCHEMA + " " + fileName;
 		outputXmllint = Tools.callApplication(path, null); // Pay attention. It uses the errorStream as output
+		
+		//Log.message().severe("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());
 
 		// Remove the temp file
 		//Tools.callApplication("rm " + fileName, null);
 		Tools.rm(fileName);
 		
-		if (outputXmllint.getErrors().equals(fileName + " validates\n")) 
+		if (outputXmllint.getErrors().contains(" validates"))  //TODO check for bugs
 			return true;
 
 		return false;

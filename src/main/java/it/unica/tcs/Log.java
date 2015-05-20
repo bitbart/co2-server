@@ -43,7 +43,7 @@ public class Log {
 			
 			log.addHandler(myFileHandler);
 			log.setUseParentHandlers(false);
-			log.setLevel(Level.INFO);
+			log.setLevel(Level.FINE);
 			
 			init = true;
 		}
@@ -64,5 +64,9 @@ public class Log {
 		String dots = s.length() == sLength ? "" : "...";
 		
 		return "'<i>" + escapeHtml(s.substring(0, sLength)).replaceAll("\n", "") + dots + "</i>'";
+	}
+	
+	public static boolean isInitialized() {
+		return init;
 	}
 }

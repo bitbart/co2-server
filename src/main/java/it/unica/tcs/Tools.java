@@ -181,6 +181,11 @@ public class Tools {
 	}*/
 	
 	public static AppResponse callApplication(String path, String input[]) {
+	
+		//StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+		
+		//if (Log.isInitialized())
+			//Log.message().warning("Caller: " + ste[2].getMethodName() + " | Path: " + path);
 		
 		String line;
 	    OutputStream stdin = null;

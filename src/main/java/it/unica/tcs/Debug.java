@@ -43,7 +43,7 @@ public class Debug {
 			Log.message().warning("Cleaning the database (except for CoRe sessions and contracts).");
 		else
 			Log.message().warning("Populating the DB with N=" + N + " and K=" + K + ".");
-		
+		/*
         String[] input = new String[1];
         String path;
         path = Tools.PATH_CTU + Tools.CTU_PARAM_TRANSLATE;

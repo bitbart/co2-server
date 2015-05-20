@@ -136,7 +136,7 @@ public class Dualizer {
 		AppResponse standardOutputOcaml;
 		String[] input = new String[1];	
 
-		path = Tools.PATH_CTU + Tools.CTU_PARAM_ADMITS_COMPLIANT;
+		path = Tools.getCtuPath() + Tools.CTU_PARAM_ADMITS_COMPLIANT;
 		input[0] = contract;
 		standardOutputOcaml = Tools.callApplication(path, input);
 		
@@ -157,7 +157,7 @@ public class Dualizer {
 		AppResponse standardOutputOcaml;
 		String[] input = new String[1];	
 
-		path = Tools.PATH_CTU + Tools.CTU_PARAM_DUAL_OF;
+		path = Tools.getCtuPath() + Tools.CTU_PARAM_DUAL_OF;
 		input[0] = contract;
 		standardOutputOcaml = Tools.callApplication(path, input);
 
