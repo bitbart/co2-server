@@ -203,11 +203,14 @@ public class Tools {
 		    stdout = process.getInputStream ();
 	
 		    // "write" the parms into stdin
-		    for (int i=0; i<input.length; i++) {
+		    if (input != null) {
 		    	
-			    line = input[i] + "\n";
-			    stdin.write(line.getBytes() );
-			    stdin.flush();
+			    for (int i=0; i<input.length; i++) {
+			    	
+				    line = input[i] + "\n";
+				    stdin.write(line.getBytes() );
+				    stdin.flush();
+			    }
 		    }
 		    stdin.close();
 	
