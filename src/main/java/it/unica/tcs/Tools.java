@@ -345,7 +345,16 @@ public class Tools {
 	public static boolean authenticate(DatabaseInterface db, String user, String pass) throws SQLException {
 
 		boolean returnValue = false;
-
+		String key = user + "," + pass;
+		
+		Cache<String, Boolean> cc = MainApplication.getCredentialsCache();
+		
+		Boolean element = cc.get(key);
+		
+		if (element != null) {
+			
+			return element;
+		}
 
 		// Checks if exists one and only one row in User table that matches passed values
 		ResultSet rs = db.select("SELECT COUNT(*) FROM user WHERE email = '" + user + "' AND password = '"
@@ -355,6 +364,8 @@ public class Tools {
 
 		if (rs.getInt(1) == 1) 
 		    returnValue = true;
+		
+		cc.put(key, returnValue);
 
 		return returnValue;
 	}
@@ -369,6 +380,16 @@ public class Tools {
 
 		ResultSet rs;
 		Integer contractOwner, userClient;
+		String key = username + "," + contractHash;
+		
+		Cache<String, Boolean> pc = MainApplication.getPermissionsCache();
+		
+		Boolean element = pc.get(key);
+		
+		if (element != null) {
+			
+			return element;
+		}
 
 		try {
 			contractOwner = new Contract().loadFromHash(contractHash).getOwnerID();
@@ -377,9 +398,13 @@ public class Tools {
 			rs.next();
 			userClient = rs.getInt(1);
 
-			if (!contractOwner.equals(userClient))
+			if (!contractOwner.equals(userClient)) {
+				
+				pc.put(key, false);
 				return false;
+			}
 			else
+				pc.put(key, true);
 				return true;
 
 		}

@@ -14,6 +14,8 @@ public class MainApplication implements ServletContextListener {
 	private static DatabaseInterface db;
 	private static Random rng; 
 	private static Mutex mutex;
+	private static Cache<String, Boolean> credentialsCache;
+	private static Cache<String, Boolean> permissionsCache;	
 	
 	public static void mutexAcquire(Integer cID) {
 	    
@@ -38,6 +40,16 @@ public class MainApplication implements ServletContextListener {
 	public static DatabaseInterface getDBConnection() {
 	    
 	    return db;
+	}
+	
+	public static Cache<String, Boolean> getCredentialsCache() {
+	    
+	    return credentialsCache;
+	}
+	
+	public static Cache<String, Boolean> getPermissionsCache() {
+	    
+	    return permissionsCache;
 	}
 	
 	@Override
@@ -91,6 +103,10 @@ public class MainApplication implements ServletContextListener {
 	    
 	    if (!SessionMonitor.MONITOR_ENABLED)
 	    	Log.message().warning("The execution monitor is currently disabled.");
-		
+	    
+	    // Creating caches
+	    
+	    credentialsCache = new Cache<String, Boolean>(24*60*60, 24*60*60, 10000);
+	    permissionsCache = new Cache<String, Boolean>(24*60*60, 24*60*60, 10000);
 	}
 }
