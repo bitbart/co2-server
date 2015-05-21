@@ -434,6 +434,22 @@ public class SessionHandler {
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String contractHash = postData.getContractHash();
+    	
+    	// TODO: handle authentication
+    	
+    	String key = contractHash;
+    	
+    	Cache<String, Boolean> lc = MainApplication.getLatentCache();
+    	
+    	Boolean response = lc.get(key);
+    	
+    	if (response != null) {
+    		
+    		if (response == true)
+    			return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
+    		else
+    			return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
+    	}
 
         DatabaseInterface db = MainApplication.getDBConnection();
         
@@ -447,22 +463,27 @@ public class SessionHandler {
             switch (state) {
                 case DatabaseInterface.CONTRACT_LATENT:
                     Log.message().fine(logmsg + "LATENT");
+                    lc.put(key, false);
                     return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_ON_DUTY:
                     Log.message().fine(logmsg + "ON_DUTY");
+                    lc.put(key, true);
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_OFF_DUTY:
                     Log.message().fine(logmsg + "OFF_DUTY");
+                    lc.put(key, true);
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_INNOCENT:
                     Log.message().fine(logmsg + "INNOCENT");
+                    lc.put(key, true);
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_CULPABLE:
                     Log.message().fine(logmsg + "CULPABLE");
+                    lc.put(key, true);
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 default:
@@ -573,6 +594,11 @@ public class SessionHandler {
 
             db.setContractState(contractID, c1_progress);
             db.setContractState(compliantID, c2_progress);
+            
+            Cache<String, Boolean> lc = MainApplication.getLatentCache();
+            
+            lc.put(c1.getContractHash(), true);
+            lc.put(c2.getContractHash(), true);
 
             Log.message().info(
                     "Contract with ID=" + contractID + " and contract with ID=" + compliantID
