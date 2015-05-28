@@ -191,19 +191,17 @@ public class ComplianceChecker {
 
                 int preCheckComparison = t1.getFirst().compareTo(t2.getFirst());
                 if (preCheckComparison == 0) {
-                    return t1.getFourth().compareTo(t2.getFourth());
+                    return t2.getFourth().compareTo(t1.getFourth());
                 } else {
                     return preCheckComparison;
                 }
             }
         });
         
-        Log.message().finest("Precheck list sorted.");
-
         // 4) For each element, it tries if it is compliant with the given contract.
-        //    Get a normally distributed index (x' = 0, sigma = 0.2), check if the corresponding contract is compliant.
+        //    Get a normally distributed index (x' = 0, sigma = 0.1), check if the corresponding contract is compliant.
         //    If it is not, remove the corresponding contract from the list and iterate       
-        NormalGenerator ng = new NormalGenerator(0.2);
+        NormalGenerator ng = new NormalGenerator(0.1);
         
         while(!compliant && !preCheckCalculus.isEmpty()) {
         	
