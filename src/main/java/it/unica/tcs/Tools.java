@@ -548,9 +548,13 @@ public class Tools {
 	 * 
 	 * @param db Database application
 	 * @param action Name of the action
+	 * @param value Value of the action
+	 * @param contextID Id of the context
+	 * @param user Username
+	 * @param hash Hash of the contract
 	 * @return True if the action is done, false otherwise
 	 * @throws SQLException */
-	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID) throws SQLException {
+	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash) throws SQLException {
 
 		String query, verificationURL, verifierResponse;
 		ResultSet rs;
@@ -567,10 +571,10 @@ public class Tools {
 			return true;
 		
 		verifierResponse = null;
-
+		
 		// 3) Calls verificationLink
 		try {
-			URL url = new URL(verificationURL + "?value=" + value + "&action=" + action);
+			URL url = new URL(verificationURL + "?user=" + user + "&hash=" + hash + "&action=" + action + "&value=" + value);
 			URLConnection connection = url.openConnection();
 			connection.connect();
 			
@@ -589,6 +593,8 @@ public class Tools {
 			Log.message().severe("The verifier returned a <i>null</i> response when validating the ACTION=" + actionID + " with VALUE=" + Log.format("") + ".");
 			return false;
 		}
+		
+		Log.message().info("Response:" + verifierResponse);
 		
 		if (verifierResponse.equals("true"))
 			return true;

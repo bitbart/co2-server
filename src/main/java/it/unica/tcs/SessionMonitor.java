@@ -452,7 +452,7 @@ public class SessionMonitor {
             	
                 if ((state == DatabaseInterface.CONTRACT_ON_DUTY) || (state == DatabaseInterface.CONTRACT_OFF_DUTY)) {
                  
-                	response = executeAction(db, contractHash, action, value);
+                	response = executeAction(db, contractHash, action, value, username);
                 }
                 else {
                 	response = new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
@@ -460,7 +460,7 @@ public class SessionMonitor {
             }
             else {
             	
-            	response = executeAction(db, contractHash, action, value);
+            	response = executeAction(db, contractHash, action, value, username);
             }
             
             
@@ -745,7 +745,7 @@ public class SessionMonitor {
         }
     }
 
-	private ResponsePacket executeAction(DatabaseInterface db, String contractHash, String action, String value) throws SQLException {
+	private ResponsePacket executeAction(DatabaseInterface db, String contractHash, String action, String value, String username) throws SQLException {
 
 		// TODO: I'm not sure that a private method has to build the ResponsePacket, maybe it should be a task of an interface method (the caller)
 		String beforeFileName, afterFileName, path;
@@ -768,7 +768,7 @@ public class SessionMonitor {
 			}
 
 			// 2) Checks if action is done
-			performed = Tools.verifyAction(db, action, value, contextID);
+			performed = Tools.verifyAction(db, action, value, contextID, username, contractHash);
 			
 			if (!performed) {
 				
