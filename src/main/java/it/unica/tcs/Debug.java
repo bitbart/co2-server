@@ -43,42 +43,42 @@ public class Debug {
 			Log.message().warning("Cleaning the database (except for CoRe sessions and contracts).");
 		else
 			Log.message().warning("Populating the DB with N=" + N + " and K=" + K + ".");
-		/*
+		
         String[] input = new String[1];
         String path;
-        path = Tools.PATH_CTU + Tools.CTU_PARAM_TRANSLATE;
+        path = Tools.getCtuPath() + Tools.CTU_PARAM_TRANSLATE;
         
         input[0] = "?pay{;t}.(?ok & ?dispute{t<10; t}.!refund{t<7} & ?abort)"; // compliant
 		
 		AppResponse firstXml = Tools.callApplication(path, input);
         
         input[0] = firstXml.getOutput() + "\n";
-        AppResponse firstMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input);
-        AppResponse firstLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input);
+        AppResponse firstMapping = Tools.callApplication(Tools.getCtuPath() + Tools.CTU_PARAM_BUILD_AUTOMATON, input);
+        AppResponse firstLabels = Tools.callApplication(Tools.getCtuPath() + Tools.CTU_PARAM_GET_LABELS, input);
         
         input[0] = "?pay{;t}.(?ok & ?dispute{t<9; t}.!refund{t<7} & ?abort)"; // not compliant
 		
 		AppResponse secondXml = Tools.callApplication(path, input);
         
         input[0] = secondXml.getOutput() + "\n";
-        AppResponse secondMapping = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_BUILD_AUTOMATON, input);
-        AppResponse secondLabels = Tools.callApplication(Tools.PATH_CTU + Tools.CTU_PARAM_GET_LABELS, input);
+        AppResponse secondMapping = Tools.callApplication(Tools.getCtuPath() + Tools.CTU_PARAM_BUILD_AUTOMATON, input);
+        AppResponse secondLabels = Tools.callApplication(Tools.getCtuPath() + Tools.CTU_PARAM_GET_LABELS, input);
         
-        /*
+        
         try {
 	        for (int i=0; i<N; i++) {
 	        	
 	        	if (Math.random() < K/N) 
-	        		db.insertContract(Tools.hashContract(firstXml, MainApplication.getRand()), firstXml, 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(firstXml), firstMapping, firstLabels); 
+	        		db.insertContract(Tools.hashContract(firstXml.getOutput(), MainApplication.getRand()), firstXml.getOutput(), 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(firstXml.getOutput()), firstMapping.getOutput(), firstLabels.getOutput()); 
 	        	else
-	        		db.insertContract(Tools.hashContract(secondXml, MainApplication.getRand()), firstXml, 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(secondXml), secondMapping, secondLabels);
+	        		db.insertContract(Tools.hashContract(secondXml.getOutput(), MainApplication.getRand()), firstXml.getOutput(), 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(secondXml.getOutput()), secondMapping.getOutput(), secondLabels.getOutput());
 	        }
         }
         catch (SQLException s) {
         	
         	Log.message().severe("SQL error when populating the DB: " + s.getMessage());
         }
-        */
+        
 		return new ResponsePacket(1, "Done!");
 	}
 }
