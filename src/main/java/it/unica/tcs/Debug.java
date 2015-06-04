@@ -68,7 +68,7 @@ public class Debug {
         try {
 	        for (int i=0; i<N; i++) {
 	        	
-	        	if (N % 10000 == 0)
+	        	if (i % 10000 == 0)
 	        		Log.message().info("During DB population, new 10.000 contracts had already been stored.");
 	        	
 	        	if (Math.random() < K/N) 
