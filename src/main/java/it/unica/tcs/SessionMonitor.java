@@ -998,17 +998,10 @@ public class SessionMonitor {
     	compliantHash = c2.getContractHash();
     	contractHash = c1.getContractHash();
 		
-		
 		// 2) Calculating culpable and onDuty
 		c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
 		c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
-		c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
-		c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
-
-		// 2) Calculating culpable and onDuty
-		c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
-		c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
-		c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
+		c1_culpable = (autoCulpable || monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE));
 		c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
 
 		// 3) update reputations, contracts state and sessions state
