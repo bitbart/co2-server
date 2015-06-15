@@ -1,5 +1,7 @@
 package it.unica.tcs;
 
+import it.unica.tcs.InternalException.ErrorTypes;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -554,7 +556,7 @@ public class Tools {
 	 * @param hash Hash of the contract
 	 * @return True if the action is done, false otherwise
 	 * @throws SQLException */
-	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash) throws SQLException {
+	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash) throws SQLException, InternalException {
 
 		String query, verificationURL, verifierResponse;
 		ResultSet rs;
@@ -570,7 +572,7 @@ public class Tools {
 		if (verificationURL.equals("true"))
 			return true;
 		else if(verificationURL.equals("false"))
-			return false;
+			throw new InternalException(ErrorTypes.TYPE_ACTION_CULPABLE);
 		
 		verifierResponse = null;
 		

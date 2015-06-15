@@ -401,6 +401,7 @@ public class SessionMonitor {
         Long timestamp;
         Contract c;
         ResponsePacket response;
+        Boolean autoCulpable = false;
 
         // 1) Verifies authentication and permissions
         try {
@@ -450,21 +451,29 @@ public class SessionMonitor {
             else if (!Tools.CONF_MOVE_AFTER_CONTRACT_END) {
             	
                 if ((state == DatabaseInterface.CONTRACT_ON_DUTY) || (state == DatabaseInterface.CONTRACT_OFF_DUTY)) {
-                 
-                	response = executeAction(db, contractHash, action, value, username);
+                	try{
+                		response = executeAction(db, contractHash, action, value, username);
+                	} catch(InternalException e){
+                		autoCulpable=true;
+                		response = new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
+                	}
                 }
                 else {
                 	response = new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
                 }
             }
             else {
-            	
-            	response = executeAction(db, contractHash, action, value, username);
+            	try{
+            		response = executeAction(db, contractHash, action, value, username);
+            	} catch(InternalException e){
+            		autoCulpable=true;
+            		response = new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
+            	}
             }
             
             
             // 2c) Checks the sessions states and updates the users' reputation accordingly            
-            handleSessionEnding(c, db);
+            handleSessionEnding(c, db, autoCulpable);
             
             return response;
         }
@@ -744,7 +753,7 @@ public class SessionMonitor {
         }
     }
 
-	private ResponsePacket executeAction(DatabaseInterface db, String contractHash, String action, String value, String username) throws SQLException {
+	private ResponsePacket executeAction(DatabaseInterface db, String contractHash, String action, String value, String username) throws SQLException, InternalException {
 
 		// TODO: I'm not sure that a private method has to build the ResponsePacket, maybe it should be a task of an interface method (the caller)
 		String beforeFileName, afterFileName, path;
@@ -768,9 +777,7 @@ public class SessionMonitor {
 
 			// 2) Checks if action is done
 			performed = Tools.verifyAction(db, action, value, contextID, username, contractHash);
-			
 			if (!performed) {
-				
 				return new ResponsePacket(-1, Messages.SESSION_ACTION_NOT_PERFORMED);
 			}
 		}
@@ -786,15 +793,9 @@ public class SessionMonitor {
 			afterFileName = Tools.getFile(contractHash + action,
 					Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
 	
-			// 4) Calls CTU and does action
-	
-			
+			// 4) Calls CTU and does action		
 			path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
-					+ action + " " + calculateDelay(db, sessionID) + " " // TODO:
-																			// Check
-																			// if
-																			// delay
-																			// works
+					+ action + " " + calculateDelay(db, sessionID) + " "
 					+ beforeFileName + " " + afterFileName + " " + 0;
 			Tools.callApplication(path, null);
 	
@@ -808,41 +809,37 @@ public class SessionMonitor {
 			if (SessionMonitor.MONITOR_ENABLED) {
 				
 				// if user became culpable with the current action, network must be
-				// rebuilt to avoid extaction
-				// from the counterparty (otherwise, both participant will be
-				// culpable)
-				if (monitorContractProgress(db, contractHash,
-						Tools.CTU_PARAM_CULPABLE)) {
+				// rebuilt to avoid extaction from the counterparty 
+				// (otherwise, both participant will be culpable)
+				if (monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE)) {
 	
+					// note the 1
 					path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " "
 							+ c1.getRole() + " " + action + " " + 0 + " "
-							+ beforeFileName + " " + afterFileName + " " + 1; // note
-																				// the
-																				// 1
+							+ beforeFileName + " " + afterFileName + " " + 1; 
+
 					Tools.callApplication(path, null);
-	
 					db.saveNetwork(sessionID, afterFileName);
 				}
 	
 				// 6a) Checks culpability
-				c1_result = monitorContractProgress(db, contractHash,
-						Tools.CTU_PARAM_CULPABLE);
-				c2_result = monitorContractProgress(db, c2.getContractHash(),
-						Tools.CTU_PARAM_CULPABLE);
+				c1_result = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
+				c2_result = monitorContractProgress(db, c2.getContractHash(), Tools.CTU_PARAM_CULPABLE);
 	
 				if (c1_result && c2_result) {
 					c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
 					c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
-					
 					return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
+					
 				} else if (c1_result) {
 					c1_progress = DatabaseInterface.CONTRACT_CULPABLE;
 					c2_progress = DatabaseInterface.CONTRACT_INNOCENT;
-					
 					return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
+					
 				} else if (c2_result) {
 					c2_progress = DatabaseInterface.CONTRACT_CULPABLE;
 					c1_progress = DatabaseInterface.CONTRACT_INNOCENT;
+
 				} else {
 	
 					// 6b) Checks who is on duty
@@ -991,8 +988,7 @@ public class SessionMonitor {
 		return rs.getInt(1);
 	}
 	
-	private void handleSessionEnding(Contract c1, DatabaseInterface db) throws DBException, SQLException, InternalException{
-		
+	private void handleSessionEnding(Contract c1, DatabaseInterface db, Boolean autoCulpable) throws DBException, SQLException, InternalException{
 		Contract c2;
 		Boolean c1_duty, c2_duty, c1_culpable, c2_culpable;
 		String compliantHash, contractHash;
@@ -1017,10 +1013,43 @@ public class SessionMonitor {
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been penalized.");
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been rewarded.");
 			
+<<<<<<< local
+			// 2) Calculating culpable and onDuty
+			c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
+			c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
+			c1_culpable = autoCulpable || monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
+			c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
+=======
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
+>>>>>>> other
 			
+<<<<<<< local
+			// 3) update reputations, contracts state and sessions state
+			if(c1_culpable){
+				User.build(c1.getOwnerID()).penalizeAndStore();
+				User.build(c2.getOwnerID()).rewardAndStore();
+				
+				db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
+				db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
+				db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
+			} else if(c2_culpable){
+				User.build(c1.getOwnerID()).rewardAndStore();
+				User.build(c2.getOwnerID()).penalizeAndStore();
+				
+				db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
+				db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
+				db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
+			} else if(!c1_duty && !c2_duty){
+				User.build(c1.getOwnerID()).rewardAndStore();
+				User.build(c2.getOwnerID()).rewardAndStore();
+				
+				db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
+				db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
+				db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_CORRECTLY);
+			}
+=======
 		} else if(c2_culpable){
 			
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been penalized.");
@@ -1046,5 +1075,6 @@ public class SessionMonitor {
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_CORRECTLY);
 		}
 
+>>>>>>> other
 	}
 }
