@@ -1004,77 +1004,44 @@ public class SessionMonitor {
 		c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
 		c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
 		c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
-		
+
+		// 2) Calculating culpable and onDuty
+		c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
+		c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
+		c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
+		c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
+
 		// 3) update reputations, contracts state and sessions state
 		if(c1_culpable){
 			User.build(c1.getOwnerID()).penalizeAndStore();
 			User.build(c2.getOwnerID()).rewardAndStore();
-			
+
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been penalized.");
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been rewarded.");
-			
-<<<<<<< local
-			// 2) Calculating culpable and onDuty
-			c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
-			c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
-			c1_culpable = autoCulpable || monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
-			c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
-=======
+				
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
->>>>>>> other
-			
-<<<<<<< local
-			// 3) update reputations, contracts state and sessions state
-			if(c1_culpable){
-				User.build(c1.getOwnerID()).penalizeAndStore();
-				User.build(c2.getOwnerID()).rewardAndStore();
-				
-				db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
-				db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
-				db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
-			} else if(c2_culpable){
-				User.build(c1.getOwnerID()).rewardAndStore();
-				User.build(c2.getOwnerID()).penalizeAndStore();
-				
-				db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
-				db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
-				db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
-			} else if(!c1_duty && !c2_duty){
-				User.build(c1.getOwnerID()).rewardAndStore();
-				User.build(c2.getOwnerID()).rewardAndStore();
-				
-				db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
-				db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
-				db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_CORRECTLY);
-			}
-=======
 		} else if(c2_culpable){
-			
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been penalized.");
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been rewarded.");
 			
 			User.build(c1.getOwnerID()).rewardAndStore();
 			User.build(c2.getOwnerID()).penalizeAndStore();
-			
+				
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
-			
 		} else if(!c1_duty && !c2_duty){
-			
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been rewarded.");
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been rewarded.");
 			
 			User.build(c1.getOwnerID()).rewardAndStore();
 			User.build(c2.getOwnerID()).rewardAndStore();
-			
+				
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_CORRECTLY);
 		}
-
->>>>>>> other
 	}
 }
