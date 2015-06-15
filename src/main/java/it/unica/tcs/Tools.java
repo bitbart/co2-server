@@ -569,6 +569,8 @@ public class Tools {
 		
 		if (verificationURL.equals("true"))
 			return true;
+		else if(verificationURL.equals("false"))
+			return false;
 		
 		verifierResponse = null;
 		
