@@ -455,7 +455,7 @@ public class SessionMonitor {
                 		response = executeAction(db, contractHash, action, value, username);
                 	} catch(InternalException e){
                 		autoCulpable=true;
-                		response = new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
+                		response = new ResponsePacket(-1, Messages.SESSION_ACTION_FALSE);
                 	}
                 }
                 else {
@@ -464,10 +464,12 @@ public class SessionMonitor {
             }
             else {
             	try{
+            		
             		response = executeAction(db, contractHash, action, value, username);
             	} catch(InternalException e){
+            		
             		autoCulpable=true;
-            		response = new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
+            		response = new ResponsePacket(-1, Messages.SESSION_ACTION_FALSE);
             	}
             }
             
@@ -695,6 +697,26 @@ public class SessionMonitor {
 
             Log.message().warning("Error in loadFromHash: " + e.getMessage());
             throw new InternalException(ErrorTypes.TYPE_PERMISSION_DENIED);
+        }
+        
+        if (queryType.equals(Tools.CTU_PARAM_CULPABLE)) {
+	        if (c.getState() == DatabaseInterface.CONTRACT_CULPABLE) {
+	        	
+	        	Log.message().fine("Checked if the contract with HASH=" + Log.format(contractHash) + " is culpable when the session is already ended: yes!");
+	        	return true;
+	        }
+	        
+	        if (c.getState() == DatabaseInterface.CONTRACT_INNOCENT) {
+	        	
+	        	Log.message().fine("Checked if the contract with HASH=" + Log.format(contractHash) + " is culpable when the session is already ended: no, it is innocent!");
+	        	return false;
+	        }
+	        
+	        if (c.getState() == DatabaseInterface.CONTRACT_COMPLETED) {
+	        	
+	        	Log.message().fine("Checked if the contract with HASH=" + Log.format(contractHash) + " is culpable when the session is already ended: no, the session was ended correctly!");
+	        	return false;
+	        }
         }
 
         // 2) Loads data
@@ -1001,11 +1023,15 @@ public class SessionMonitor {
 		// 2) Calculating culpable and onDuty
 		c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
 		c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
-		c1_culpable = (autoCulpable || monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE));
+		c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
 		c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
+		
+		if (autoCulpable)
+			c1_culpable = true;
 
 		// 3) update reputations, contracts state and sessions state
 		if(c1_culpable){
+			
 			User.build(c1.getOwnerID()).penalizeAndStore();
 			User.build(c2.getOwnerID()).rewardAndStore();
 
@@ -1015,7 +1041,9 @@ public class SessionMonitor {
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
-		} else if(c2_culpable){
+		
+		} else if(c2_culpable) {
+			
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been penalized.");
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been rewarded.");
 			
@@ -1025,7 +1053,9 @@ public class SessionMonitor {
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
-		} else if(!c1_duty && !c2_duty){
+		
+		} else if(!c1_duty && !c2_duty) {
+			
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been rewarded.");
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been rewarded.");
 			
