@@ -440,6 +440,11 @@ public class SessionMonitor {
             rs = db.select(query);
             rs.next();
             timestamp = rs.getLong(1);
+            
+            handleSessionEnding(c, db, false); // First of all, verifies if the session is already ended (to avoid that the results will be overwritten)
+            
+        	if (c.getState() == DatabaseInterface.CONTRACT_CULPABLE || c.getState() == DatabaseInterface.CONTRACT_INNOCENT || c.getState() == DatabaseInterface.CONTRACT_COMPLETED)
+        		return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
 
             // 2b) Checks state
             state = SessionHandler.getContractState(db, username, pass, contractHash);
@@ -1019,6 +1024,9 @@ public class SessionMonitor {
     	c2 = new Contract().loadFromHash(c1.getCompliantHash());
     	compliantHash = c2.getContractHash();
     	contractHash = c1.getContractHash();
+    	
+    	if (c1.getState() == DatabaseInterface.CONTRACT_CULPABLE || c1.getState() == DatabaseInterface.CONTRACT_INNOCENT || c1.getState() == DatabaseInterface.CONTRACT_COMPLETED)
+    		return; // Nothing to do
 		
 		// 2) Calculating culpable and onDuty
 		c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
