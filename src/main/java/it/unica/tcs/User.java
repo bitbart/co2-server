@@ -58,7 +58,7 @@ public class User {
 
 	private void loadFromUsername(String username) throws SQLException {
 		
-		String query = "SELECT * FROM user WHERE email = '" + userID + "';";
+		String query = "SELECT * FROM user WHERE email = '" + username + "';";
 			ResultSet result;
 
 			result = db.select(query);

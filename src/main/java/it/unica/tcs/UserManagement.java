@@ -87,7 +87,8 @@ public class UserManagement {
 		}
 		
 		Log.message().finest("User with EMAIL=" + Log.format(username) + " has asked for his rep. Result is: " + currentUser.getReputation());
-		return new ResponsePacket(1, "User successfully created");
+		
+		return new ResponsePacket(1, currentUser.getReputation() + "");
 	}
 	
 	public static boolean isValidEmailAddress(String email) {
