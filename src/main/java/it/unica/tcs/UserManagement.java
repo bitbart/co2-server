@@ -43,6 +43,53 @@ public class UserManagement {
 		return new ResponsePacket(1, "User successfully created");
 	}
 	
+	@POST
+	@Path("/getReputation")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public ResponsePacket getReputation(QueryPacket postData) {
+		
+		String username = postData.getUsername();
+		String password = postData.getPassword();
+		
+		if (Tools.isNotValid(username, Tools.USERNAME_REGEX) || Tools.isNotValid(password, Tools.PASSWORD_REGEX)) {// TODO: to be completed
+            
+            Log.message().warning("The getReputation() was called with wrong parameters.");
+            return new ResponsePacket(-1, "The GET_REPUTATION api was called with wrong parameters.");
+        }
+
+        // 1) Connecting to db
+        DatabaseInterface db = MainApplication.getDBConnection();
+
+        try {
+            // 2) Checking for valid auth data
+            if (!Tools.authenticate(db, username, password)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
+                                + Log.format(Tools.hash256(password)) + "");
+    
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+        }catch (SQLException e) {
+
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+        
+        User currentUser;
+		try {
+			currentUser = User.build(username);
+		} catch (SQLException e) {
+			
+			Log.message().severe("Thrown SQL exception while trying to get the reputation of an user: " + e.getMessage());
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+		}
+		
+		Log.message().finest("User with EMAIL=" + Log.format(username) + " has asked for his rep. Result is: " + currentUser.getReputation());
+		return new ResponsePacket(1, "User successfully created");
+	}
+	
 	public static boolean isValidEmailAddress(String email) {
 		
 	   boolean result = true;
