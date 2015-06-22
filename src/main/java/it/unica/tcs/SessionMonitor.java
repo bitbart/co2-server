@@ -532,7 +532,7 @@ public class SessionMonitor {
             
             query = "SELECT a.action_id,action_name,data_type,data_int_value,data_string_value,data_file_value,COUNT(*),trace_id "
                     + "FROM `trace` AS t LEFT JOIN action AS a ON t.action_id = a.action_id WHERE session_id = " + sessionID + " "
-                    + "AND `read`=0 AND role=" + (1 - c.getRole()) + " ORDER BY timestamp;";  // counterparty's role
+                    + "AND `read`=0 AND role=" + (1 - c.getRole()) + " ORDER BY timestamp;";  // counterpart's role
             rs = db.select(query);
             rs.next();
             count = rs.getInt(7); // returns COUNT(*)
@@ -810,7 +810,7 @@ public class SessionMonitor {
 				
 				// if user became culpable with the current action, network must be
 				// rebuilt to avoid extaction
-				// from the counterparty (otherwise, both participant will be
+				// from the counterpart (otherwise, both participant will be
 				// culpable)
 				if (monitorContractProgress(db, contractHash,
 						Tools.CTU_PARAM_CULPABLE)) {
@@ -945,7 +945,7 @@ public class SessionMonitor {
 		Float elapsedTime;
 
 		query = "SELECT last_timestamp FROM session WHERE session_id="
-				+ sessionID + ";"; // counterparty's role
+				+ sessionID + ";"; // counterpart's role
 		rs = db.select(query);
 		rs.next();
 		timestamp = rs.getLong(1);
