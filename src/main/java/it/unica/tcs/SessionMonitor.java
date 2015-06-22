@@ -768,7 +768,7 @@ public class SessionMonitor {
 			}
 
 			// 2) Checks if action is done
-			performed = Tools.verifyAction(db, action, value, contextID, username, contractHash);
+			performed = Tools.verifyAction(db, action, value, contextID, username, contractHash, c1.getSessionID());
 			
 			if (!performed) {
 				
