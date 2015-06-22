@@ -552,9 +552,10 @@ public class Tools {
 	 * @param contextID Id of the context
 	 * @param user Username
 	 * @param hash Hash of the contract
+	 * @param sessionID Hash of the session
 	 * @return True if the action is done, false otherwise
 	 * @throws SQLException */
-	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash) throws SQLException {
+	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash, Integer sessionID) throws SQLException {
 
 		String query, verificationURL, verifierResponse;
 		ResultSet rs;
@@ -574,7 +575,7 @@ public class Tools {
 		
 		// 3) Calls verificationLink
 		try {
-			URL url = new URL(verificationURL + "?user=" + user + "&hash=" + hash + "&action=" + action + "&value=" + value);
+			URL url = new URL(verificationURL + "?user=" + user + "&hash=" + hash + "&action=" + action + "&value=" + value + "&session=" + sessionID);
 			URLConnection connection = url.openConnection();
 			connection.connect();
 			
