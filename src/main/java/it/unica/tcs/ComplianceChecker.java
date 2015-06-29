@@ -148,7 +148,7 @@ public class ComplianceChecker {
         List<Quadruple<Double, String[], Integer, Integer>> preCheckCalculus = new ArrayList<Quadruple<Double, String[], Integer, Integer>>();
 
         // 1) Takes all identifiers of the contracts to check
-        queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux FROM `" + DatabaseInterface.TABLE_CONTRACT
+        queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux, delay FROM `" + DatabaseInterface.TABLE_CONTRACT
                 + "` WHERE context_id = " + contextID + " AND state = 0 ORDER BY rand();";
         rs = db.select(queryText);
 
