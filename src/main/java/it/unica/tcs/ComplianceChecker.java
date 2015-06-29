@@ -141,7 +141,8 @@ public class ComplianceChecker {
         boolean compliant = false;
         String otherContractXML, queryText, otherPreCheckType, otherMapping, otherChanList;
         ResultSet rs, rs2;
-        Integer otherID;
+        Integer otherID, otherDelay;
+        Long otherTimestamp;
 
         BasicPair<Integer, String> compliantData = new BasicPair<Integer, String>();
         List<Quadruple<Double, String[], Integer, Integer>> preCheckCalculus = new ArrayList<Quadruple<Double, String[], Integer, Integer>>();
@@ -159,6 +160,14 @@ public class ComplianceChecker {
             otherMapping = rs.getString("mapping");
             otherChanList = rs.getString("aux"); // For TSTs, the channel list is stored in the auxiliary column
             otherPreCheckType = rs.getString("type_pre_check");
+            otherDelay = rs.getInt("delay");
+            otherTimestamp= rs.getLong("timestamp");
+            
+            if (otherTimestamp + otherDelay >= System.currentTimeMillis()) {
+            	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
+            	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
+            	continue;
+            }
 
             double preCheckValue = preCheck(preCheckType, otherPreCheckType);
             

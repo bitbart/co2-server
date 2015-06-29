@@ -9,6 +9,7 @@ public class QueryPacket {
 	private String contractHash;
 	private String actionName;
 	private String actionValue;
+	private Integer delay;
 
 	// Must have no-argument constructor
 	public QueryPacket() {
@@ -43,6 +44,10 @@ public class QueryPacket {
 		return actionValue;
 	}
 	
+	public Integer getDelay() {
+		return delay;
+	}
+	
 	public void setCredentials(String username, String password) {
 		this.username = username;
 		this.password = password;
@@ -74,6 +79,10 @@ public class QueryPacket {
 	
 	public void setActionValue(String actionValue) {
 		this.actionValue = actionValue;
+	}
+	
+	public void setDelay(Integer delay) {
+		this.delay = delay;
 	}
 	
 	public void setContractPair(String firstContract, String secondContract) {
