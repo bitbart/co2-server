@@ -191,6 +191,9 @@ public class Contract {
 	
 	public boolean isExpired() {
 		
+		if (delay == 0)
+			return false;
+		
 		if (timestamp + delay <= System.currentTimeMillis())
 			return false;
 		else
