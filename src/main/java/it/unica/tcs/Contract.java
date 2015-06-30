@@ -20,6 +20,7 @@ public class Contract {
 	private Integer state;
 	private Long timestamp;
     private String typePreCheck;
+    private Integer delay;
 	private boolean initialized;
 
 	public Contract() {
@@ -64,6 +65,7 @@ public class Contract {
 		this.role = result.getInt("role");
 		this.state = result.getInt("state");
 		this.timestamp = result.getLong("timestamp");
+		this.delay = result.getInt("delay");
 		this.typePreCheck = result.getString("type_pre_check");
 
 		this.initialized = true;
@@ -88,6 +90,7 @@ public class Contract {
 		this.role = result.getInt("role");
 		this.state = result.getInt("state");
 		this.timestamp = result.getLong("timestamp");
+		this.delay = result.getInt("delay");
         this.typePreCheck = result.getString("type_pre_check");
 
 		this.initialized = true;
@@ -170,6 +173,11 @@ public class Contract {
 
 		return this.state;
 	}
+	
+	public Integer getDelay() {
+
+		return this.delay;
+	}
 
 	public Long getTimestamp() {
 
@@ -179,5 +187,16 @@ public class Contract {
 	public String getTypePreCheck(){
 	    
 	    return this.typePreCheck;
+	}
+	
+	public boolean isExpired() {
+		
+		if (delay == 0)
+			return false;
+		
+		if (timestamp + delay <= System.currentTimeMillis())
+			return false;
+		else
+			return true;
 	}
 }

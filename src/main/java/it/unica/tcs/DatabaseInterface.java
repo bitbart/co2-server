@@ -40,6 +40,7 @@ public class DatabaseInterface {
 	public final static int CONTRACT_INNOCENT = 3;
 	public final static int CONTRACT_CULPABLE = 4;
 	public final static int CONTRACT_COMPLETED = 5;
+	public final static int CONTRACT_EXPIRED = 6;
 
 	// Roles of participants during interaction
 	public final static int CONTRACT_ROLE_LATENT = -1;
@@ -132,14 +133,14 @@ public class DatabaseInterface {
 
 	/** @throws SQLException */
 	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID,
-	        Integer role, Integer state, Long timestamp, String typePreCheck, String mapping, String aux) throws SQLException {
+	        Integer role, Integer state, Long timestamp, String typePreCheck, String mapping, String aux, Integer delay) throws SQLException {
 
 		String insertQuery, selectQuery;
 		Integer identifier;
 		ResultSet rs;
 
-		String[] cols = new String[10];
-		String[] vals = new String[10];
+		String[] cols = new String[11];
+		String[] vals = new String[11];
 
 		cols[0] = "contract_hash";
 		cols[1] = "contract_xml";
@@ -151,6 +152,7 @@ public class DatabaseInterface {
 		cols[7] = "type_pre_check";
 		cols[8] = "mapping";
 		cols[9] = "aux";
+		cols[10] = "delay";
 
 
 		vals[0] = contractHash;
@@ -163,6 +165,7 @@ public class DatabaseInterface {
 		vals[7] = typePreCheck;
 		vals[8] = mapping;
 		vals[9] = aux;
+		vals[10] = delay + "";
 
 		insertQuery = generateInsertQuery(TABLE_CONTRACT, cols, vals);
 

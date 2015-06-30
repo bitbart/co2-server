@@ -1,7 +1,5 @@
 package it.unica.tcs;
 
-import it.unica.tcs.InternalException.ErrorTypes;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -554,9 +552,10 @@ public class Tools {
 	 * @param contextID Id of the context
 	 * @param user Username
 	 * @param hash Hash of the contract
+	 * @param sessionID Hash of the session
 	 * @return True if the action is done, false otherwise
 	 * @throws SQLException */
-	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash) throws SQLException, InternalException {
+	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash, Integer sessionID) throws SQLException {
 
 		String query, verificationURL, verifierResponse;
 		ResultSet rs;
@@ -571,14 +570,12 @@ public class Tools {
 		
 		if (verificationURL.equals("true"))
 			return true;
-		else if(verificationURL.equals("false"))
-			throw new InternalException(ErrorTypes.TYPE_ACTION_CULPABLE);
 		
 		verifierResponse = null;
 		
 		// 3) Calls verificationLink
 		try {
-			URL url = new URL(verificationURL + "?user=" + user + "&hash=" + hash + "&action=" + action + "&value=" + value);
+			URL url = new URL(verificationURL + "?user=" + user + "&hash=" + hash + "&action=" + action + "&value=" + value + "&session=" + sessionID);
 			URLConnection connection = url.openConnection();
 			connection.connect();
 			

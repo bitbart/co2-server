@@ -68,13 +68,11 @@ public class Debug {
         try {
 	        for (int i=0; i<N; i++) {
 	        	
-	        	if (i % 10000 == 0)
-	        		Log.message().info("During DB population, new 10.000 contracts had already been stored.");
-	        	
+	        	// 27230 is the id of testuser1
 	        	if (Math.random() < K/N) 
-	        		db.insertContract(Tools.hashContract(firstXml.getOutput(), MainApplication.getRand()), firstXml.getOutput(), 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(firstXml.getOutput()), firstMapping.getOutput(), firstLabels.getOutput()); 
+	        		db.insertContract(Tools.hashContract(firstXml.getOutput(), MainApplication.getRand()), firstXml.getOutput(), 27230, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(firstXml.getOutput()), firstMapping.getOutput(), firstLabels.getOutput(), 0); 
 	        	else
-	        		db.insertContract(Tools.hashContract(secondXml.getOutput(), MainApplication.getRand()), firstXml.getOutput(), 1, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(secondXml.getOutput()), secondMapping.getOutput(), secondLabels.getOutput());
+	        		db.insertContract(Tools.hashContract(secondXml.getOutput(), MainApplication.getRand()), firstXml.getOutput(), 27230, 0, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_LATENT, new Long(MainApplication.getRand()), ComplianceChecker.getContractType(secondXml.getOutput()), secondMapping.getOutput(), secondLabels.getOutput(), 0);
 	        }
         }
         catch (SQLException s) {

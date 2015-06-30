@@ -38,6 +38,7 @@ public class SessionHandler {
     	String pass = postData.getPassword();
     	String contractXML = postData.getFirstContract();
     	Long timestamp = MainApplication.getRand();
+    	Integer delay = postData.getDelay();
     	
         Integer contractID, compliantID;
         String contractHash, compliantContract, typePreCheck, firstOutputOcaml, secondOutputOcaml;
@@ -179,9 +180,12 @@ public class SessionHandler {
 
         // 8b) Saves contract data
         try {
+        	if (delay == null)
+        		delay = 0;
+        	
             contractHash = Tools.hashContract(contractXML, timestamp);
             contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contractXML));
-            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(timestamp), typePreCheck, firstOutputOcaml, secondOutputOcaml); 
+            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(timestamp), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay); 
             
             // The contract is under processing (not latent)
             Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
@@ -258,6 +262,7 @@ public class SessionHandler {
             
             // 10) Merging contracts
             if (compliant.getState() == DatabaseInterface.CONTRACT_LATENT) {
+            	
                 areFused = fuse(db, contractXML, compliantContract, contractID, compliantID);
                 endWhile = false;
                 
@@ -331,18 +336,45 @@ public class SessionHandler {
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
-
+        
+        try {
+        	
+        	// Loads contractID
+			original = new Contract().loadFromHash(originalHash);
+            originalID = original.getContractID();
+        }
+        catch (SQLException e) {
+		    
+            Log.message().warning("Failed while checking if the requested CONTRACT='"+ originalHash +"' exists and is latent: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+		}
+            
         // 3) Checking if requested contract exists and is latent.
         try {
-        	// Load original contract data
-			original = new Contract().loadFromHash(originalHash);
-	        originalState = original.getState();
+            
+        	MainApplication.mutexAcquire(originalID);
+        	
+        	// Loads all data (after mutex acquiring)
+        	original = new Contract().loadFromID(originalID);
+        	originalState = original.getState();
             originalID = original.getContractID();
             originalXML = original.getContractXML();
 
 	        if (originalState != DatabaseInterface.CONTRACT_LATENT) {
 	        	
-	        	Log.message().info("Checked if the contract with HASH=" + originalHash + " is latent: NO!");
+	        	// Log.message().info("Checked if the contract with HASH=" + originalHash + " is latent: NO!");
+	        	MainApplication.mutexRelease(originalID);
+	        	
+	        	new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+	        }
+	        
+	        if (original.isExpired()) {
+	        	
+	        	db.setContractState(originalID, DatabaseInterface.CONTRACT_EXPIRED);
+            	Log.message().info("Contract with ID=" + originalID + " is declared expired.");
+	        	MainApplication.mutexRelease(originalID);
+	        	
 	        	new ResponsePacket(-1, Messages.PERMISSION_DENIED);
 	        }
 	        
@@ -350,6 +382,7 @@ public class SessionHandler {
 	        
 		} catch (SQLException e) {
 		    
+			MainApplication.mutexRelease(originalID);
             Log.message().warning("Failed while checking if the requested CONTRACT='"+ originalHash +"' exists and is latent: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
@@ -364,6 +397,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
             
+        	MainApplication.mutexRelease(originalID);
             Log.message().warning("Failed SELECT when loading owner data in accept(). SQL says: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
@@ -390,26 +424,29 @@ public class SessionHandler {
             String firstOutputOcaml = firstOutput.getOutput();
             String secondOutputOcaml = secondOutput.getOutput();
             
-            dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "5", firstOutputOcaml, secondOutputOcaml);
+            dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "5", firstOutputOcaml, secondOutputOcaml, 0);
 
             Log.message().info("Added new contract with XML=" + Log.format(dualXML) + ", ID=" + dualID + ", HASH=" + Log.format(dualHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
       
         } catch (SQLException e) {
             
             Log.message().warning("Cannot add a contract to DB. SQL says: " + e.getMessage());
+            MainApplication.mutexRelease(originalID);
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             
         } catch (Exception e){
             
             Log.message().warning("XML error: " + e.getMessage());
+            MainApplication.mutexRelease(originalID);
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
         }
 
         // 5) Compliance contract certainly exists: merge contracts.
         areFused = fuse(db, originalXML, dualXML, originalID, dualID);
+        MainApplication.mutexRelease(originalID);
         
         if (areFused) {
-
+        	
             return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +"." + Messages.SESSION_COMPLIANT_YES, dualHash);
         }
         else {

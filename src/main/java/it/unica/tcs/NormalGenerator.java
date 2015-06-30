@@ -36,7 +36,7 @@ public class NormalGenerator {
 		    standardDeviation = standardDeviation / correctionFactor;
 		}
 		
-		Normal normalGen = new Normal(0, standardDeviation, randomEngine);;
+		Normal normalGen = new Normal(0, standardDeviation, randomEngine);
 		
 		double n = -1;
 		

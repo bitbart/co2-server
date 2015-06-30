@@ -141,13 +141,14 @@ public class ComplianceChecker {
         boolean compliant = false;
         String otherContractXML, queryText, otherPreCheckType, otherMapping, otherChanList;
         ResultSet rs, rs2;
-        Integer otherID;
+        Integer otherID, otherDelay;
+        Long otherTimestamp;
 
         BasicPair<Integer, String> compliantData = new BasicPair<Integer, String>();
         List<Quadruple<Double, String[], Integer, Integer>> preCheckCalculus = new ArrayList<Quadruple<Double, String[], Integer, Integer>>();
 
         // 1) Takes all identifiers of the contracts to check
-        queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux FROM `" + DatabaseInterface.TABLE_CONTRACT
+        queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux, delay, timestamp FROM `" + DatabaseInterface.TABLE_CONTRACT
                 + "` WHERE context_id = " + contextID + " AND state = 0 ORDER BY rand();";
         rs = db.select(queryText);
 
@@ -159,6 +160,14 @@ public class ComplianceChecker {
             otherMapping = rs.getString("mapping");
             otherChanList = rs.getString("aux"); // For TSTs, the channel list is stored in the auxiliary column
             otherPreCheckType = rs.getString("type_pre_check");
+            otherDelay = rs.getInt("delay");
+            otherTimestamp= rs.getLong("timestamp");
+            
+            if (otherDelay != 0 && otherTimestamp + otherDelay >= System.currentTimeMillis()) {
+            	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
+            	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
+            	continue;
+            }
 
             double preCheckValue = preCheck(preCheckType, otherPreCheckType);
             
