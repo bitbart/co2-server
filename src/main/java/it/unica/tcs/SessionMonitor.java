@@ -429,10 +429,8 @@ public class SessionMonitor {
             rs.next();
             timestamp = rs.getLong(1);
             
-            handleSessionEnding(c, db, false); // First of all, verifies if the session is already ended (to avoid that the results will be overwritten)
-            
-        	if (c.getState() == DatabaseInterface.CONTRACT_CULPABLE || c.getState() == DatabaseInterface.CONTRACT_INNOCENT || c.getState() == DatabaseInterface.CONTRACT_COMPLETED)
-        		return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
+            if (handleSessionEnding(c, db, false)) // First of all, verifies if the session is already ended (to avoid that the results will be overwritten)
+            	return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
 
             // 2b) Checks state
             state = SessionHandler.getContractState(db, username, pass, contractHash);
