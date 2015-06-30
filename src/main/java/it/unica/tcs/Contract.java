@@ -18,7 +18,7 @@ public class Contract {
 	private Integer contextID;
 	private Integer role;
 	private Integer state;
-	private Long timestamp;
+	private Long randomLong;
     private String typePreCheck;
     private Integer delay;
 	private boolean initialized;
@@ -64,7 +64,7 @@ public class Contract {
 		this.contextID = result.getInt("context_id");
 		this.role = result.getInt("role");
 		this.state = result.getInt("state");
-		this.timestamp = result.getLong("timestamp");
+		this.randomLong = result.getLong("random_long");
 		this.delay = result.getInt("delay");
 		this.typePreCheck = result.getString("type_pre_check");
 
@@ -89,7 +89,7 @@ public class Contract {
 		this.contextID = result.getInt("context_id");
 		this.role = result.getInt("role");
 		this.state = result.getInt("state");
-		this.timestamp = result.getLong("timestamp");
+		this.randomLong = result.getLong("random_long");
 		this.delay = result.getInt("delay");
         this.typePreCheck = result.getString("type_pre_check");
 
@@ -179,9 +179,9 @@ public class Contract {
 		return this.delay;
 	}
 
-	public Long getTimestamp() {
+	public Long getRandomLong() {
 
-		return this.timestamp;
+		return this.randomLong;
 	}
 	
 	public String getTypePreCheck(){
@@ -194,7 +194,7 @@ public class Contract {
 		if (delay == 0)
 			return false;
 		
-		if (timestamp + delay <= System.currentTimeMillis())
+		if (randomLong + delay <= System.currentTimeMillis())
 			return false;
 		else
 			return true;

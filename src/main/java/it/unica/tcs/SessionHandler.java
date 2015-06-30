@@ -37,7 +37,7 @@ public class SessionHandler {
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String contractXML = postData.getFirstContract();
-    	Long timestamp = MainApplication.getRand();
+    	Long randomLong = MainApplication.getRand();
     	Integer delay = postData.getDelay();
     	
         Integer contractID, compliantID;
@@ -183,9 +183,9 @@ public class SessionHandler {
         	if (delay == null)
         		delay = 0;
         	
-            contractHash = Tools.hashContract(contractXML, timestamp);
+            contractHash = Tools.hashContract(contractXML, randomLong);
             contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contractXML));
-            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(timestamp), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay); 
+            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay); 
             
             // The contract is under processing (not latent)
             Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
