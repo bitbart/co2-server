@@ -386,7 +386,7 @@ public class SessionMonitor {
     @Path(value = "/send")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-    public ResponsePacket send(QueryPacket postData) {
+    public ResponsePacket send(QueryPacket postData) { //
     	
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
