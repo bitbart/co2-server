@@ -180,15 +180,14 @@ public class SessionMonitor {
 
         // 2) Does query
         try {
+        	
             c = new Contract().loadFromHash(contractHash);
+            handleSessionEnding(c, db, false); // update the state of the session
+            
+            c = new Contract().loadFromHash(contractHash); // reload the contract state
             contractState = c.getState();
             
-			boolean c1_result = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
-
-            if (c1_result == true) {
-            	
-            	if (contractState != DatabaseInterface.CONTRACT_ON_DUTY)
-            		db.setContractState(c.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY); // updates the DB
+			if (contractState == DatabaseInterface.CONTRACT_ON_DUTY) {
           
                 Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
@@ -197,9 +196,6 @@ public class SessionMonitor {
                 return new ResponsePacket(1, Messages.PROPERTY_YES);
             }
             else {
-            	
-            	if (contractState == DatabaseInterface.CONTRACT_ON_DUTY)
-            		db.setContractState(c.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY); // updates the DB
             	
                 Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
@@ -261,6 +257,9 @@ public class SessionMonitor {
         try {
 
             c = new Contract().loadFromHash(contractHash);
+            handleSessionEnding(c, db, false); // update the state of the session
+            
+            c = new Contract().loadFromHash(contractHash); // reload the contract state
             contractState = c.getState();
 
             if (contractState == DatabaseInterface.CONTRACT_CULPABLE) {
@@ -271,17 +270,6 @@ public class SessionMonitor {
                 return new ResponsePacket(1, Messages.PROPERTY_YES);
             }
             else {
-                
-                if (monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE)) { // the user is became culpable (because of time elapsing)
-                	
-                	db.setContractState(c.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
-                    
-                    Log.message().fine(
-                            "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
-                                    + " is culpable: YES!");
-                    
-                    return new ResponsePacket(1, Messages.PROPERTY_YES);
-                }
                 
                 Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
@@ -620,8 +608,6 @@ public class SessionMonitor {
     	String contractHash = postData.getContractHash();
     	
         DatabaseInterface db = MainApplication.getDBConnection();
-        Boolean c1_duty, c2_duty, c1_culpable, c2_culpable;
-        String compliantHash;
         Contract c1, c2;
     	
     	
@@ -655,28 +641,22 @@ public class SessionMonitor {
         try {
             // 2) Loading contracts data
 			c1 = new Contract().loadFromHash(contractHash);
-			c2 = new Contract().loadFromHash(c1.getCompliantHash());
-			compliantHash = c2.getContractHash();
-			
-			
-			// 3) Calculating culpable and onDuty
-			c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
-			c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
-			c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
-			c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
-		
+            boolean response = handleSessionEnding(c1, db, false); // update the state of the session
+            
+            if (!response)
+            	return new ResponsePacket(0, Messages.TYPE_NO);
+            
+            
+            c1 = new Contract().loadFromHash(contractHash);
+            c2 = new Contract().loadFromHash(c1.getCompliantHash());
 			
 			// 4) Deciding contract state
-			if(c1_culpable || c2_culpable){
+			if(c1.getState() == DatabaseInterface.CONTRACT_CULPABLE || c2.getState() == DatabaseInterface.CONTRACT_CULPABLE){
 		        return new ResponsePacket(2, Messages.TYPE_YES);
 		        
-			} else if(!c1_duty && !c2_duty){
+			} else
 		        return new ResponsePacket(1, Messages.TYPE_YES);
-		        
-			} else {
-		        return new ResponsePacket(0, Messages.TYPE_NO);
-			}
-        
+			
         } catch (SQLException | DBException e) {
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
 		} catch (InternalException e) {
@@ -1015,7 +995,7 @@ public class SessionMonitor {
 		return rs.getInt(1);
 	}
 	
-	private void handleSessionEnding(Contract c1, DatabaseInterface db, Boolean autoCulpable) throws DBException, SQLException, InternalException{
+	private boolean handleSessionEnding(Contract c1, DatabaseInterface db, Boolean autoCulpable) throws DBException, SQLException, InternalException{
 		Contract c2;
 		Boolean c1_duty, c2_duty, c1_culpable, c2_culpable;
 		String compliantHash, contractHash;
@@ -1026,7 +1006,7 @@ public class SessionMonitor {
     	contractHash = c1.getContractHash();
     	
     	if (c1.getState() == DatabaseInterface.CONTRACT_CULPABLE || c1.getState() == DatabaseInterface.CONTRACT_INNOCENT || c1.getState() == DatabaseInterface.CONTRACT_COMPLETED)
-    		return; // Nothing to do
+    		return true; // Session is ended
 		
 		// 2) Calculating culpable and onDuty
 		c1_duty = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_DUTY);
@@ -1049,6 +1029,8 @@ public class SessionMonitor {
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
+			
+			return true;
 		
 		} else if(c2_culpable) {
 			
@@ -1061,6 +1043,8 @@ public class SessionMonitor {
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
+			
+			return true;
 		
 		} else if(!c1_duty && !c2_duty) {
 			
@@ -1073,6 +1057,10 @@ public class SessionMonitor {
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_CORRECTLY);
+			
+			return true;
 		}
+		
+		return false; // session is not ended
 	}
 }
