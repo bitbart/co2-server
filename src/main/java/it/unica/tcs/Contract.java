@@ -19,6 +19,7 @@ public class Contract {
 	private Integer role;
 	private Integer state;
 	private Long randomLong;
+	private Long timestamp;
     private String typePreCheck;
     private Integer delay;
 	private boolean initialized;
@@ -66,6 +67,7 @@ public class Contract {
 		this.state = result.getInt("state");
 		this.randomLong = result.getLong("random_long");
 		this.delay = result.getInt("delay");
+		this.timestamp = result.getLong("tell_timestamp");
 		this.typePreCheck = result.getString("type_pre_check");
 
 		this.initialized = true;
@@ -91,6 +93,7 @@ public class Contract {
 		this.state = result.getInt("state");
 		this.randomLong = result.getLong("random_long");
 		this.delay = result.getInt("delay");
+		this.timestamp = result.getLong("tell_timestamp");
         this.typePreCheck = result.getString("type_pre_check");
 
 		this.initialized = true;
@@ -187,6 +190,11 @@ public class Contract {
 	public String getTypePreCheck(){
 	    
 	    return this.typePreCheck;
+	}
+	
+	public Long getTimestamp() {
+		
+		return this.timestamp;
 	}
 	
 	public boolean isExpired() {

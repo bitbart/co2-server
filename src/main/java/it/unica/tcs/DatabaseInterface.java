@@ -139,8 +139,8 @@ public class DatabaseInterface {
 		Integer identifier;
 		ResultSet rs;
 
-		String[] cols = new String[11];
-		String[] vals = new String[11];
+		String[] cols = new String[12];
+		String[] vals = new String[12];
 
 		cols[0] = "contract_hash";
 		cols[1] = "contract_xml";
@@ -153,6 +153,7 @@ public class DatabaseInterface {
 		cols[8] = "mapping";
 		cols[9] = "aux";
 		cols[10] = "delay";
+		cols[11] = "tell_timestamp";
 
 
 		vals[0] = contractHash;
@@ -166,6 +167,7 @@ public class DatabaseInterface {
 		vals[8] = mapping;
 		vals[9] = aux;
 		vals[10] = delay + "";
+		vals[11] = System.currentTimeMillis() + "";
 
 		insertQuery = generateInsertQuery(TABLE_CONTRACT, cols, vals);
 
