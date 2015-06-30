@@ -188,6 +188,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
         	
+        	
             Log.message().warning("Cannot add a contract to DB. SQL says: " + e.getMessage());
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
         }
