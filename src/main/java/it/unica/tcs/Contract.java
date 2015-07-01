@@ -202,7 +202,7 @@ public class Contract {
 		if (delay == 0)
 			return false;
 		
-		if (randomLong + delay <= System.currentTimeMillis())
+		if (randomLong + delay >= System.currentTimeMillis())
 			return false;
 		else
 			return true;
