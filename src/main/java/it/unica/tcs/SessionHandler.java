@@ -310,13 +310,20 @@ public class SessionHandler {
     	String pass = postData.getPassword();
     	String originalHash = postData.getContractHash();
     	Long randLong = MainApplication.getRand();
+    	String type = postData.getContractType();
 
     	Contract original;
     	Integer originalState;
-        String originalXML, dualXML, dualHash;
+        String originalXML, dualXML, dualHash, originalType;
         Integer contextID, originalID, dualID;
         boolean areFused;
         int userID;
+        
+        if (!type.equals(Contract.TYPE_TST)) { // TODO: handle other contract types here
+        	
+        	Log.message().fine("A user tried to accept a contract of an unknown contract type: " + Log.format(type));
+        	return new ResponsePacket(-1, "The specified contract type doesn't exist."); // serialize this message
+        }
         
         AppResponse firstOutput, secondOutput;
 
@@ -360,6 +367,13 @@ public class SessionHandler {
         	originalState = original.getState();
             originalID = original.getContractID();
             originalXML = original.getContractXML();
+            originalType = original.getType();
+            
+            if (!originalType.equals(type)) {
+            	
+            	Log.message().fine("The contract that a user tried to accept is not of the specified type (" + Log.format(type) + ").");
+            	return new ResponsePacket(0, "The contract you tried to accept is not of the specified type (" + type + ")."); // serialize this message
+            }
 
 	        if (originalState != DatabaseInterface.CONTRACT_LATENT) {
 	        	

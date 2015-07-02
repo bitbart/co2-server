@@ -139,8 +139,8 @@ public class DatabaseInterface {
 		Integer identifier;
 		ResultSet rs;
 
-		String[] cols = new String[12];
-		String[] vals = new String[12];
+		String[] cols = new String[13];
+		String[] vals = new String[13];
 
 		cols[0] = "contract_hash";
 		cols[1] = "contract_xml";
@@ -154,6 +154,7 @@ public class DatabaseInterface {
 		cols[9] = "aux";
 		cols[10] = "delay";
 		cols[11] = "tell_timestamp";
+		cols[12] = "type";
 
 
 		vals[0] = contractHash;
@@ -168,6 +169,7 @@ public class DatabaseInterface {
 		vals[9] = aux;
 		vals[10] = delay + "";
 		vals[11] = System.currentTimeMillis() + "";
+		vals[12] = Contract.TYPE_TST; // TODO: handle different contract types
 
 		insertQuery = generateInsertQuery(TABLE_CONTRACT, cols, vals);
 
