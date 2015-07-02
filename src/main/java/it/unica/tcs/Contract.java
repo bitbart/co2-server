@@ -2,12 +2,15 @@ package it.unica.tcs;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import it.unica.tcs.DatabaseInterface;
 
 /** 
  */
 // TODO: Add comments
 public class Contract {
+	
+	public static String TYPE_TST = "tst";
 
 	private DatabaseInterface db;
 	private Integer contractID;
@@ -22,6 +25,7 @@ public class Contract {
 	private Long timestamp;
     private String typePreCheck;
     private Integer delay;
+    private String type;
 	private boolean initialized;
 
 	public Contract() {
@@ -69,6 +73,7 @@ public class Contract {
 		this.delay = result.getInt("delay");
 		this.timestamp = result.getLong("tell_timestamp");
 		this.typePreCheck = result.getString("type_pre_check");
+		this.type = result.getString("type");
 
 		this.initialized = true;
 
@@ -95,6 +100,7 @@ public class Contract {
 		this.delay = result.getInt("delay");
 		this.timestamp = result.getLong("tell_timestamp");
         this.typePreCheck = result.getString("type_pre_check");
+		this.type = result.getString("type");
 
 		this.initialized = true;
 		
@@ -197,12 +203,17 @@ public class Contract {
 		return this.timestamp;
 	}
 	
+	public String getType() {
+		
+		return this.type;
+	}
+	
 	public boolean isExpired() {
 		
 		if (delay == 0)
 			return false;
 		
-		if (randomLong + delay <= System.currentTimeMillis())
+		if (randomLong + new Long(delay) <= System.currentTimeMillis())
 			return false;
 		else
 			return true;

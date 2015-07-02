@@ -163,7 +163,7 @@ public class ComplianceChecker {
             otherDelay = rs.getInt("delay");
             otherTimestamp= rs.getLong("tell_timestamp");
             
-            if (otherDelay != 0 && otherTimestamp + otherDelay >= System.currentTimeMillis()) {
+            if (otherDelay != 0 && otherTimestamp + new Long(otherDelay) >= System.currentTimeMillis()) {
             	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
             	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
             	continue;

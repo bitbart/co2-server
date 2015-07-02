@@ -10,6 +10,7 @@ public class QueryPacket {
 	private String actionName;
 	private String actionValue;
 	private Integer delay;
+	private String contractType;
 
 	// Must have no-argument constructor
 	public QueryPacket() {
@@ -88,5 +89,13 @@ public class QueryPacket {
 	public void setContractPair(String firstContract, String secondContract) {
 		this.firstContract = firstContract;
 		this.secondContract = secondContract;
+	}
+
+	public String getContractType() {
+		return contractType;
+	}
+
+	public void setContractType(String contractType) {
+		this.contractType = contractType;
 	}
 }
