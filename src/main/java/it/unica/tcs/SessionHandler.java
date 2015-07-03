@@ -319,10 +319,10 @@ public class SessionHandler {
         boolean areFused;
         int userID;
         
-        if (!type.equals(Contract.TYPE_TST)) { // TODO: handle other contract types here
+        if (type==null || !type.equals(Contract.TYPE_TST)) { // TODO: handle other contract types here
         	
-        	Log.message().fine("A user tried to accept a contract of an unknown contract type: " + Log.format(type));
-        	return new ResponsePacket(-1, "The specified contract type doesn't exist."); // serialize this message
+        	Log.message().fine("A user tried to accept a contract of an unknown or null contract type: " + Log.format(type));
+        	return new ResponsePacket(-1, "The specified contract type doesn't exist or you haven't specified the type."); // serialize this message
         }
         
         AppResponse firstOutput, secondOutput;
