@@ -16,6 +16,7 @@ import javax.ws.rs.core.MediaType;
 @Path(value = "/monitoring")
 public class SessionMonitor {
 	
+	static final boolean HARD_DEBUGGING = true;
 	static final boolean MONITOR_ENABLED = true;
 	
     @POST
@@ -60,6 +61,9 @@ public class SessionMonitor {
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket getPossibleActions(QueryPacket postData) {
     	
+    	if (HARD_DEBUGGING)
+    		Log.message().severe("Entering GET_POSSIBLE_ACTIONS");
+    	
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String contractHash = postData.getContractHash();
@@ -75,6 +79,9 @@ public class SessionMonitor {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving GET_POSSIBLE_ACTIONS");
 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
@@ -84,7 +91,9 @@ public class SessionMonitor {
                 Log.message().warning(
                         "Access denied: user with USERNAME=" + Log.format(username)
                                 + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
-
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving GET_POSSIBLE_ACTIONS");
                 
                 return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
             }
@@ -121,6 +130,9 @@ public class SessionMonitor {
             
             //Tools.callApplication(path, null, true);
             
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving GET_POSSIBLE_ACTIONS");
+            
             if (ocamlResult.isEmpty())
                 return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
             else
@@ -132,6 +144,9 @@ public class SessionMonitor {
             Log.message().warning(
                     "Error in loadFromHash while checking if the owner of a contract with HASH="
                             + Log.format(contractHash) + " is on duty.");
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving GET_POSSIBLE_ACTIONS");
 
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -142,6 +157,9 @@ public class SessionMonitor {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket isOnDuty(QueryPacket postData) {
+    	
+    	if (HARD_DEBUGGING)
+    		Log.message().severe("Entering IS_ON_DUTY");
     	
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
@@ -157,6 +175,9 @@ public class SessionMonitor {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_ON_DUTY");
 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
@@ -166,7 +187,9 @@ public class SessionMonitor {
                 Log.message().warning(
                         "Access denied: user with USERNAME=" + Log.format(username)
                                 + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
-
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_ON_DUTY");
                 
                 return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
             }
@@ -174,6 +197,9 @@ public class SessionMonitor {
         catch (SQLException e) {
 
             Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving IS_ON_DUTY");
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -193,6 +219,9 @@ public class SessionMonitor {
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is on duty: YES!");
                 
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_ON_DUTY");
+                
                 return new ResponsePacket(1, Messages.PROPERTY_YES);
             }
             else {
@@ -200,6 +229,9 @@ public class SessionMonitor {
                 Log.message().fine(
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is on duty: NO!");
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_ON_DUTY");
                 
                 return new ResponsePacket(0, Messages.PROPERTY_NO);
             }
@@ -210,6 +242,9 @@ public class SessionMonitor {
             Log.message().warning(
                     "Error in loadFromHash while checking if the owner of a contract with HASH="
                             + Log.format(contractHash) + " is on duty.");
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving IS_ON_DUTY");
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -220,6 +255,9 @@ public class SessionMonitor {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket isCulpable(QueryPacket postData) {
+    	
+    	if (HARD_DEBUGGING)
+    		Log.message().severe("Entering IS_CULPABLE");
     	
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
@@ -235,6 +273,9 @@ public class SessionMonitor {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_CULPABLE");
 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
@@ -244,11 +285,17 @@ public class SessionMonitor {
                         "Access denied: user with USERNAME=" + Log.format(username)
                                 + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
                 
+                if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_CULPABLE");
+                
                 return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
             }
         }
         catch (SQLException e) {
             Log.message().warning("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving IS_CULPABLE");
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -267,6 +314,9 @@ public class SessionMonitor {
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is culpable: YES!");
                 
+                if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_CULPABLE");
+                
                 return new ResponsePacket(1, Messages.PROPERTY_YES);
             }
             else {
@@ -275,6 +325,9 @@ public class SessionMonitor {
                         "Checked if the owner of the contract with HASH=" + Log.format(contractHash)
                                 + " is culpable: NO!");
                 
+                if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving IS_CULPABLE");
+                
                 return new ResponsePacket(0, Messages.PROPERTY_NO);
             }
         }
@@ -282,11 +335,17 @@ public class SessionMonitor {
             
             Log.message().warning("InternalException in isCulpable: " + e.getMessage());
             
+            if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving IS_CULPABLE");
+            
             return new ResponsePacket(e.getType(), e.getMessage());
         }
         catch (DBException e) {
             
             Log.message().warning("DBException in isCulpable: " + e.getMessage());
+            
+            if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving IS_CULPABLE");
             
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -295,6 +354,9 @@ public class SessionMonitor {
             Log.message().warning(
                     "Error in loadFromHash while checking if the owner of a contract with HASH="
                             + Log.format(contractHash) + " is culpable.");
+            
+            if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving IS_CULPABLE");
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -376,6 +438,9 @@ public class SessionMonitor {
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket send(QueryPacket postData) { //
     	
+    	if (HARD_DEBUGGING)
+    		Log.message().severe("Entering SEND");
+    	
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
     	String contractHash = postData.getContractHash();
@@ -399,6 +464,9 @@ public class SessionMonitor {
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
                 
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving SEND");
+                
                 return  new ResponsePacket(-1, Messages.AUTH_FAILED);
 
             }
@@ -408,12 +476,18 @@ public class SessionMonitor {
                         "Access denied: user with USERNAME=" + Log.format(username)
                                 + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
                 
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving SEND");
+                
                 return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
             }
         }
         catch (SQLException e) {
         	
             Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving SEND");
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
@@ -429,9 +503,13 @@ public class SessionMonitor {
             rs.next();
             timestamp = rs.getLong(1);
             
-            if (handleSessionEnding(c, db, false)) // First of all, verifies if the session is already ended (to avoid that the results will be overwritten)
+            if (handleSessionEnding(c, db, false)) { // First of all, verifies if the session is already ended (to avoid that the results will be overwritten)
+            	
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving SEND");
+            	
             	return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
-
+            }
             // 2b) Checks state
             state = SessionHandler.getContractState(db, username, pass, contractHash);
 
@@ -468,11 +546,17 @@ public class SessionMonitor {
             // 2c) Checks the sessions states and updates the users' reputation accordingly            
             handleSessionEnding(c, db, autoCulpable);
             
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving SEND");
+            
             return response;
         }
         catch (DBException | SQLException | InternalException e) {
         	
             Log.message().severe("A database exception was thrown when executing DO: " + e.getMessage());
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving SEND");
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
@@ -484,6 +568,9 @@ public class SessionMonitor {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket receive(QueryPacket postData) {
+    	
+    	if (HARD_DEBUGGING)
+    		Log.message().severe("Entering RECEIVE");
     	
     	String username = postData.getUsername();
     	String pass = postData.getPassword();
@@ -503,6 +590,9 @@ public class SessionMonitor {
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
                 
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving RECEIVE");
+                
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
 
             }
@@ -512,11 +602,17 @@ public class SessionMonitor {
                         "Access denied: user with USERNAME=" + Log.format(username)
                                 + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
                 
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving RECEIVE");
+                
                 return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
             }
         }
         catch (SQLException e) {
             Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving RECEIVE");
             
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
@@ -539,6 +635,9 @@ public class SessionMonitor {
             count = rs.getInt(7); // returns COUNT(*)
             
             if (count < 1) {
+            	
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving RECEIVE");
                 
                 return new ResponsePacket(0, "Nothing to receive (the buffer is empty)");
             }
@@ -565,6 +664,9 @@ public class SessionMonitor {
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
                 
                 response.setActionValue(value);
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving RECEIVE");
                 return response;
             }
             else if (dataType == 1) {
@@ -573,6 +675,9 @@ public class SessionMonitor {
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
                 
                 response.setActionValue(value);
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving RECEIVE");
                 return response;
             }
             else {
@@ -581,6 +686,9 @@ public class SessionMonitor {
                 db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
                 
                 response.setActionValue(value + "");
+                
+            	if (HARD_DEBUGGING)
+            		Log.message().severe("Leaving RECEIVE");
                 return response;
             }
         }
@@ -588,6 +696,9 @@ public class SessionMonitor {
             
             Log.message().warning("Can't select data in receive(). SQL says: " + e.getMessage());
             
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving RECEIVE");
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
     }
@@ -598,7 +709,7 @@ public class SessionMonitor {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     /** */
-    public ResponsePacket isSessionEnded(QueryPacket postData) {
+    public ResponsePacket isSessionEnded(QueryPacket postData) { //TODO: add hard debugging
     	
     	// 0) Load input data
     	String username = postData.getUsername();
