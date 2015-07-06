@@ -505,8 +505,7 @@ public class SessionMonitor {
             
             if (handleSessionEnding(c, db, false)) { // First of all, verifies if the session is already ended (to avoid that the results will be overwritten)
             	
-            	if (HARD_DEBUGGING)
-            		Log.message().severe("Leaving SEND");
+            	if (HARD_DEBUGGING) Log.message().severe("Leaving SEND");
             	
             	return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
             }
@@ -871,10 +870,14 @@ public class SessionMonitor {
 
 	private ResponsePacket executeAction(DatabaseInterface db, String contractHash, String action, String value, String username) throws SQLException, InternalException {
 
+		
+		if (HARD_DEBUGGING)
+			Log.message().severe("Entering EXECUTE_ACTION");
+		
 		// TODO: I'm not sure that a private method has to build the ResponsePacket, maybe it should be a task of an interface method (the caller)
 		String beforeFileName, afterFileName, path;
-		Integer sessionID, contextID, c1_progress = DatabaseInterface.CONTRACT_OFF_DUTY, c2_progress = c1_progress;
-		boolean allowed, performed, c1_result, c2_result;
+		Integer sessionID, contextID;
+		boolean allowed, performed;
 
 		Contract c1 = new Contract().loadFromHash(contractHash);
 		Contract c2 = new Contract().loadFromHash(c1.getCompliantHash());
@@ -900,6 +903,7 @@ public class SessionMonitor {
 		
 		sessionID = c1.getSessionID();
 
+		// Executes the action
 		if (SessionMonitor.MONITOR_ENABLED) {
 			
 			// 3) Loads data from db to do the action
@@ -936,8 +940,18 @@ public class SessionMonitor {
 
 					Tools.callApplication(path, null);
 					db.saveNetwork(sessionID, afterFileName);
+					
+					if (HARD_DEBUGGING)
+						Log.message().severe("Leaving EXECUTE_ACTION (with errors)");
+					
+					db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
+					db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
+					
+					db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
+					
+					return new ResponsePacket(-1, "The action performed was not allowed by your contract and made you culpable.");
 				}
-	
+				/*
 				// 6a) Checks culpability
 				c1_result = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
 				c2_result = monitorContractProgress(db, c2.getContractHash(), Tools.CTU_PARAM_CULPABLE);
@@ -977,7 +991,7 @@ public class SessionMonitor {
 	
 						Log.message().severe("Two participants found on duty!");
 					}
-				}
+				}*/
 			}
 
 			// Get action type and add trace (with message value)
@@ -1030,20 +1044,32 @@ public class SessionMonitor {
 					"Cannot retrieve action type for CONTEXT_ID=" + contextID
 							+ " and ACTION=" + Log.format(action)
 							+ ". SQL says: " + sqle.getMessage());
+			
+			if (HARD_DEBUGGING)
+				Log.message().severe("Leaving EXECUTE_ACTION (with errors)");
 
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		
 		} catch (DBException e) {
+			
+			if (HARD_DEBUGGING)
+				Log.message().severe("Leaving EXECUTE_ACTION (with errors)");
 
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 			
 		} catch (InternalException iie) {
+			
+			if (HARD_DEBUGGING)
+				Log.message().severe("Leaving EXECUTE_ACTION (with errors)");
 
 			return new ResponsePacket(iie.getType(), iie.getMessage());
 		}
 
-		db.updateContract(contractHash, sessionID, c1.getRole(), c1_progress);
-		db.updateContract(c2.getContractHash(), sessionID, c2.getRole(), c2_progress);
+		//db.updateContract(contractHash, sessionID, c1.getRole(), c1_progress);
+		//db.updateContract(c2.getContractHash(), sessionID, c2.getRole(), c2_progress);
+		
+		if (HARD_DEBUGGING)
+			Log.message().severe("Leaving EXECUTE_ACTION");
 
 		return new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
 	}
