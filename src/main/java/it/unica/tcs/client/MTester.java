@@ -7,7 +7,10 @@ import java.util.UUID;
 import co2api.CO2ServerConnection;
 import co2api.ContractException;
 import co2api.Private;
+import co2api.Public;
+import co2api.Session;
 import co2api.TST;
+import co2api.TimeExpiredException;
 
 public class MTester {
 
@@ -21,8 +24,12 @@ public class MTester {
 	}
 
 	private static void test1() {
+		
+		boolean result = false;
 
-		/* It executes correctly the contract !hello{x<10}.?great{x<20} */
+		// description
+		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?great{x<20}. ♠");
+		
 		Thread pA = new Thread() {
 			public void run() {
 				
@@ -65,6 +72,39 @@ public class MTester {
 					printFinest(1, p, "created the private contract for user "+p +".");
 				} catch (ContractException e) {
 					printError(1, p, "can't create the private for user "+p +". " + e.getMessage());
+					return;
+				}
+				
+				Public<TST> puA;
+				try {
+					puA = pA.tell();
+					printInfo(1, p, "the contract of "+p +" has been published online.");
+				} catch (ContractException e) {
+					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
+					return;
+				}
+				
+				Session<TST> sA;
+				try {
+					if (puA.isFused()) {
+						try {
+							sA = puA.getSession(); 
+							printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
+						}
+						catch (ContractException e) {
+							printError(1, p, "the contract seems to be fused, but the session can't be getted." + e.getMessage());
+						}
+					}
+					else {
+						sA = puA.waitForSession(30000);
+						printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
+					}
+						
+				} catch (ContractException e) {
+					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
+					return;
+				} catch (TimeExpiredException e) {
+					printError(1,p, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
 				}
 			}
@@ -116,6 +156,46 @@ public class MTester {
 					printFinest(1, q, "created the private contract for user "+q +".");
 				} catch (ContractException e) {
 					printError(1, q, "can't create the private for user "+q +". " + e.getMessage());
+					return;
+				}
+				
+				try {
+					Thread.sleep(31000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				
+				Public<TST> puB;
+				try {
+					puB = pB.tell(30000);
+					printInfo(1, q, "the contract of "+q +" has been published online.");
+				} catch (ContractException e) {
+					printError(1, q, "can't advertise the contract of "+q +" with the TELL. " + e.getMessage());
+					return;
+				}
+				
+				Session<TST> sB;
+				try {
+					if (puB.isFused()) {
+						
+						try {
+							sB = puB.getSession(); 
+							printInfo(1, q, "the contract of "+q +" has been fused, the session is established.");
+						}
+						catch (ContractException e) {
+							printError(1, q, "the contract seems to be fused, but the session can't be getted." + e.getMessage());
+						}
+					}
+					else {
+						sB = puB.waitForSession(30000);
+						printInfo(1, q, "the contract of "+q +" has been fused, the session is established.");
+					}
+						
+				} catch (ContractException e) {
+					printError(1, q, "can't advertise the contract of "+q +" with the TELL. " + e.getMessage());
+					return;
+				} catch (TimeExpiredException e) {
+					printError(1,q, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
 				}
 			}
