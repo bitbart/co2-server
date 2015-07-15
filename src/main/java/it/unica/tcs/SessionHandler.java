@@ -128,6 +128,8 @@ public class SessionHandler {
         	outputCTU = Tools.callApplication(Tools.getCtuPath()+ Tools.CTU_PARAM_BUILD_AUTOMATON, input);
         	
             if (outputCTU.isEmpty()) {
+            	
+            	Log.message().fine("UPPAAL errors:" + outputCTU.getErrors());
             		
             	Log.message().severe("CTU still returns an empty mapping for a contract. Rejecting tell.");
             	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);

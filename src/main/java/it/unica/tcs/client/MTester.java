@@ -4,8 +4,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import org.apache.commons.lang3.RandomStringUtils;
+
 import co2api.CO2ServerConnection;
 import co2api.ContractException;
+import co2api.ContractViolationException;
+import co2api.Message;
 import co2api.Private;
 import co2api.Public;
 import co2api.Session;
@@ -26,16 +30,18 @@ public class MTester {
 	private static void test1() {
 		
 		boolean result = false;
+		
+		
 
 		// description
-		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?great{x<20}. ♠");
+		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?great{x<20}. ♠\n");
 		
 		Thread pA = new Thread() {
 			public void run() {
 				
 				String p = "A";
 
-				String base = randString();
+				String base = randString(10);
 				String username = base + "@tester.it";
 				String password = base;
 
@@ -84,7 +90,7 @@ public class MTester {
 					return;
 				}
 				
-				Session<TST> sA;
+				Session<TST> sA = null;
 				try {
 					if (puA.isFused()) {
 						try {
@@ -107,6 +113,24 @@ public class MTester {
 					printError(1,p, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
 				}
+				
+				try {
+					Thread.sleep(9000);  // wait for the deadline (one second before)
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				
+				try {
+					if (sA == null)
+						throw new ContractException("The session object is null.");
+						
+					sA.send("hello"); // performs the action
+					printInfo(1,p, "action 'hello' correctly performed!");
+					
+				} catch (ContractException e) {
+					printError(1,p, "cannot perform the expected action 'hello'. " + e.getMessage());
+					return;
+				}
 			}
 		};
 
@@ -115,7 +139,7 @@ public class MTester {
 				
 				String q = "B";
 				
-				String base2 = randString();
+				String base2 = randString(10);
 				String username2 = base2 + "@tester.it";
 				String password2 = base2;
 
@@ -174,7 +198,7 @@ public class MTester {
 					return;
 				}
 				
-				Session<TST> sB;
+				Session<TST> sB = null;
 				try {
 					if (puB.isFused()) {
 						
@@ -197,6 +221,28 @@ public class MTester {
 				} catch (TimeExpiredException e) {
 					printError(1,q, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
+				}
+				
+				try {
+					if (sB == null)
+						throw new ContractException("The session object is null.");
+						
+					Message m = sB.waitForReceive(10500); // waits
+					
+					switch (m.getLabel()) {
+					case "hello": printInfo(1,q, "action 'hello' correctly received by the counterpart");
+					default: printError(1,q, "the action label received is not the expected 'hello'!"); return;
+					}
+					
+				} catch (ContractException e) {
+					printError(1,q, "cannot receive the expected action 'hello'. " + e.getMessage());
+					return;
+				} catch (TimeExpiredException e) {
+					// TODO handle
+					e.printStackTrace();
+				} catch (ContractViolationException e) {
+					// TODO handle
+					e.printStackTrace();
 				}
 			}
 		};
@@ -272,9 +318,9 @@ public class MTester {
 		return sdf.format(resultdate) + " | TEST-" + n + "-"+p +" | ";
 	}
 
-	private static String randString() {
+	private static String randString(Integer len) {
 
-		return UUID.randomUUID().toString().replace("-", "").substring(0, 5);
+		return RandomStringUtils.randomAlphabetic(len).toLowerCase();
 	}
 	
 	private static void pre(Integer n) {

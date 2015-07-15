@@ -2,11 +2,21 @@ package it.unica.tcs;
 
 import it.unica.tcs.Log;
 import it.unica.tcs.Tools;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 // TODO: Create all javadocs
 
@@ -65,37 +75,35 @@ public class DatabaseInterface {
 	// Context
 	public final static String CONTEXT_EMPTY_NAME = "contextempty";
 	public final static Integer CONTEXT_EMPTY_ID = 0;
-	
+
 	// Action types
 	public final static int ACTION_TYPE_INT = 0;
-    public final static int ACTION_TYPE_STRING = 1;
-    public final static int ACTION_TYPE_FILE = 2;
+	public final static int ACTION_TYPE_STRING = 1;
+	public final static int ACTION_TYPE_FILE = 2;
 
 	// Public query functions called by the server.
 
 	/** */
 	public void open() throws SQLException {
-		
+
 		if (this.connection == null) {
-		    
-		    this.registerConnector();
-		    this.connection = DriverManager.getConnection("jdbc:mysql://localhost/" + DB_NAME + "?autoReconnect=true", DB_USER, DB_PASS);
+
+			this.registerConnector();
+			this.connection = DriverManager.getConnection("jdbc:mysql://localhost/" + DB_NAME + "?autoReconnect=true", DB_USER, DB_PASS);
 		}
 	}
 
 	/** */
 	public void close() {
 
-		
-        try {
-            if (this.connection != null)
-                connection.close();
-        }
-        catch (SQLException e) {
-            
-            Log.message().warning("Can't close a opened connection. SQL says: " + e);
-        }
-		
+		try {
+			if (this.connection != null)
+				connection.close();
+		} catch (SQLException e) {
+
+			Log.message().warning("Can't close a opened connection. SQL says: " + e);
+		}
+
 		connection = null;
 	}
 
@@ -132,8 +140,8 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID,
-	        Integer role, Integer state, Long randomLong, String typePreCheck, String mapping, String aux, Integer delay) throws SQLException {
+	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID, Integer role, Integer state, Long randomLong, String typePreCheck, String mapping,
+			String aux, Integer delay) throws SQLException {
 
 		String insertQuery, selectQuery;
 		Integer identifier;
@@ -155,7 +163,6 @@ public class DatabaseInterface {
 		cols[10] = "delay";
 		cols[11] = "tell_timestamp";
 		cols[12] = "type";
-
 
 		vals[0] = contractHash;
 		vals[1] = contractXML;
@@ -183,62 +190,62 @@ public class DatabaseInterface {
 
 		return identifier;
 	}
-	
+
 	public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID, String value, boolean isFile) throws SQLException {
 
-        String insertQuery;
+		String insertQuery;
 
-        String[] cols = new String[6];
-        String[] vals = new String[6];
+		String[] cols = new String[6];
+		String[] vals = new String[6];
 
-        cols[0] = "action_id";
-        cols[1] = "action_name";
-        cols[2] = "role";
-        cols[3] = "session_id";
-        cols[4] = "timestamp";
-        cols[5] = "data_string_value";
-        
-        if (isFile)
-            cols[4] = "data_file_value";
+		cols[0] = "action_id";
+		cols[1] = "action_name";
+		cols[2] = "role";
+		cols[3] = "session_id";
+		cols[4] = "timestamp";
+		cols[5] = "data_string_value";
 
-        vals[0] = actionID + "";
-        vals[1] = actionName;
-        vals[2] = role + "";
-        vals[3] = sessionID + "";
-        vals[4] = Long.toString(System.currentTimeMillis());
-        vals[5] = value;
+		if (isFile)
+			cols[4] = "data_file_value";
 
-        if (isFile)
-            insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals, true);
-        else
-            insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals);
+		vals[0] = actionID + "";
+		vals[1] = actionName;
+		vals[2] = role + "";
+		vals[3] = sessionID + "";
+		vals[4] = Long.toString(System.currentTimeMillis());
+		vals[5] = value;
 
-        this.throwUpdate(insertQuery);
+		if (isFile)
+			insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals, true);
+		else
+			insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals);
+
+		this.throwUpdate(insertQuery);
 	}
-	
-    public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID) throws SQLException {
 
-        String insertQuery;
+	public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID) throws SQLException {
 
-        String[] cols = new String[5];
-        String[] vals = new String[5];
+		String insertQuery;
 
-        cols[0] = "action_id";
-        cols[1] = "action_name";
-        cols[2] = "role";
-        cols[3] = "session_id";
-        cols[4] = "timestamp";
+		String[] cols = new String[5];
+		String[] vals = new String[5];
 
-        vals[0] = actionID + "";
-        vals[1] = actionName;
-        vals[2] = role + "";
-        vals[3] = sessionID + "";
-        vals[4] = Long.toString(System.currentTimeMillis());
+		cols[0] = "action_id";
+		cols[1] = "action_name";
+		cols[2] = "role";
+		cols[3] = "session_id";
+		cols[4] = "timestamp";
 
-        insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals);
+		vals[0] = actionID + "";
+		vals[1] = actionName;
+		vals[2] = role + "";
+		vals[3] = sessionID + "";
+		vals[4] = Long.toString(System.currentTimeMillis());
 
-        this.throwUpdate(insertQuery);
-    }
+		insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals);
+
+		this.throwUpdate(insertQuery);
+	}
 
 	/** @throws SQLException */
 	public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID, Integer value) throws SQLException {
@@ -287,8 +294,7 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public Integer insertSession(String sessionHash, Integer state, String lastState, Integer contextID)
-	        throws SQLException {
+	public Integer insertSession(String sessionHash, Integer state, String lastState, Integer contextID) throws SQLException {
 
 		String insertQuery, selectQuery;
 		ResultSet rs;
@@ -302,7 +308,8 @@ public class DatabaseInterface {
 		cols[2] = "context_id";
 		cols[3] = "start_timestamp";
 		cols[4] = "last_timestamp";
-		cols[5] = "last_state"; // A "load_file" column must be the last in the string array
+		cols[5] = "last_state"; // A "load_file" column must be the last in the
+								// string array
 
 		vals[0] = sessionHash;
 		vals[1] = state + "";
@@ -325,8 +332,7 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, String reputation, String credit)
-	        throws SQLException {
+	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, String reputation, String credit) throws SQLException {
 
 		String updateQuery, condition;
 
@@ -355,8 +361,7 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public void setTraceRead(Integer traceID)
-	        throws SQLException {
+	public void setTraceRead(Integer traceID) throws SQLException {
 
 		String updateQuery, condition;
 
@@ -383,7 +388,8 @@ public class DatabaseInterface {
 		String[] vals = new String[2];
 
 		cols[0] = "last_timestamp";
-		cols[1] = "last_state"; // A "load_file" column must be the last in the string array
+		cols[1] = "last_state"; // A "load_file" column must be the last in the
+								// string array
 
 		vals[0] = Long.toString(System.currentTimeMillis());
 		vals[1] = last_state;
@@ -394,9 +400,8 @@ public class DatabaseInterface {
 
 		this.throwUpdate(updateQuery);
 	}
-	
-	public void setSessionState(Integer sessionID, Integer state)
-	        throws SQLException {
+
+	public void setSessionState(Integer sessionID, Integer state) throws SQLException {
 
 		String updateQuery, condition;
 
@@ -435,7 +440,7 @@ public class DatabaseInterface {
 		this.throwUpdate(updateQuery);
 	}
 
-	/** @throws SQLException  */
+	/** @throws SQLException */
 	public void updateContract(Integer contractID, Integer sessionID, Integer role, Integer state) throws SQLException {
 
 		String updateQuery, condition;
@@ -457,7 +462,7 @@ public class DatabaseInterface {
 
 		this.throwUpdate(updateQuery);
 	}
-	
+
 	public void setContractState(Integer contractID, Integer state) throws SQLException {
 
 		String updateQuery, condition;
@@ -541,6 +546,127 @@ public class DatabaseInterface {
 		this.throwUpdate(updateQuery);
 	}
 
+	// Methods for handling array storing
+
+	/** This method will help to convert any object into byte array */
+	public byte[] convertObjectToByteArray(Object obj) throws IOException {
+		
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+		objectOutputStream.writeObject(obj);
+		return byteArrayOutputStream.toByteArray();
+	}
+
+	/** This method will help to save java objects into database */
+	public long saveFVT(String userID, Object javaObject2Persist) throws SQLException {
+
+		byte[] byteArray = null;
+		PreparedStatement preparedStatement = null;
+		String SQLQUERY_TO_SAVE_JAVAOBJECT = "UPDATE user SET ftv=? WHERE user_id=" + userID;
+		int persistObjectID = -1;
+		try {
+
+			byteArray = convertObjectToByteArray(javaObject2Persist);
+			preparedStatement = connection.prepareStatement(SQLQUERY_TO_SAVE_JAVAOBJECT, PreparedStatement.RETURN_GENERATED_KEYS);
+			preparedStatement.setBytes(1, byteArray);
+			preparedStatement.executeUpdate();
+			
+			ResultSet rs = preparedStatement.getGeneratedKeys();
+
+			if (rs.next()) {
+				persistObjectID = rs.getInt(1);
+			}
+
+			preparedStatement.close();
+		} catch (Exception e) {
+			
+			throw new SQLException(e.getMessage());
+		}
+		return persistObjectID;
+	}
+
+	/** This method will help to read java objects from database */
+	@SuppressWarnings("unchecked")
+	public ArrayList<Float> getFVT(long objectId) throws SQLException {
+		
+		String SQLQUERY_TO_READ_JAVAOBJECT = "SELECT java_object FROM persist_java_objects WHERE object_id = ?;";
+		PreparedStatement pstmt = null;
+		ResultSet resultSet = null;
+		Blob blob = null;
+		byte[] bytes = null;
+
+		try {
+			pstmt = connection.prepareStatement(SQLQUERY_TO_READ_JAVAOBJECT);
+			pstmt.setLong(1, objectId);
+
+			resultSet = pstmt.executeQuery();
+			while (resultSet.next()) {
+				blob = resultSet.getBlob(1);
+			}
+			bytes = blob.getBytes(1, (int) (blob.length()));
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		ObjectInputStream objectInputStream = null;
+		
+		try {
+			if (bytes != null)
+				objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
+	
+			Object retrievingObject = objectInputStream.readObject();
+	
+			List<Object> dataListFromDB = (List<Object>) retrievingObject;
+			
+			return (ArrayList<Float>) dataListFromDB.get(0);
+		}
+		catch (Exception e) {
+			
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/* Example of usage
+	@SuppressWarnings("unchecked")
+	public static void main(String args[]) throws Exception {
+		Connection connection = null;
+		byte[] retrievedArrayObject = null;
+		try {
+			connection = getConnection();
+
+			List<Object> listToSaveInDB = new ArrayList<Object>();
+			listToSaveInDB.add(new Date());
+			listToSaveInDB.add(new String("KUMAR GAURAV"));
+			listToSaveInDB.add(new Integer(55));
+
+			long persistObjectID = saveBlob(connection, listToSaveInDB);
+			System.out.println(listToSaveInDB + " Object is saved sucessfully");
+
+			retrievedArrayObject = getBlob(connection, persistObjectID);
+
+			ObjectInputStream objectInputStream = null;
+			if (retrievedArrayObject != null)
+				objectInputStream = new ObjectInputStream(new ByteArrayInputStream(retrievedArrayObject));
+
+			Object retrievingObject = objectInputStream.readObject();
+
+			List<Object> dataListFromDB = (List<Object>) retrievingObject;
+			for (Object object : dataListFromDB) {
+				System.out.println("Retrieved Data is :->" + object.toString());
+			}
+
+			System.out.println("Successfully retrieved java Object from Database");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			connection.close();
+		}
+	} */
+
 	// Private functions used by different public query functions.
 
 	private String generateInsertQuery(String table, String[] cols, String[] vals) throws SQLException {
@@ -548,16 +674,14 @@ public class DatabaseInterface {
 		return generateInsertQuery(table, cols, vals, false);
 	}
 
-	private String generateInsertQuery(String table, String[] cols, String[] vals, boolean loadfile)
-	        throws SQLException {
+	private String generateInsertQuery(String table, String[] cols, String[] vals, boolean loadfile) throws SQLException {
 
 		String insertQuery = new String();
 		String columns = new String();
 		String values = new String();
 
 		if (cols.length != vals.length)
-		    throw new SQLException("Columns and values number mismatch in generateInsertQuery [" + cols.length + "; "
-		            + vals.length + "]");
+			throw new SQLException("Columns and values number mismatch in generateInsertQuery [" + cols.length + "; " + vals.length + "]");
 
 		for (int i = 0; i < cols.length; i++) {
 			columns += "`" + cols[i] + "`";
@@ -574,25 +698,24 @@ public class DatabaseInterface {
 		}
 
 		insertQuery = "INSERT INTO `" + DB_NAME + "`.`" + table + "` (" + columns + ") VALUES (" + values + ");";
-		
-	    Log.message().finest("Executed query: " + insertQuery);
+
+		Log.message().finest("Executed query: " + insertQuery);
 
 		return insertQuery;
 	}
 
-	private String generateUpdateQuery(String table, String[] cols, String[] vals, String condition)
-	        throws SQLException {
+	private String generateUpdateQuery(String table, String[] cols, String[] vals, String condition) throws SQLException {
 
 		return generateUpdateQuery(table, cols, vals, condition, false);
 	}
 
-	private String generateUpdateQuery(String table, String[] cols, String[] vals, String condition, boolean loadfile)
-	        throws SQLException {
+	private String generateUpdateQuery(String table, String[] cols, String[] vals, String condition, boolean loadfile) throws SQLException {
 
 		String updateQuery = new String();
 		String sets = new String();
 
-		if (cols.length != vals.length) throw new SQLException();
+		if (cols.length != vals.length)
+			throw new SQLException();
 
 		for (int i = 0; i < cols.length; i++) {
 
@@ -601,7 +724,8 @@ public class DatabaseInterface {
 			else
 				sets += "`" + cols[i] + "`=" + "'" + vals[i] + "'";
 
-			if (i < cols.length - 1) sets += ",";
+			if (i < cols.length - 1)
+				sets += ",";
 		}
 
 		updateQuery = "UPDATE `" + table + "` SET " + sets + " WHERE " + condition + " ;";
@@ -612,13 +736,14 @@ public class DatabaseInterface {
 	/** */
 	private void registerConnector() {
 
-		// The following section of Java code shows how you might register MySQL Connector/J
+		// The following section of Java code shows how you might register MySQL
+		// Connector/J
 		try {
-			// The newInstance() call is a work around for some broken Java implementations
+			// The newInstance() call is a work around for some broken Java
+			// implementations
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
 
-		}
-		catch (Exception ex) {
+		} catch (Exception ex) {
 
 			Log.message().severe("Error when loading JDBC driver!");
 		}
@@ -627,8 +752,8 @@ public class DatabaseInterface {
 	/** */
 	private ResultSet throwSelect(String querySelect) throws SQLException {
 
-	    this.open(); // Re-creates the connection, if lost
-	    
+		this.open(); // Re-creates the connection, if lost
+
 		Statement stmt = null;
 		ResultSet rs = null;
 
@@ -641,31 +766,29 @@ public class DatabaseInterface {
 	/** */
 	private Integer throwUpdate(String queryUpdate) throws SQLException {
 
-	    this.open(); // Re-creates the connection, if lost
-	    
+		this.open(); // Re-creates the connection, if lost
+
 		Statement stmt = null;
 		Integer rs = null;
-		
+
 		stmt = connection.createStatement();
 		rs = stmt.executeUpdate(queryUpdate);
-		
+
 		return rs;
 	}
-	
+
 	public Integer deleteContracts() throws SQLException {
 
-	    this.open(); // Re-creates the connection, if lost
-	    
+		this.open(); // Re-creates the connection, if lost
+
 		Statement stmt = null;
 		Integer rs = null;
-		
+
 		stmt = connection.createStatement();
 		rs = stmt.executeUpdate("DELETE FROM " + TABLE_CONTRACT + " WHERE context_id<>4");
 		rs = stmt.executeUpdate("DELETE FROM " + TABLE_SESSION + " WHERE context_id<>4");
-		
+
 		return rs;
 	}
-	
-	
-}
 
+}
