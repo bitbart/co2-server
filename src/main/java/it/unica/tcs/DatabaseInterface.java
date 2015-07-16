@@ -558,7 +558,7 @@ public class DatabaseInterface {
 	}
 
 	/** This method will help to save java objects into database */
-	public long saveFVT(String userID, Object javaObject2Persist) throws SQLException {
+	public long saveFTV(String userID, Object javaObject2Persist) throws SQLException {
 
 		byte[] byteArray = null;
 		PreparedStatement preparedStatement = null;
@@ -578,6 +578,10 @@ public class DatabaseInterface {
 			}
 
 			preparedStatement.close();
+		} catch (SQLException e) {
+			
+			throw e;
+			
 		} catch (Exception e) {
 			
 			throw new SQLException(e.getMessage());
@@ -587,9 +591,9 @@ public class DatabaseInterface {
 
 	/** This method will help to read java objects from database */
 	@SuppressWarnings("unchecked")
-	public ArrayList<Float> getFVT(long objectId) throws SQLException {
+	public Double[] getFTV(String userID) throws SQLException {
 		
-		String SQLQUERY_TO_READ_JAVAOBJECT = "SELECT java_object FROM persist_java_objects WHERE object_id = ?;";
+		String SQLQUERY_TO_READ_JAVAOBJECT = "SELECT ftv FROM user WHERE user_id = ?;";
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		Blob blob = null;
@@ -597,7 +601,7 @@ public class DatabaseInterface {
 
 		try {
 			pstmt = connection.prepareStatement(SQLQUERY_TO_READ_JAVAOBJECT);
-			pstmt.setLong(1, objectId);
+			pstmt.setString(1, userID);
 
 			resultSet = pstmt.executeQuery();
 			while (resultSet.next()) {
@@ -606,9 +610,9 @@ public class DatabaseInterface {
 			bytes = blob.getBytes(1, (int) (blob.length()));
 
 		} catch (SQLException e) {
-			e.printStackTrace();
+			throw e;
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new SQLException(e.getMessage());
 		}
 		
 		ObjectInputStream objectInputStream = null;
@@ -618,10 +622,8 @@ public class DatabaseInterface {
 				objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
 	
 			Object retrievingObject = objectInputStream.readObject();
-	
-			List<Object> dataListFromDB = (List<Object>) retrievingObject;
 			
-			return (ArrayList<Float>) dataListFromDB.get(0);
+			return (Double[]) retrievingObject;
 		}
 		catch (Exception e) {
 			

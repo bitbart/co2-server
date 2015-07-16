@@ -1,6 +1,8 @@
 package it.unica.tcs;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -10,6 +12,41 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/debug")
 public class Debug {
+	
+	@POST
+	@Path("/trustguard")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public ResponsePacket trustGuard(QueryPacket postData) {
+		
+		DatabaseInterface db = MainApplication.getDBConnection();
+		
+		Double[] ftv = new Double[4];
+		Double[] ftv1;
+		
+		ftv[0] = 1.;
+		ftv[1] = 2.;
+		ftv[2] = 3.;
+		ftv[3] = 4.;
+		
+		try {
+			db.saveFTV("17584", ftv);
+		} catch (SQLException e) {
+			return new ResponsePacket(-1, "errore mysql saveFTV: " + e.getMessage());
+		}
+		
+		try {
+			ftv1 = db.getFTV("17584");
+			
+			if (ftv1[1] == 2.)
+				return new ResponsePacket(1, "Il risultato è corretto");
+			else
+				return new ResponsePacket(-1, "Il risultato è sbagliato: " + ftv1[1]);
+			
+		} catch (SQLException e) {
+			return new ResponsePacket(-1, "errore mysql getFTV: " + e.getMessage());
+		}
+	}
 
 	@POST
 	@Path("/tellStandard")
