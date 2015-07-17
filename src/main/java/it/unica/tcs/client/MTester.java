@@ -34,7 +34,7 @@ public class MTester {
 		
 
 		// description
-		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?great{x<20}. ♠\n");
+		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?good{x<20}. ♠\n");
 		
 		Thread pA = new Thread() {
 			public void run() {
@@ -74,7 +74,7 @@ public class MTester {
 
 				Private<TST> pA;
 				try {
-					pA = new TST("!hello{x<10}.?great{x<20}").toPrivate(co2);
+					pA = new TST("!hello{x<10}.?good{x<20}").toPrivate(co2);
 					printFinest(1, p, "created the private contract for user "+p +".");
 				} catch (ContractException e) {
 					printError(1, p, "can't create the private for user "+p +". " + e.getMessage());
@@ -176,7 +176,7 @@ public class MTester {
 				Private<TST> pB = null;
 
 				try {
-					pB = new TST("?hello{x<10}.!great{x<20}").toPrivate(co2bis);
+					pB = new TST("?hello{x<10}.!good{x<20}").toPrivate(co2bis);
 					printFinest(1, q, "created the private contract for user "+q +".");
 				} catch (ContractException e) {
 					printError(1, q, "can't create the private for user "+q +". " + e.getMessage());
@@ -184,7 +184,7 @@ public class MTester {
 				}
 				
 				try {
-					Thread.sleep(31000);
+					Thread.sleep(5000);
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
@@ -230,8 +230,8 @@ public class MTester {
 					Message m = sB.waitForReceive(10500); // waits
 					
 					switch (m.getLabel()) {
-					case "hello": printInfo(1,q, "action 'hello' correctly received by the counterpart");
-					default: printError(1,q, "the action label received is not the expected 'hello'!"); return;
+					case "hello": printInfo(1,q, "action 'hello' correctly received by the counterpart"); break;
+					default: printError(1,q, "the action label received is not the expected 'hello' (is "+ m.getLabel() + ")!"); return;
 					}
 					
 				} catch (ContractException e) {

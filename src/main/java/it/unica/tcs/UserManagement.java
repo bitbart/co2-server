@@ -86,9 +86,9 @@ public class UserManagement {
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
 		}
 		
-		Log.message().finest("User with EMAIL=" + Log.format(username) + " has asked for his rep. Result is: " + currentUser.getReputation());
+		Log.message().finest("User with EMAIL=" + Log.format(username) + " has asked for his rep. Result is: " + currentUser.getTV());
 		
-		return new ResponsePacket(1, currentUser.getReputation() + "");
+		return new ResponsePacket(1, currentUser.getTV() + "");
 	}
 	
 	public static boolean isValidEmailAddress(String email) {

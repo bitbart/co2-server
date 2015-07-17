@@ -172,12 +172,12 @@ public class ComplianceChecker {
             double preCheckValue = preCheck(preCheckType, otherPreCheckType);
             
             if (preCheckValue > 0) {
-                queryText = "SELECT reputation FROM " + DatabaseInterface.TABLE_CONTRACT + " JOIN " + DatabaseInterface.TABLE_USER + " ON owner_id = user_id WHERE contract_id = " + otherID;
+                queryText = "SELECT tv FROM " + DatabaseInterface.TABLE_CONTRACT + " JOIN " + DatabaseInterface.TABLE_USER + " ON owner_id = user_id WHERE contract_id = " + otherID;
                 rs2 = db.select(queryText);
                 
                 if(rs2.next()){
                     
-                	int otherReputation = rs2.getInt("reputation");
+                	int otherReputation = rs2.getInt("tv");
                     
                 	// TODO: change the Quadruple to BasicPair<Double, Contract>, where Contract stores all data like the following, and String contains the precheck value
                     String[] contractData = new String[3];

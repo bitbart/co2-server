@@ -16,7 +16,7 @@ import javax.ws.rs.core.MediaType;
 @Path(value = "/monitoring")
 public class SessionMonitor {
 	
-	static final boolean HARD_DEBUGGING = true;
+	static final boolean HARD_DEBUGGING = false;
 	static final boolean MONITOR_ENABLED = true;
 	
     @POST

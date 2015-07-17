@@ -131,8 +131,67 @@ public class User {
 		return reputation;
 	}
 
-	public void setReputation(Integer reputation) {
-		this.reputation = reputation;
+	public void updateReputation(Integer lastFeedback) {
+		
+		Integer MAX_HI 	= 4;				// NUMERO MASSIMO DI INTERVALLI DA MEMORIZZARE
+		Integer K 		= 2;				// DIMENSIONE DELL'AGGREGAZIONE
+		
+		
+		this.reputation = lastFeedback;
+		
+		Double currentHistory = 0.;
+		Double weightsSum = 0.;
+	
+		Double Ri, Hi, Di;
+		Double alpha = 0.53, beta = 0.49, gamma = .6, ro = 0.8;
+		
+		
+		
+		for (int k = 1; k <= this.ftv.length-1; k++) {
+			weightsSum += Math.pow(ro, k-1);
+		}
+		for (int k = 1; k <= this.ftv.length-1; k++) {
+			currentHistory += this.ftv[k] * (Math.pow(ro, k-1)/weightsSum);
+ 		}
+		
+		Hi 	= currentHistory;
+		Ri = new Double(this.reputation);
+		
+		
+		
+		
+		Double[] tmp = new Double[MAX_HI]; // Temporary array
+		tmp[0] = Ri;
+		
+		int bound = 0;
+		if (this.ftv.length == MAX_HI)
+			bound = MAX_HI;
+		else
+			bound = this.ftv.length+1;
+		
+		
+		for (int j=1; j<bound; j++) {
+			
+			tmp[j] = (this.ftv[j]*(Math.pow(K, j)-1)+this.ftv[j-1]) / (Math.pow(K, j)) ;
+		}
+		
+		this.ftv = tmp;
+		
+		Di = Ri - Hi;
+
+		// Changes gamma 
+		if (Di < 0) 	
+			gamma = 0.4;
+			
+		this.tv = alpha*Ri + beta*Hi + gamma*Di;
+	}
+	
+	public Double getTV() {
+		return this.tv;
+	}
+	
+	public Double[] getFTV() {
+		return this.ftv;
 	}
 	
 	public void reward() {
