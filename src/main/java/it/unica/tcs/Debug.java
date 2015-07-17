@@ -30,7 +30,7 @@ public class Debug {
 		ftv[3] = 4.;
 		
 		try {
-			db.saveFTV("17584", ftv);
+			db.saveFTV(17584, ftv);
 		} catch (SQLException e) {
 			return new ResponsePacket(-1, "errore mysql saveFTV: " + e.getMessage());
 		}

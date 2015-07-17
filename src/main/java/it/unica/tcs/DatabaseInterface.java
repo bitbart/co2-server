@@ -332,12 +332,12 @@ public class DatabaseInterface {
 	}
 
 	/** @throws SQLException */
-	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, String reputation, String credit) throws SQLException {
+	public void updateUser(Integer userID, String firstName, String lastName, String email, String password, Integer reputation, Integer credit, Double tv, Double[] ftv) throws SQLException {
 
 		String updateQuery, condition;
 
-		String[] cols = new String[6];
-		String[] vals = new String[6];
+		String[] cols = new String[7];
+		String[] vals = new String[7];
 
 		cols[0] = "first_name";
 		cols[1] = "last_name";
@@ -345,19 +345,23 @@ public class DatabaseInterface {
 		cols[3] = "password";
 		cols[4] = "reputation";
 		cols[5] = "credit";
+		cols[6] = "tv";
 
 		vals[0] = firstName;
 		vals[1] = lastName;
 		vals[2] = email;
 		vals[3] = password;
-		vals[4] = reputation;
-		vals[5] = credit;
+		vals[4] = reputation + "";
+		vals[5] = credit + "";
+		vals[6] = tv + "";
 
 		condition = "user_id = '" + userID + "'";
 
 		updateQuery = generateUpdateQuery(TABLE_USER, cols, vals, condition);
 
 		this.throwUpdate(updateQuery);
+		
+		saveFTV(userID, ftv);
 	}
 
 	/** @throws SQLException */
@@ -558,7 +562,7 @@ public class DatabaseInterface {
 	}
 
 	/** This method will help to save java objects into database */
-	public long saveFTV(String userID, Object javaObject2Persist) throws SQLException {
+	public long saveFTV(Integer userID, Object javaObject2Persist) throws SQLException {
 
 		byte[] byteArray = null;
 		PreparedStatement preparedStatement = null;
@@ -590,7 +594,6 @@ public class DatabaseInterface {
 	}
 
 	/** This method will help to read java objects from database */
-	@SuppressWarnings("unchecked")
 	public Double[] getFTV(String userID) throws SQLException {
 		
 		String SQLQUERY_TO_READ_JAVAOBJECT = "SELECT ftv FROM user WHERE user_id = ?;";

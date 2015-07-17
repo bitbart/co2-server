@@ -17,6 +17,8 @@ public class User {
 	private String password;
 	private Integer credit;
 	private Integer reputation;
+	private Double tv;
+	private Double[] ftv;
 
 	private User() {
 
@@ -54,6 +56,7 @@ public class User {
 			this.password = result.getString("password");
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
+			this.tv = result.getDouble("tv");
 	}
 
 	private void loadFromUsername(String username) throws SQLException {
@@ -71,11 +74,12 @@ public class User {
 			this.password = result.getString("password");
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
+			this.tv = result.getDouble("tv");
 	}
 	
 	public void store() throws SQLException {		
 		
-		db.updateUser(userID, firstName, lastName, username, password, reputation + "", credit + "");
+		db.updateUser(userID, firstName, lastName, username, password, reputation, credit, tv, ftv);
 	}
 	
 	public Integer getUserID() {
@@ -123,7 +127,7 @@ public class User {
 		this.credit = credit;
 	}
 
-	public Integer getReputation() {
+	public Integer getLastFeedback() {
 		return reputation;
 	}
 
@@ -133,7 +137,7 @@ public class User {
 	
 	public void reward() {
 		
-		this.reputation += REP_SUCCESS;
+		this.reputation = REP_SUCCESS;
 	}
 	
 	public void rewardAndStore() throws SQLException {
@@ -144,7 +148,7 @@ public class User {
 	
 	public void penalize() {
 		
-		this.reputation += REP_CULPABLE;
+		this.reputation = REP_CULPABLE;
 	}
 	
 	public void penalizeAndStore() throws SQLException {
@@ -155,7 +159,7 @@ public class User {
 	
 	public void decrementRep() {
 		
-		this.reputation += REP_TELL;
+		this.reputation = REP_TELL;
 	}
 	
 	public void decrementRepAndStore() throws SQLException {
