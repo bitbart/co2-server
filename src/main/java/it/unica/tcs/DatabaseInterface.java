@@ -626,7 +626,18 @@ public class DatabaseInterface {
 	
 			Object retrievingObject = objectInputStream.readObject();
 			
-			return (Double[]) retrievingObject;
+			Double[] res = (Double[]) retrievingObject;
+			
+			if (res == null || res.length != 4) {
+				
+				res = new Double[4];
+				res[0] = 0.;
+				res[1] = 0.;
+				res[2] = 0.;
+				res[3] = 0.;
+			}
+			
+			return res;
 		}
 		catch (Exception e) {
 			

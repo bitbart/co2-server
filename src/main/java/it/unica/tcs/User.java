@@ -57,6 +57,7 @@ public class User {
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
 			this.tv = result.getDouble("tv");
+			this.ftv = db.getFTV(userID + "");
 	}
 
 	private void loadFromUsername(String username) throws SQLException {
@@ -75,6 +76,7 @@ public class User {
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
 			this.tv = result.getDouble("tv");
+			this.ftv = db.getFTV(userID + "");
 	}
 	
 	public void store() throws SQLException {		
@@ -131,13 +133,10 @@ public class User {
 		return reputation;
 	}
 
-	public void updateReputation(Integer lastFeedback) {
+	public void updateReputation() {
 		
 		Integer MAX_HI 	= 4;				// NUMERO MASSIMO DI INTERVALLI DA MEMORIZZARE
 		Integer K 		= 2;				// DIMENSIONE DELL'AGGREGAZIONE
-		
-		
-		this.reputation = lastFeedback;
 		
 		Double currentHistory = 0.;
 		Double weightsSum = 0.;
@@ -202,6 +201,7 @@ public class User {
 	public void rewardAndStore() throws SQLException {
 		
 		reward();
+		updateReputation();
 		store();
 	}
 	
@@ -213,6 +213,7 @@ public class User {
 	public void penalizeAndStore() throws SQLException {
 		
 		penalize();
+		updateReputation();
 		store();
 	}
 	
@@ -224,6 +225,7 @@ public class User {
 	public void decrementRepAndStore() throws SQLException {
 		
 		decrementRep();
+		updateReputation();
 		store();
 	}
 }
