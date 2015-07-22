@@ -8,6 +8,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -596,39 +598,55 @@ public class DatabaseInterface {
 	/** This method will help to read java objects from database */
 	public Double[] getFTV(String userID) throws SQLException {
 		
-		String SQLQUERY_TO_READ_JAVAOBJECT = "SELECT ftv FROM user WHERE user_id = ?;";
-		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		Blob blob = null;
 		byte[] bytes = null;
 
 		try {
-			pstmt = connection.prepareStatement(SQLQUERY_TO_READ_JAVAOBJECT);
-			pstmt.setString(1, userID);
-
-			resultSet = pstmt.executeQuery();
-			while (resultSet.next()) {
-				blob = resultSet.getBlob(1);
-			}
-			bytes = blob.getBytes(1, (int) (blob.length()));
+			resultSet = select("SELECT ftv FROM user WHERE user_id = " + userID);
+			resultSet.next();
+			blob = resultSet.getBlob("ftv");
+			
+			if (blob != null)
+				bytes = blob.getBytes(1, (int) (blob.length()));
 
 		} catch (SQLException e) {
+			
 			throw e;
-		} catch (Exception e) {
-			throw new SQLException(e.getMessage());
+		}
+		catch (Exception e) {
+			
+			e.printStackTrace();
+			
+			Log.message().severe("Unknown exception in getFTV: " + e.getMessage());
+			throw new SQLException("unknown exception.");
+			
 		}
 		
 		ObjectInputStream objectInputStream = null;
 		
 		try {
+			
+			Double[] res;
+			
 			if (bytes != null)
+			{
 				objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
 	
-			Object retrievingObject = objectInputStream.readObject();
-			
-			Double[] res = (Double[]) retrievingObject;
-			
-			if (res == null || res.length != 4) {
+				Object retrievingObject = objectInputStream.readObject();
+				
+				res = (Double[]) retrievingObject;
+				
+				if (res == null || res.length != 4) {
+					
+					res = new Double[4];
+					res[0] = 0.;
+					res[1] = 0.;
+					res[2] = 0.;
+					res[3] = 0.;
+				}
+			}
+			else {
 				
 				res = new Double[4];
 				res[0] = 0.;
@@ -639,10 +657,11 @@ public class DatabaseInterface {
 			
 			return res;
 		}
-		catch (Exception e) {
+		catch (IOException | ClassNotFoundException e) {
 			
-			throw new SQLException(e.getMessage());
+			throw new SQLException("IOException or ClassNotFoundException in getFTV: " + e.getMessage());
 		}
+		
 	}
 
 	/* Example of usage

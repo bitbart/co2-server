@@ -509,6 +509,7 @@ public class SessionMonitor {
             	
             	return new ResponsePacket(-1, Messages.SESSION_MOVE_AFTER_END);
             }
+            
             // 2b) Checks state
             state = SessionHandler.getContractState(db, username, pass, contractHash);
 
@@ -541,7 +542,6 @@ public class SessionMonitor {
             	}
             }
             
-            
             // 2c) Checks the sessions states and updates the users' reputation accordingly            
             handleSessionEnding(c, db, autoCulpable);
             
@@ -550,9 +550,27 @@ public class SessionMonitor {
             
             return response;
         }
-        catch (DBException | SQLException | InternalException e) {
+        catch (DBException e) {
         	
-            Log.message().severe("A database exception was thrown when executing DO: " + e.getMessage());
+            Log.message().severe("DBException thrown when executing 'send()': " + e.getMessage());
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving SEND");
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+        catch (SQLException e) {
+        	
+            Log.message().severe("SQLException thrown when executing 'send()': " + e.getMessage());
+            
+        	if (HARD_DEBUGGING)
+        		Log.message().severe("Leaving SEND");
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+        catch (InternalException e) {
+        	
+            Log.message().severe("InternalException thrown when executing 'send()': " + e.getMessage());
             
         	if (HARD_DEBUGGING)
         		Log.message().severe("Leaving SEND");
@@ -1130,7 +1148,7 @@ public class SessionMonitor {
 		return rs.getInt(1);
 	}
 	
-	private boolean handleSessionEnding(Contract c1, DatabaseInterface db, Boolean autoCulpable) throws DBException, SQLException, InternalException{
+	private boolean handleSessionEnding(Contract c1, DatabaseInterface db, Boolean autoCulpable) throws DBException, SQLException, InternalException {
 		Contract c2;
 		Boolean c1_duty, c2_duty, c1_culpable, c2_culpable;
 		String compliantHash, contractHash;
@@ -1163,6 +1181,7 @@ public class SessionMonitor {
 				
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
+			
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
 			
 			return true;
@@ -1177,6 +1196,7 @@ public class SessionMonitor {
 				
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_INNOCENT);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_CULPABLE);
+			
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_UNCORRECTLY);
 			
 			return true;
@@ -1186,11 +1206,13 @@ public class SessionMonitor {
 			Log.message().fine("User with ID=" + c1.getOwnerID() + " has been rewarded.");
 			Log.message().fine("User with ID=" + c2.getOwnerID() + " has been rewarded.");
 			
-			User.build(c1.getOwnerID()).rewardAndStore();
+			User tmp = User.build(c1.getOwnerID());
+			tmp.rewardAndStore();
 			User.build(c2.getOwnerID()).rewardAndStore();
 				
 			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
 			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_COMPLETED);
+			
 			db.setSessionState(c1.getSessionID(), DatabaseInterface.SESSION_COMPLETED_CORRECTLY);
 			
 			return true;

@@ -57,7 +57,15 @@ public class User {
 			this.credit = result.getInt("credit");
 			this.reputation = result.getInt("reputation");
 			this.tv = result.getDouble("tv");
+			
+			try {
 			this.ftv = db.getFTV(userID + "");
+			}
+			catch (SQLException e) {
+				
+				Log.message().severe("SQLException in getFTV: " + e.getMessage());
+				throw e;
+			}
 	}
 
 	private void loadFromUsername(String username) throws SQLException {
@@ -81,7 +89,9 @@ public class User {
 	
 	public void store() throws SQLException {		
 		
+		Log.message().info("PASSAGGIO F");
 		db.updateUser(userID, firstName, lastName, username, password, reputation, credit, tv, ftv);
+		Log.message().info("PASSAGGIO G");
 	}
 	
 	public Integer getUserID() {
@@ -200,9 +210,13 @@ public class User {
 	
 	public void rewardAndStore() throws SQLException {
 		
+		Log.message().info("Fatto RAS 1");
 		reward();
+		Log.message().info("Fatto RAS 2");
 		updateReputation();
+		Log.message().info("Fatto RAS 3");
 		store();
+		Log.message().info("Fatto RAS 4");
 	}
 	
 	public void penalize() {
