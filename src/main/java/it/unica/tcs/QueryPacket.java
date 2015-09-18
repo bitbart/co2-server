@@ -4,6 +4,7 @@ public class QueryPacket {
 
 	private String username;
 	private String password;
+	private String newPassword;
 	private String firstContract;
 	private String secondContract;
 	private String contractHash;
@@ -98,4 +99,13 @@ public class QueryPacket {
 	public void setContractType(String contractType) {
 		this.contractType = contractType;
 	}
+
+	public String getNewPassword() {
+		return newPassword;
+	}
+
+	public void setNewPassword(String newPassword) {
+		this.newPassword = newPassword;
+	}
+	
 }

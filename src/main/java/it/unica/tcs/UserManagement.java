@@ -104,4 +104,55 @@ public class UserManagement {
 	   }
 	   return result;
 	}
+	
+	@POST
+	@Path("/changePassword")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public ResponsePacket changePassword(QueryPacket postData) {
+		
+		String username = postData.getUsername();
+		String oldPassword = postData.getPassword();
+		String newPassword = postData.getNewPassword();
+		
+		
+		if (Tools.isNotValid(username, Tools.USERNAME_REGEX) || Tools.isNotValid(oldPassword, Tools.PASSWORD_REGEX)
+				|| Tools.isNotValid(newPassword, Tools.PASSWORD_REGEX)) {// TODO: to be completed
+            
+            Log.message().warning("The changePassword() was called with wrong parameters.");
+            return new ResponsePacket(-1, "The CHANGE_PASSWORD api was called with wrong parameters.");
+        }
+
+        // 1) Connecting to db
+        DatabaseInterface db = MainApplication.getDBConnection();
+
+        try {
+            // 2) Checking for valid auth data
+            if (!Tools.authenticate(db, username, oldPassword)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
+                                + Log.format(Tools.hash256(oldPassword)) + "");
+    
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+        }catch (SQLException e) {
+
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+        
+        // 3) update the password
+		try {
+			 db.updatePassword(username, newPassword);
+		} catch (SQLException e) {
+			
+			Log.message().severe("Thrown SQL exception while trying update the password of an user: " + e.getMessage());
+            return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
+		}
+		
+		Log.message().finest("Updated password for user with EMAIL=" + Log.format(username));
+		
+		return new ResponsePacket(1, "Password update sucessfully");
+	}
 }

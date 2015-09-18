@@ -140,6 +140,23 @@ public class DatabaseInterface {
 
 		this.throwUpdate(query);
 	}
+	
+	/** @throws SQLException */
+	public void updatePassword(String username, String newPassword) throws SQLException {
+		
+		String query, condition;
+		String[] cols = new String[1];
+		String[] vals = new String[1];		
+		
+		cols[0] = "password";		
+		vals[0] = Tools.hash256(newPassword);
+		
+		condition = "'email' = " + username;
+		
+		query = generateUpdateQuery(TABLE_USER, cols, vals, condition);
+		
+		this.throwUpdate(query);		
+	}
 
 	/** @throws SQLException */
 	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID, Integer role, Integer state, Long randomLong, String typePreCheck, String mapping,
