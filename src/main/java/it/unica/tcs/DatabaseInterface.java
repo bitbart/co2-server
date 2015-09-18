@@ -151,7 +151,7 @@ public class DatabaseInterface {
 		cols[0] = "password";		
 		vals[0] = Tools.hash256(newPassword);
 		
-		condition = "'email' = " + username;
+		condition = "`email` = '" + username + "'";
 		
 		query = generateUpdateQuery(TABLE_USER, cols, vals, condition);
 		
@@ -781,7 +781,7 @@ public class DatabaseInterface {
 		}
 
 		updateQuery = "UPDATE `" + table + "` SET " + sets + " WHERE " + condition + " ;";
-
+		
 		return updateQuery;
 	}
 
