@@ -543,7 +543,7 @@ public class SessionHandler {
                 case DatabaseInterface.CONTRACT_EXPIRED:
                     Log.message().fine(logmsg + "EXPIRED");
                     lc.put(key, true);
-                    return new ResponsePacket(-1, Messages.CONTRACT_EXPIRED_MESSAGE);
+                    return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
 
                 default:
                     Log.message().fine(logmsg + "ERROR");

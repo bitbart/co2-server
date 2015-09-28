@@ -407,6 +407,9 @@ public class SessionMonitor {
             
             c = new Contract().loadFromHash(contractHash);
             
+            if (c.getState() == DatabaseInterface.CONTRACT_EXPIRED)
+            	return new ResponsePacket(-2, "Contract expired: cannot be fused anymore.");
+            
             if (c.getSessionID() == -1)
                 return new ResponsePacket(0, "Contract not fused yet");
             
