@@ -31,6 +31,7 @@ public class Messages {
 	public final static String CONTRACT_FUSED_MESSAGE = "Contract is fused";
 	public final static String CONTRACT_COMPLETED_MESSAGE = "Contract is consumed";
 	public final static String CONTRACT_STUCK_MESSAGE = "Contract is stuck";
+	public final static String CONTRACT_EXPIRED_MESSAGE = "The contract is expired and cannot be fused anymore.";
 
 	/* Session messages */
 	public static final String SESSION_COMPLIANT_NO = "Compliant contract not found yet";
