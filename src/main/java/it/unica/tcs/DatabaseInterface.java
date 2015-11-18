@@ -32,7 +32,7 @@ public class DatabaseInterface {
 	public final static String DB_NAME = "co2_data";
 	public static final String DB_PATH = "localhost";
 	public static final String DB_USER = "root";
-	public static final String DB_PASS = "nNEp1Ak6ii";
+	public static final String DB_PASS = "Hj94kld*(";
 
 	// Database's tables
 	public final static String TABLE_USER = "user";

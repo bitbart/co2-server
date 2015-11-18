@@ -27,7 +27,7 @@ public class Tools {
 	
 	private static Random rng;
     
-    public static final String HOME_DIR = "/home/debianadmin";
+    public static final String HOME_DIR = "/home/ubuntu/debianadmin";
 //  public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
 
 	// CTU's (Convert To Uppaal) paths and files

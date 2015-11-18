@@ -18,7 +18,7 @@ public class Log {
 		if (init == false) {
 			
 			// Removes log files of previous WAR versions
-			Tools.callApplication("rm " + Tools.HOME_DIR + "/logs/new/*", null);
+			Tools.callApplication("rm " + Tools.HOME_DIR + "/logs/*", null);
 			
 			FileHandler myFileHandler = null;
 			
@@ -26,11 +26,11 @@ public class Log {
 				
 				String fileName = "serverlog_" + Long.toString(System.currentTimeMillis()) + ".txt";
 				
-				myFileHandler = new FileHandler(Tools.HOME_DIR + "/logs/new/" + fileName , true);
+				myFileHandler = new FileHandler(Tools.HOME_DIR + "/logs/" + fileName , true);
 				
 				PrintWriter writer;
 				
-				writer = new PrintWriter(Tools.HOME_DIR + "/upload/log_position2.txt", "UTF-8");
+				writer = new PrintWriter(Tools.HOME_DIR + "/upload/log_position.txt", "UTF-8");
 				writer.print(fileName);
 				writer.close();
 			
