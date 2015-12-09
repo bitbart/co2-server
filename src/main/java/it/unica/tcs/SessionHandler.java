@@ -470,6 +470,66 @@ public class SessionHandler {
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
     }
+    
+    @POST
+    @Path(value = "/retract")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket retract(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+    	
+        DatabaseInterface db = MainApplication.getDBConnection();
+
+        try {
+            // 2) Checking for valid auth data
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+        }catch (SQLException e) {
+            
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+
+    	
+    	try {
+			Contract c = new Contract().loadFromHash(contractHash);
+			
+			MainApplication.mutexAcquire(c.getContractID());
+			
+			c.loadFromHash(contractHash); // reload the contract again (to be atomic)
+			
+			Integer state = c.getState();
+			
+			if (state == DatabaseInterface.CONTRACT_LATENT) {
+				
+				db.updateContract(c.getContractHash(), c.getSessionID(), c.getRole(), DatabaseInterface.CONTRACT_EXPIRED);
+				
+				MainApplication.mutexRelease(c.getContractID());
+				
+				return new ResponsePacket(1, "The contract has been successfully retracted.");
+			}
+			else {
+				
+				MainApplication.mutexRelease(c.getContractID());
+				
+				return new ResponsePacket(-1, "The specified contract is actually not latent and cannot be retracted.");
+			}
+				
+			
+		} catch (SQLException e) {
+			
+			Log.message().severe("Thrown SQL exception while trying to retract the contract with hash " + Log.format(contractHash)+ ": " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+		}
+    }
 
     
     /** 
