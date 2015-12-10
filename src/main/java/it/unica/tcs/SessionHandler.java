@@ -553,16 +553,29 @@ public class SessionHandler {
     	
     	String key = contractHash;
     	
-    	Cache<String, Boolean> lc = MainApplication.getLatentCache();
+    	Cache<String, Integer> lc = MainApplication.getLatentCache();
     	
-    	Boolean response = lc.get(key);
+    	Integer response = lc.get(key);
     	
     	if (response != null) {
     		
-    		if (response == true)
-    			return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
-    		else
-    			return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
+    		switch(response) {
+    		
+	    		case DatabaseInterface.CONTRACT_LATENT: 
+	    		case DatabaseInterface.CONTRACT_HANDLED:
+	    			return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
+	    		case DatabaseInterface.CONTRACT_OFF_DUTY: 
+	    		case DatabaseInterface.CONTRACT_ON_DUTY: 
+	    			return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
+	    		case DatabaseInterface.CONTRACT_EXPIRED:
+	    			return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
+	    		case DatabaseInterface.CONTRACT_INNOCENT:
+	    		case DatabaseInterface.CONTRACT_CULPABLE:
+	    			new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
+	    		default:
+	    			return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+	    			
+    		}
     	}
 
         DatabaseInterface db = MainApplication.getDBConnection();
@@ -577,32 +590,32 @@ public class SessionHandler {
             switch (state) {
                 case DatabaseInterface.CONTRACT_LATENT:
                     Log.message().fine(logmsg + "LATENT");
-                    lc.put(key, false);
+                    lc.put(key, DatabaseInterface.CONTRACT_LATENT);
                     return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_ON_DUTY:
                     Log.message().fine(logmsg + "ON_DUTY");
-                    lc.put(key, true);
+                    lc.put(key, DatabaseInterface.CONTRACT_ON_DUTY);
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_OFF_DUTY:
                     Log.message().fine(logmsg + "OFF_DUTY");
-                    lc.put(key, true);
+                    lc.put(key, DatabaseInterface.CONTRACT_OFF_DUTY);
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_INNOCENT:
                     Log.message().fine(logmsg + "INNOCENT");
-                    lc.put(key, true);
+                    lc.put(key, DatabaseInterface.CONTRACT_INNOCENT);
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_CULPABLE:
                     Log.message().fine(logmsg + "CULPABLE");
-                    lc.put(key, true);
+                    lc.put(key, DatabaseInterface.CONTRACT_CULPABLE);
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
                     
                 case DatabaseInterface.CONTRACT_EXPIRED:
                     Log.message().fine(logmsg + "EXPIRED");
-                    lc.put(key, true);
+                    lc.put(key, DatabaseInterface.CONTRACT_EXPIRED);
                     return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
 
                 default:
@@ -714,10 +727,10 @@ public class SessionHandler {
             db.setContractState(contractID, c1_progress);
             db.setContractState(compliantID, c2_progress);
             
-            Cache<String, Boolean> lc = MainApplication.getLatentCache();
+            Cache<String, Integer> lc = MainApplication.getLatentCache();
             
-            lc.put(c1.getContractHash(), true);
-            lc.put(c2.getContractHash(), true);
+            lc.put(c1.getContractHash(), c1_progress);
+            lc.put(c2.getContractHash(), c2_progress);
 
             Log.message().info(
                     "Contract with ID=" + contractID + " and contract with ID=" + compliantID
