@@ -509,7 +509,7 @@ public class SessionHandler {
 			
 			if (state == DatabaseInterface.CONTRACT_LATENT) {
 				
-				db.updateContract(c.getContractHash(), c.getSessionID(), c.getRole(), DatabaseInterface.CONTRACT_EXPIRED);
+				db.updateContractState(c.getContractHash(), DatabaseInterface.CONTRACT_EXPIRED);
 				
 				MainApplication.mutexRelease(c.getContractID());
 				

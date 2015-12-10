@@ -526,6 +526,23 @@ public class DatabaseInterface {
 
 		this.throwUpdate(updateQuery);
 	}
+	
+	public void updateContractState(String contractHash, Integer state) throws SQLException {
+
+		String updateQuery, condition;
+
+		String[] cols = new String[1];
+		String[] vals = new String[1];
+
+		cols[1] = "state";
+		vals[1] = state + "";
+
+		condition = "contract_hash = '" + contractHash + "'";
+
+		updateQuery = generateUpdateQuery(TABLE_CONTRACT, cols, vals, condition);
+
+		this.throwUpdate(updateQuery);
+	}
 
 	/** @throws SQLException */
 	public void updateContext(Integer contextID, String name, String description) throws SQLException {

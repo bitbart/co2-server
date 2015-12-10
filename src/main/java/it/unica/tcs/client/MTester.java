@@ -90,6 +90,20 @@ public class MTester {
 					return;
 				}
 				
+				// TODO: toberemoved
+				try {
+					
+					puA.retract();
+					printInfo(1, p, "the contract of "+ p + " has been retracted.");
+					
+					if(2>1)
+					return;
+				} catch (ContractException e) {
+					
+					printError(1, p, "cannot perfom the retract: " + e.getMessage());
+					return;
+				}
+				
 				Session<TST> sA = null;
 				try {
 					if (puA.isFused()) {
