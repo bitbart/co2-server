@@ -534,8 +534,8 @@ public class DatabaseInterface {
 		String[] cols = new String[1];
 		String[] vals = new String[1];
 
-		cols[1] = "state";
-		vals[1] = state + "";
+		cols[0] = "state";
+		vals[0] = state + "";
 
 		condition = "contract_hash = '" + contractHash + "'";
 

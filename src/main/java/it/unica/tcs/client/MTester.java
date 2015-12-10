@@ -90,19 +90,7 @@ public class MTester {
 					return;
 				}
 				
-				// TODO: toberemoved
-				try {
-					
-					puA.retract();
-					printInfo(1, p, "the contract of "+ p + " has been retracted.");
-					
-					if(2>1)
-					return;
-				} catch (ContractException e) {
-					
-					printError(1, p, "cannot perfom the retract: " + e.getMessage());
-					return;
-				}
+
 				
 				Session<TST> sA = null;
 				try {
@@ -127,6 +115,20 @@ public class MTester {
 					printError(1,p, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
 				}
+				
+				/* TODO: toberemoved
+				try {
+					
+					puA.retract();
+					printInfo(1, p, "the contract of "+ p + " has been retracted.");
+					
+					if(2>1)
+					return;
+				} catch (ContractException e) {
+					
+					printError(1, p, "cannot perfom the retract: " + e.getMessage());
+					return;
+				}*/
 				
 				try {
 					Thread.sleep(9000);  // wait for the deadline (one second before)
