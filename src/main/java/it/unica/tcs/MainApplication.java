@@ -16,7 +16,7 @@ public class MainApplication implements ServletContextListener {
 	private static Mutex mutex;
 	private static Cache<String, Boolean> credentialsCache;
 	private static Cache<String, Boolean> permissionsCache;	
-	private static Cache<String, Integer> latentCache;
+	private static Cache<String, Integer[]> latentCache;
 	
 	public static void mutexAcquire(Integer cID) {
 	    
@@ -53,7 +53,7 @@ public class MainApplication implements ServletContextListener {
 	    return permissionsCache;
 	}
 	
-	public static Cache<String, Integer> getLatentCache() {
+	public static Cache<String, Integer[]> getLatentCache() {
 	    
 	    return latentCache;
 	}
@@ -114,6 +114,6 @@ public class MainApplication implements ServletContextListener {
 	    
 	    credentialsCache = new Cache<String, Boolean>(24*60*60, 24*60*60, 10000);
 	    permissionsCache = new Cache<String, Boolean>(24*60*60, 24*60*60, 10000);
-	    latentCache = new Cache<String, Integer>(24*60*60, 24*60*60, 10000);
+	    latentCache = new Cache<String, Integer[]>(24*60*60, 24*60*60, 10000);
 	}
 }

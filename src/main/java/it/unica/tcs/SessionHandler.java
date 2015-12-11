@@ -553,69 +553,83 @@ public class SessionHandler {
     	
     	String key = contractHash;
     	
-    	Cache<String, Integer> lc = MainApplication.getLatentCache();
+    	DatabaseInterface db = MainApplication.getDBConnection();
     	
-    	Integer response = lc.get(key);
+    	Cache<String, Integer[]> lc = MainApplication.getLatentCache();
     	
-    	if (response != null) {
-    		
-    		switch(response) {
-    		
-	    		case DatabaseInterface.CONTRACT_LATENT: 
-	    		case DatabaseInterface.CONTRACT_HANDLED:
-	    			return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
-	    		case DatabaseInterface.CONTRACT_OFF_DUTY: 
-	    		case DatabaseInterface.CONTRACT_ON_DUTY: 
-	    			return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
-	    		case DatabaseInterface.CONTRACT_EXPIRED:
-	    			return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
-	    		case DatabaseInterface.CONTRACT_INNOCENT:
-	    		case DatabaseInterface.CONTRACT_CULPABLE:
-	    			new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
-	    		default:
-	    			return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
-	    			
-    		}
-    	}
-
-        DatabaseInterface db = MainApplication.getDBConnection();
-        
-        Integer state;
-        String logmsg = "Checked state for contract with HASH=" + Log.format(contractHash) + ": ";
+    	Integer[] response = lc.get(key);
+    	Integer actualTime = (int) (System.currentTimeMillis()/1000); // here it is approximated to 1 second
 
         // Retrieves contract state
         try {
-            state = getContractState(db, username, pass, contractHash);
+        	
+        	if (response != null) {
+        		
+        		switch(response[0]) {
+        		
+    	    		case DatabaseInterface.CONTRACT_LATENT: 
+    	    		case DatabaseInterface.CONTRACT_HANDLED:
+    	    			//Log.message().fine("Checked if contract with hash=" + Log.format(contractHash) + " is fused (in cache). Expire time is '" + response[1] + "' "
+    	    			//		+ "and actual time is '" + actualTime + "'.");
+    	    			if (response[1] == -1 || response[1] > actualTime)
+    	    				return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
+    	    			else {
+    	    				Log.message().fine("Updated state in db and cache for contract with HASH=" + Log.format(contractHash) + ": " + "EXPIRED");
+    	    				lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_EXPIRED});
+    	    				db.updateContractState(contractHash, DatabaseInterface.CONTRACT_EXPIRED);
+    	    				
+    	    				return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
+    	    			}
+    	    		case DatabaseInterface.CONTRACT_OFF_DUTY: 
+    	    		case DatabaseInterface.CONTRACT_ON_DUTY: 
+    	    			return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
+    	    		case DatabaseInterface.CONTRACT_EXPIRED:
+    	    			return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
+    	    		case DatabaseInterface.CONTRACT_INNOCENT:
+    	    		case DatabaseInterface.CONTRACT_CULPABLE:
+    	    			new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
+    	    		default:
+    	    			return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+    	    			
+        		}
+        	}
+        	
+        	Contract c = new Contract().loadFromHash(contractHash);
+            Integer state;
+            Integer expireTime = c.getDelay() == 0 ? -1 : (int) (c.getTimestamp()/1000) + c.getDelay()/1000;
+            String logmsg = "Checked state for contract with HASH=" + Log.format(contractHash) + ": ";
+        	
+            state = c.getState();
 
             switch (state) {
                 case DatabaseInterface.CONTRACT_LATENT:
                     Log.message().fine(logmsg + "LATENT");
-                    lc.put(key, DatabaseInterface.CONTRACT_LATENT);
+                    lc.put(key, new Integer[] { DatabaseInterface.CONTRACT_LATENT , expireTime});
                     return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_ON_DUTY:
                     Log.message().fine(logmsg + "ON_DUTY");
-                    lc.put(key, DatabaseInterface.CONTRACT_ON_DUTY);
+                    lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_ON_DUTY});
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_OFF_DUTY:
                     Log.message().fine(logmsg + "OFF_DUTY");
-                    lc.put(key, DatabaseInterface.CONTRACT_OFF_DUTY);
+                    lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_OFF_DUTY});
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_INNOCENT:
                     Log.message().fine(logmsg + "INNOCENT");
-                    lc.put(key, DatabaseInterface.CONTRACT_INNOCENT);
+                    lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_INNOCENT});
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_CULPABLE:
                     Log.message().fine(logmsg + "CULPABLE");
-                    lc.put(key, DatabaseInterface.CONTRACT_CULPABLE);
+                    lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_CULPABLE});
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
                     
                 case DatabaseInterface.CONTRACT_EXPIRED:
                     Log.message().fine(logmsg + "EXPIRED");
-                    lc.put(key, DatabaseInterface.CONTRACT_EXPIRED);
+                    lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_EXPIRED});
                     return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
 
                 default:
@@ -624,11 +638,11 @@ public class SessionHandler {
             }
 
         }
-        catch (DBException e) {
+        catch (SQLException e) {
 
             Log.message().warning("Database exception thrown when checking fusion: " + e.getMessage());
             
-            return new ResponsePacket(-1, e.getMessage());
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
     }
     
@@ -727,10 +741,10 @@ public class SessionHandler {
             db.setContractState(contractID, c1_progress);
             db.setContractState(compliantID, c2_progress);
             
-            Cache<String, Integer> lc = MainApplication.getLatentCache();
+            Cache<String, Integer[]> lc = MainApplication.getLatentCache();
             
-            lc.put(c1.getContractHash(), c1_progress);
-            lc.put(c2.getContractHash(), c2_progress);
+            lc.put(c1.getContractHash(), new Integer[]{c1_progress});
+            lc.put(c2.getContractHash(), new Integer[]{c2_progress});
 
             Log.message().info(
                     "Contract with ID=" + contractID + " and contract with ID=" + compliantID

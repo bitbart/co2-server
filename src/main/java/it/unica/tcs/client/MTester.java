@@ -18,26 +18,32 @@ import co2api.TimeExpiredException;
 
 public class MTester {
 
-	private static final Integer LOG_LEVEL = 1;
+	private static final Integer LOG_LEVEL = 1; 
 
-	public static void main(String[] args) {
+	public static void main(String[] args) { 
 
 		welcome();
 		
 		pre(1); test1(); post(1);
-	}
+	} 
 
 	private static void test1() {
 		
 		boolean result = false;
 		
+		final boolean aEnabled = true;
+		final boolean bEnabled = false; 
+		
 		
 
 		// description
-		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?good{x<20}. ♠\n");
+		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?good{x<20}. ♠\n"); 
 		
 		Thread pA = new Thread() {
 			public void run() {
+				
+				if (!aEnabled)
+					return;
 				
 				String p = "A";
 
@@ -74,7 +80,7 @@ public class MTester {
 
 				Private<TST> pA;
 				try {
-					pA = new TST("!hello{x<10}.?ok{x<20}").toPrivate(co2);
+					pA = new TST("!hello{x<10}.?poba{x<20}").toPrivate(co2);
 					printFinest(1, p, "created the private contract for user "+p +".");
 				} catch (ContractException e) {
 					printError(1, p, "can't create the private for user "+p +". " + e.getMessage());
@@ -83,36 +89,10 @@ public class MTester {
 				
 				Public<TST> puA;
 				try {
-					puA = pA.tell();
+					puA = pA.tell(3000);
 					printInfo(1, p, "the contract of "+p +" has been published online.");
 				} catch (ContractException e) {
 					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
-					return;
-				}
-				
-
-				
-				Session<TST> sA = null;
-				try {
-					if (puA.isFused()) {
-						try {
-							sA = puA.getSession(); 
-							printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
-						}
-						catch (ContractException e) {
-							printError(1, p, "the contract seems to be fused, but the session can't be getted." + e.getMessage());
-						}
-					}
-					else {
-						sA = puA.waitForSession(30000);
-						printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
-					}
-						
-				} catch (ContractException e) {
-					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
-					return;
-				} catch (TimeExpiredException e) {
-					printError(1,p, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
 				}
 				
@@ -129,6 +109,34 @@ public class MTester {
 					printError(1, p, "cannot perfom the retract: " + e.getMessage());
 					return;
 				}*/
+
+				
+				Session<TST> sA = null;
+				try {
+					
+					puA.waitForSession();
+					/*
+					if (puA.isFused()) {
+						try {
+							sA = puA.getSession(); 
+							printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
+						}
+						catch (ContractException e) {
+							printError(1, p, "the contract seems to be fused, but the session can't be getted." + e.getMessage());
+						}
+					}
+					else {
+						sA = puA.waitForSession(30000);
+						printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
+					}*/
+						
+				} catch (ContractException e) {
+					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
+					return;
+				}/* catch (TimeExpiredException e) {
+					printError(1,p, "can't get a session before the deadline of 30secs. " + e.getMessage());
+					return;
+				} */
 				
 				try {
 					Thread.sleep(9000);  // wait for the deadline (one second before)
@@ -152,6 +160,9 @@ public class MTester {
 
 		Thread pB = new Thread() {
 			public void run() {
+				
+				if (!bEnabled)
+					return;
 				
 				String q = "B";
 				
