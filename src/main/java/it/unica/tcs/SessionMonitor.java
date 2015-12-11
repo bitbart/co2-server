@@ -407,18 +407,26 @@ public class SessionMonitor {
             
             c = new Contract().loadFromHash(contractHash);
             
-            if (c.getState() == DatabaseInterface.CONTRACT_EXPIRED)
+            /*if (c.getState() == DatabaseInterface.CONTRACT_EXPIRED)
             	return new ResponsePacket(-2, "Contract expired: cannot be fused anymore.");
             
             if (c.getSessionID() == -1)
                 return new ResponsePacket(0, "Contract not fused yet");
+            */
             
-            query = "SELECT start_timestamp FROM session WHERE session_id = " + c.getSessionID();
-            rs = db.select(query);
-            rs.next();
-            timestamp = rs.getLong(1);
+            ResponsePacket rp = SessionHandler.isFused(contractHash);
             
-            return new ResponsePacket(1, timestamp + "");
+            if (rp.getType() == 1) {
+            
+	            query = "SELECT start_timestamp FROM session WHERE session_id = " + c.getSessionID();
+	            rs = db.select(query);
+	            rs.next();
+	            timestamp = rs.getLong(1);
+	            
+	            return new ResponsePacket(1, timestamp + "");
+            }
+            else
+            	return rp;
         }
         catch (SQLException e) {
             

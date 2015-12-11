@@ -530,26 +530,8 @@ public class SessionHandler {
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
 		}
     }
-
     
-    /** 
-     * Given a contract it communicates if is fused.
-     * @param username Client username
-     * @param pass Client password
-     * @param contractHash Xml contract sent by client
-     * @return Xml response that communicates if the contract is fused 
-     */
-    @POST
-    @Path(value = "/isFused")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-    public ResponsePacket checkFused(QueryPacket postData) {
-    	
-    	String username = postData.getUsername();
-    	String pass = postData.getPassword();
-    	String contractHash = postData.getContractHash();
-    	
-    	// TODO: handle authentication
+    public static ResponsePacket isFused(String contractHash) {
     	
     	String key = contractHash;
     	
@@ -644,6 +626,43 @@ public class SessionHandler {
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
+    }
+
+    
+    /** 
+     * Given a contract it communicates if is fused.
+     * @param username Client username
+     * @param pass Client password
+     * @param contractHash Xml contract sent by client
+     * @return Xml response that communicates if the contract is fused 
+     */
+    @POST
+    @Path(value = "/isFused")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket checkFused(QueryPacket postData) {
+    	
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+    	
+        DatabaseInterface db = MainApplication.getDBConnection();
+
+        try {
+            // 2) Checking for valid auth data
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+        }catch (SQLException e) {
+            
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+    	
+    	return isFused(contractHash);
     }
     
     @POST

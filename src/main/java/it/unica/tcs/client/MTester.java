@@ -80,7 +80,7 @@ public class MTester {
 
 				Private<TST> pA;
 				try {
-					pA = new TST("!hello{x<10}.?poba{x<20}").toPrivate(co2);
+					pA = new TST("!hello{x<10}.?poba{x<20}").toPrivate(co2); 
 					printFinest(1, p, "created the private contract for user "+p +".");
 				} catch (ContractException e) {
 					printError(1, p, "can't create the private for user "+p +". " + e.getMessage());
