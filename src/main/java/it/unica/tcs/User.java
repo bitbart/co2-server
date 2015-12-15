@@ -89,9 +89,7 @@ public class User {
 	
 	public void store() throws SQLException {		
 		
-		Log.message().info("PASSAGGIO F");
 		db.updateUser(userID, firstName, lastName, username, password, reputation, credit, tv, ftv);
-		Log.message().info("PASSAGGIO G");
 	}
 	
 	public Integer getUserID() {
