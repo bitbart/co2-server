@@ -731,6 +731,75 @@ public class SessionMonitor {
         }
     }
     
+    @POST
+    @Path(value = "/canISend")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+    /** */
+    public ResponsePacket canISend(QueryPacket postData) {
+    	
+    	// 0) Load input data
+    	String username = postData.getUsername();
+    	String pass = postData.getPassword();
+    	String contractHash = postData.getContractHash();
+    	String action = postData.getActionName();
+    	
+        DatabaseInterface db = MainApplication.getDBConnection();
+    	
+    	
+        // 1) Verifies authentication and permissions
+        try {
+
+            if (!Tools.authenticate(db, username, pass)) {
+                Log.message().warning(
+                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return  new ResponsePacket(-1, Messages.AUTH_FAILED);
+
+            }
+            if (!Tools.permissionContract(db, username, contractHash)) {
+
+                Log.message().warning(
+                        "Access denied: user with USERNAME=" + Log.format(username)
+                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+                
+                return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+            }
+        }
+        catch (SQLException e) {
+        	
+            Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
+        }
+
+        // 2d) Calls MySQL
+        try {
+            Contract c = new Contract().loadFromHash(contractHash);
+            
+            String fileName = Tools.getFile(contractHash + c.getRole(), Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
+            
+            Tools.loadNetworkFromDB(db, contractHash, fileName);
+            
+            AppResponse ar = Tools.callApplication(Tools.getCtuPath()+ "-isa " + fileName + " " + c.getRole() + " " + action, null);
+            
+            if (ar.hasErrors()) {
+            	
+            	throw new Exception("errors inside the CTU response of isAllowedActions.");
+            }
+            
+            if (ar.getOutput().equals("yes"))
+            	return new ResponsePacket(1, "The specified action can be performed by the participant.");
+            else
+            	return new ResponsePacket(0, "The specified action CANNOT be performed by the participant.");
+        }
+        catch (Exception e) {
+
+            Log.message().warning("Exception thrown in isAllowed: " + e.getMessage());
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+    }
     
     @POST
     @Path(value = "/isSessionEnded")
@@ -805,7 +874,7 @@ public class SessionMonitor {
     // TODO: add comments
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
-        String path, fileName = "", newFileName = "", sessionHash = "";
+        String path, fileName = "", newFileName = "", sessionHash = ""; //fix old_session_hash
         AppResponse ocamlResult;
         Integer role;
         Contract c;
