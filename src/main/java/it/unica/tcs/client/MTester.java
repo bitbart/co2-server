@@ -37,7 +37,7 @@ public class MTester {
 		
 
 		// description
-		System.out.println("\\\\ ♣ It correctly executes the contract !hello{x<10}.?good{x<20}. ♠\n"); 
+		System.out.println("\\\\ ♣ It executes the contract !hello{x<10}.?good{x<20} (without performing 'good', at the moment) ♠\n"); 
 		
 		Thread pA = new Thread() {
 			public void run() {
@@ -80,7 +80,7 @@ public class MTester {
 
 				Private<TST> pA;
 				try {
-					pA = new TST("!hello{x<10}.?poba{x<20}").toPrivate(co2); 
+					pA = new TST("!hello{x<10}.?good{x<20}").toPrivate(co2); 
 					printFinest(1, p, "created the private contract for user "+p +".");
 				} catch (ContractException e) {
 					printError(1, p, "can't create the private for user "+p +". " + e.getMessage());
@@ -96,7 +96,7 @@ public class MTester {
 					return;
 				}
 				
-				/* TODO: toberemoved
+				/* -- RETRACT (if needed) --
 				try {
 					
 					puA.retract();
@@ -148,7 +148,7 @@ public class MTester {
 					if (sA == null)
 						throw new ContractException("The session object is null.");
 						
-					sA.send("helo"); // performs the action
+					sA.send("hello"); // performs the action
 					printInfo(1,p, "action 'hello' correctly performed!");
 					
 				} catch (ContractException e) {
@@ -203,7 +203,7 @@ public class MTester {
 				Private<TST> pB = null;
 
 				try {
-					pB = new TST("?hello{x<10}.!ok{x<20}").toPrivate(co2bis);
+					pB = new TST("?hello{x<10}.!good{x<20}").toPrivate(co2bis);
 					printFinest(1, q, "created the private contract for user "+q +".");
 				} catch (ContractException e) {
 					printError(1, q, "can't create the private for user "+q +". " + e.getMessage());
@@ -265,11 +265,11 @@ public class MTester {
 					printError(1,q, "cannot receive the expected action 'hello'. " + e.getMessage());
 					return;
 				} catch (TimeExpiredException e) {
-					// TODO handle
-					e.printStackTrace();
+					printError(1,q, "cannot receive the expected action 'hello'. " + e.getMessage());
+					return;
 				} catch (ContractViolationException e) {
-					// TODO handle
-					e.printStackTrace();
+					printError(1,q, "cannot receive the expected action 'hello'. " + e.getMessage());
+					return;
 				}
 			}
 		};
