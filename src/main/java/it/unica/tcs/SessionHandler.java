@@ -710,7 +710,8 @@ public class SessionHandler {
         input[1] = contract;
         Tools.callApplication(path, input);
         
-        Tools.callApplication("chown mysql " + fileName, null); // Change the proprietary of the file (mysql) due to an error bug
+        Tools.mysqlChown(fileName);
+        //Tools.callApplication("chown mysql " + fileName, null); // Change the proprietary of the file (mysql) due to an error bug
 
         sessionHash = Tools.hash256(c1.getContractHash() + c2.getContractHash());
 

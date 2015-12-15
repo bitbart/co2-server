@@ -11,6 +11,16 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
@@ -35,7 +45,7 @@ public class Tools {
 //	public static final String PATH_CONS = CO2_DIR + "/cons";
 	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
 //	public static final String PATH_NETS = CO2_DIR + "/nets";
-	public static final String PATH_CTU_NETS = HOME_DIR + "/tmp/nets/OcamlNetworks_";
+	public static final String PATH_CTU_NETS = "/tmp/OcamlNetworks_";
 //	public static final String PATH_AUTOMATA = CO2_DIR + "/automata";
 	public static final String PATH_CTU_AUTOMATA = HOME_DIR + "/tmp/nets/OcamlAutomata_";
 //	public static final String PATH_LABELS = CO2_DIR + "/labels";
@@ -246,6 +256,21 @@ public class Tools {
 	    
 	    return ar;
 	}
+	
+	public static void mysqlChown(String filename) {
+		
+		try {
+			Path path = Paths.get(filename);
+		    UserPrincipalLookupService lookupService = FileSystems.getDefault()
+		        .getUserPrincipalLookupService();
+		    UserPrincipal userPrincipal = lookupService.lookupPrincipalByName("mysql");
+	
+		    Files.setOwner(path, userPrincipal);
+			
+		} catch (IOException e) {
+			Log.message().severe("Can change the group owner of " + filename + " to mysql: " + e.getMessage());
+		}
+	}
 
 	/** Creates a new filename. To avoid collisions, it uses random values (where the seed is an input param) and current
 	 * time.
@@ -272,6 +297,8 @@ public class Tools {
 			if ((!f.exists()) && (create)) {
 				try {
 					f.createNewFile();
+					f.setReadable(true, false);
+					f.setWritable(true, false);
 
 				}
 				catch (IOException e) {}

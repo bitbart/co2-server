@@ -20,7 +20,7 @@ public class MTester {
 
 	private static final Integer LOG_LEVEL = 1; 
 
-	public static void main(String[] args) { 
+	public static void main(String[] args) {   
 
 		welcome();
 		
@@ -32,7 +32,7 @@ public class MTester {
 		boolean result = false;
 		
 		final boolean aEnabled = true;
-		final boolean bEnabled = false; 
+		final boolean bEnabled = true; 
 		
 		
 
@@ -89,7 +89,7 @@ public class MTester {
 				
 				Public<TST> puA;
 				try {
-					puA = pA.tell(3000);
+					puA = pA.tell();
 					printInfo(1, p, "the contract of "+p +" has been published online.");
 				} catch (ContractException e) {
 					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
@@ -114,8 +114,8 @@ public class MTester {
 				Session<TST> sA = null;
 				try {
 					
-					puA.waitForSession();
-					/*
+					//puA.waitForSession();
+					
 					if (puA.isFused()) {
 						try {
 							sA = puA.getSession(); 
@@ -128,15 +128,15 @@ public class MTester {
 					else {
 						sA = puA.waitForSession(30000);
 						printInfo(1, p, "the contract of "+p +" has been fused, the session is established.");
-					}*/
+					}
 						
 				} catch (ContractException e) {
 					printError(1, p, "can't advertise the contract of "+p +" with the TELL. " + e.getMessage());
 					return;
-				}/* catch (TimeExpiredException e) {
+				} catch (TimeExpiredException e) {
 					printError(1,p, "can't get a session before the deadline of 30secs. " + e.getMessage());
 					return;
-				} */
+				}
 				
 				try {
 					Thread.sleep(9000);  // wait for the deadline (one second before)
@@ -189,7 +189,7 @@ public class MTester {
 					printFine(1, q, "connection created with username={ " + username2 + " } and password={ " + password2 + " }.");
 				} catch (ContractException e) {
 					printError(1, q, "failed when creating connection with username={ " + username2 + " } and password={ " + password2 + " }. " + e.getMessage());
-					return;
+					return; 
 				}
 
 				// GET REPUTATION
@@ -247,7 +247,7 @@ public class MTester {
 					return;
 				} catch (TimeExpiredException e) {
 					printError(1,q, "can't get a session before the deadline of 30secs. " + e.getMessage());
-					return;
+					return; 
 				}
 				
 				try {
