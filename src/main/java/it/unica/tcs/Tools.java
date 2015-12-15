@@ -45,7 +45,7 @@ public class Tools {
 //	public static final String PATH_CONS = CO2_DIR + "/cons";
 	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
 //	public static final String PATH_NETS = CO2_DIR + "/nets";
-	public static final String PATH_CTU_NETS = "/tmp/OcamlNetworks_";
+	public static final String PATH_CTU_NETS = HOME_DIR + "/tmp/nets/OcamlNetworks_";
 //	public static final String PATH_AUTOMATA = CO2_DIR + "/automata";
 	public static final String PATH_CTU_AUTOMATA = HOME_DIR + "/tmp/nets/OcamlAutomata_";
 //	public static final String PATH_LABELS = CO2_DIR + "/labels";
