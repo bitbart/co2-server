@@ -875,7 +875,7 @@ public class SessionMonitor {
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
         String path, fileName = "", newFileName = "", sessionHash = ""; //fix old_session_hash
-        AppResponse ocamlResult;
+        AppResponse ocamlResult, tmpResults;
         Integer role;
         Contract c;
 
@@ -916,6 +916,7 @@ public class SessionMonitor {
 
         // 2c) MySQL needs a file to write network
         fileName = Tools.getFile(sessionHash + role, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
+        Log.message().finest("Written network: " + fileName);
 
         // 2d) Calls MySQL
         try {
@@ -923,8 +924,13 @@ public class SessionMonitor {
             
             // Updates network with time elapsed ... TODO: handle granularity different from 0
             newFileName = Tools.getFile(sessionHash + role + 5, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, false);
-            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
+            tmpResults = Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
+            
+            Log.message().finest("Updated network: " + newFileName);
             //Log.message().info("CTU Output: " + output);
+            
+            if (tmpResults.hasErrors())
+            	throw new SQLException("Error in CTU: " + tmpResults.getErrors());
 
         }
         catch (SQLException e) {
@@ -939,7 +945,7 @@ public class SessionMonitor {
         //Tools.callApplication(path, null, true);
         
         if (ocamlResult.isEmpty())
-        	Log.message().warning("CTU is not returning the state for a contract.");
+        	Log.message().warning("CTU is not returning the state for a contract. Error is: " + ocamlResult.getErrors());
 
         try {
             db.saveNetwork(c.getSessionID(), newFileName);
@@ -950,8 +956,8 @@ public class SessionMonitor {
         }
         
         // Remove the temp file
-        Tools.callApplication("rm " + fileName, null);
-        Tools.callApplication("rm " + newFileName, null);
+        //Tools.callApplication("rm " + fileName, null);
+        //Tools.callApplication("rm " + newFileName, null);
         String logmsg = "Checked if contract with HASH=" + Log.format(contractHash);
         logmsg += queryType.equals(Tools.CTU_PARAM_CULPABLE) ? " is culpable: " : " is on duty: ";
 

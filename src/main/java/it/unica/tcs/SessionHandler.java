@@ -39,6 +39,7 @@ public class SessionHandler {
     	String contractXML = postData.getFirstContract();
     	Long randomLong = MainApplication.getRand();
     	Integer delay = postData.getDelay();
+    	boolean prv = postData.getPrivate();
     	
         Integer contractID, compliantID;
         String contractHash, compliantContract, typePreCheck, firstOutputOcaml, secondOutputOcaml;
@@ -187,7 +188,7 @@ public class SessionHandler {
         	
             contractHash = Tools.hashContract(contractXML, randomLong);
             contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contractXML));
-            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay); 
+            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay, prv); 
             
             // The contract is under processing (not latent)
             Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
@@ -665,6 +666,7 @@ public class SessionHandler {
     	return isFused(contractHash);
     }
     
+    /*
     @POST
     @Produces(value="text/xml")
     @Path(value = "/depositTell") 
@@ -672,7 +674,7 @@ public class SessionHandler {
             @FormParam("contract") String contractXML, @FormParam("randlong") String randLong, @FormParam("deposit") String deposit) {
         
         return null;
-    }
+    }*/
 
     /** Given a contract and a compliant, fuses the two contracts.
      * 
@@ -684,6 +686,7 @@ public class SessionHandler {
     private boolean fuse(DatabaseInterface db, String contract, String compliant, Integer contractID, Integer compliantID) {
 
         String input[] = new String[2], path, fileName, sessionHash;
+        AppResponse ocamlResults;
         Integer contextID, sessionID;
         
         Contract c1, c2;
@@ -708,7 +711,15 @@ public class SessionHandler {
         path = Tools.getCtuPath()+ Tools.CTU_PARAM_START + " " + fileName;
         input[0] = compliant + "\n";
         input[1] = contract;
-        Tools.callApplication(path, input);
+        ocamlResults = Tools.callApplication(path, input);
+        
+        if (ocamlResults.hasErrors()) {
+        	
+            Log.message().severe(
+                    "Error while creating the initial state for a session. CTU error: " + ocamlResults.getErrors());
+            Log.message().finest("Ocaml filename: " + fileName);
+            return false;
+        }
         
         //Tools.mysqlChown(fileName);
         //Tools.callApplication("chown mysql " + fileName, null); // Change the proprietary of the file (mysql) due to an error bug

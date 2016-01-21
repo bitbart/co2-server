@@ -157,17 +157,23 @@ public class DatabaseInterface {
 		
 		this.throwUpdate(query);		
 	}
+	
+	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID, Integer role, Integer state, Long randomLong, String typePreCheck, String mapping,
+			String aux, Integer delay) throws SQLException {
+		
+		return insertContract(contractHash, contractXML, ownerID, contextID, role, state, randomLong, typePreCheck, mapping, aux, delay, false);
+	}
 
 	/** @throws SQLException */
 	public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID, Integer role, Integer state, Long randomLong, String typePreCheck, String mapping,
-			String aux, Integer delay) throws SQLException {
+			String aux, Integer delay, boolean prv) throws SQLException {
 
 		String insertQuery, selectQuery;
 		Integer identifier;
 		ResultSet rs;
 
-		String[] cols = new String[13];
-		String[] vals = new String[13];
+		String[] cols = new String[14];
+		String[] vals = new String[14];
 
 		cols[0] = "contract_hash";
 		cols[1] = "contract_xml";
@@ -182,6 +188,7 @@ public class DatabaseInterface {
 		cols[10] = "delay";
 		cols[11] = "tell_timestamp";
 		cols[12] = "type";
+		cols[13] = "private";
 
 		vals[0] = contractHash;
 		vals[1] = contractXML;
@@ -196,6 +203,7 @@ public class DatabaseInterface {
 		vals[10] = delay + "";
 		vals[11] = System.currentTimeMillis() + "";
 		vals[12] = Contract.TYPE_TST; // TODO: handle different contract types
+		vals[13] = prv ? "1" : "0";
 
 		insertQuery = generateInsertQuery(TABLE_CONTRACT, cols, vals);
 

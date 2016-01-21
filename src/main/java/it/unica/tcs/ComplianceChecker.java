@@ -149,7 +149,7 @@ public class ComplianceChecker {
 
         // 1) Takes all identifiers of the contracts to check
         queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux, delay, tell_timestamp FROM `" + DatabaseInterface.TABLE_CONTRACT
-                + "` WHERE context_id = " + contextID + " AND state = 0 ORDER BY rand();";
+                + "` WHERE context_id = " + contextID + " AND state = 0 AND private = 0 ORDER BY rand();";
         rs = db.select(queryText);
 
         // 2) For every id get probability of compliance

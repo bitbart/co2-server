@@ -12,12 +12,21 @@ public class QueryPacket {
 	private String actionValue;
 	private Integer delay;
 	private String contractType;
+	private boolean prv;
 
 	// Must have no-argument constructor
 	public QueryPacket() {
 
 	}
 	
+	public boolean getPrivate() {
+		return prv;
+	}
+
+	public void setPrivate(boolean prv) {
+		this.prv = prv;
+	}
+
 	public String getUsername() {
 		return username;
 	}

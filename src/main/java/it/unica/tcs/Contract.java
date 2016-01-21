@@ -27,6 +27,7 @@ public class Contract {
     private Integer delay;
     private String type;
 	private boolean initialized;
+	private Integer prv;
 
 	public Contract() {
 
@@ -74,6 +75,7 @@ public class Contract {
 		this.timestamp = result.getLong("tell_timestamp");
 		this.typePreCheck = result.getString("type_pre_check");
 		this.type = result.getString("type");
+		this.prv = result.getInt("private");
 
 		this.initialized = true;
 
@@ -101,6 +103,7 @@ public class Contract {
 		this.timestamp = result.getLong("tell_timestamp");
         this.typePreCheck = result.getString("type_pre_check");
 		this.type = result.getString("type");
+		this.prv = result.getInt("private");
 
 		this.initialized = true;
 		
@@ -206,6 +209,11 @@ public class Contract {
 	public String getType() {
 		
 		return this.type;
+	}
+	
+	public boolean isPrivate() {
+		
+		return this.prv == 1;
 	}
 	
 	public boolean isExpired() {
