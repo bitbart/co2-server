@@ -75,7 +75,7 @@ public class Validator {
 		String fileName, path, context, contextMessage;
 		
 		AppResponse outputOcaml, outputXmllint;
-		DatabaseInterface db = new DatabaseInterface();
+		DatabaseInterface db = DatabaseInterface.getInstance();
 		String[] input = new String[1];
 
 		// 1) Checks null or empty input
@@ -152,7 +152,6 @@ public class Validator {
 		Set<String> elementsFound = new HashSet<>();
 		Set<String> elementsAllowed = new HashSet<>();
 		NodeList intaction, extaction;
-		ResultSet exists, idActionsAllowed, nameActionsAllowed;
 		String temp, contextNameDeclared;
 		Integer contextID;
 
@@ -160,21 +159,27 @@ public class Validator {
 		contextNameDeclared = Tools.getDeclaredStringContext(contract);
 
 		try {
-
 			db.open();
-
-			exists = db.select("SELECT context_id FROM context WHERE name = '" + contextNameDeclared + "';");
-			exists.next();
-			contextID = exists.getInt(1);
-
 		}
 		catch (SQLException e) {
-
+		    
 			Log.message().severe("Cannot open database or select 'context_id' with NAME=" + Log.format(contextNameDeclared) + ". SQL says: " + e.getMessage());
 
 			return Messages.DB_SELECT_FAILED;
 		}
 
+		try (
+		        ResultSet exists  = db.select("SELECT context_id FROM context WHERE name = '" + contextNameDeclared + "';")
+		        ) {
+		    exists.next();
+		    contextID = exists.getInt(1);
+		    
+		} catch (SQLException e) {
+		    Log.message().severe("Error retrieving contextID: " + e.getMessage());
+
+            return Messages.ERROR_GENERIC_INTERNAL;
+		}
+		
 		// 2) Gets (from contract) all actions done
 		if (!contextID.equals(DatabaseInterface.CONTEXT_EMPTY_ID)) {
 
@@ -209,20 +214,18 @@ public class Validator {
 			}
 
 			// 3) Gets (from db) all the actions allowed for this context
-			try {
+			try (
+			        ResultSet actionNamesRS = db.select(
+			                "SELECT action.name "
+			                + "FROM action JOIN context_action ON action.action_id=context_action.action_id "
+			                + "WHERE context_action.context_id = '" + contextID + "';");
+			        ){
 
-				idActionsAllowed = db.select("SELECT action_id FROM context_action WHERE context_id = '" + contextID
-				        + "';");
+				while (actionNamesRS.next()) {
 
-				while (idActionsAllowed.next()) {
-
-					nameActionsAllowed = db.select("SELECT name FROM action WHERE action_id = '"
-					        + idActionsAllowed.getString(1) + "';");
-
-					while (nameActionsAllowed.next())
-						elementsAllowed.add(nameActionsAllowed.getString(1));
+					elementsAllowed.add(actionNamesRS.getString(1));
 				}
-
+				
 			}
 			catch (SQLException e) {
 
@@ -233,7 +236,8 @@ public class Validator {
 
 			// 4) Compares all actions done with the actions allowed
 			for (String element : elementsFound) {
-				if (!elementsAllowed.contains(element)) return Messages.CONTRACT_ACTION_CONTEXT;
+				if (!elementsAllowed.contains(element)) 
+				    return Messages.CONTRACT_ACTION_CONTEXT;
 			}
 		}
 

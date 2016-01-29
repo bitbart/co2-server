@@ -34,18 +34,18 @@ public class Log {
 				writer.print(fileName);
 				writer.close();
 			
+				myFileHandler.setFormatter(new LogFormatter());
+				
+				log.addHandler(myFileHandler);
+				log.setUseParentHandlers(false);
+				log.setLevel(Level.FINEST);
+				
+				init = true;
+
 			} catch (SecurityException | IOException e) {
-			
 				e.printStackTrace();
 			}
 			
-			myFileHandler.setFormatter(new LogFormatter());
-			
-			log.addHandler(myFileHandler);
-			log.setUseParentHandlers(false);
-			log.setLevel(Level.FINEST);
-			
-			init = true;
 		}
 	}
 	

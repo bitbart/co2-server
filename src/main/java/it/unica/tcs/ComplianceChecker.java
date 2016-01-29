@@ -140,52 +140,61 @@ public class ComplianceChecker {
 
         boolean compliant = false;
         String otherContractXML, queryText, otherPreCheckType, otherMapping, otherChanList;
-        ResultSet rs, rs2;
         Integer otherID, otherDelay;
         Long otherTimestamp;
 
         BasicPair<Integer, String> compliantData = new BasicPair<Integer, String>();
         List<Quadruple<Double, String[], Integer, Integer>> preCheckCalculus = new ArrayList<Quadruple<Double, String[], Integer, Integer>>();
 
+
         // 1) Takes all identifiers of the contracts to check
         queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux, delay, tell_timestamp FROM `" + DatabaseInterface.TABLE_CONTRACT
-                + "` WHERE context_id = " + contextID + " AND state = 0 AND private = 0 ORDER BY rand();";
-        rs = db.select(queryText);
+        	+ "` WHERE context_id = " + contextID + " AND state = 0 AND private = 0 ORDER BY rand();";
 
-        // 2) For every id get probability of compliance
-        //    If the probability of compliance is bigger than zero, get the other contract's owner reputation
-        while (rs.next()) {
-            otherID = rs.getInt("contract_id");
-            otherContractXML = rs.getString("contract_xml");
-            otherMapping = rs.getString("mapping");
-            otherChanList = rs.getString("aux"); // For TSTs, the channel list is stored in the auxiliary column
-            otherPreCheckType = rs.getString("type_pre_check");
-            otherDelay = rs.getInt("delay");
-            otherTimestamp= rs.getLong("tell_timestamp");
-            
-            if (otherDelay != 0 && otherTimestamp + otherDelay <= System.currentTimeMillis()) {
-            	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
-            	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
-            	continue;
-            }
-
-            double preCheckValue = preCheck(preCheckType, otherPreCheckType);
-            
-            if (preCheckValue > 0) {
-                queryText = "SELECT tv FROM " + DatabaseInterface.TABLE_CONTRACT + " JOIN " + DatabaseInterface.TABLE_USER + " ON owner_id = user_id WHERE contract_id = " + otherID;
-                rs2 = db.select(queryText);
+        try (
+        	ResultSet rs = db.select(queryText);
+        	)
+        
+        {
+            // 2) For every id get probability of compliance
+            //    If the probability of compliance is bigger than zero, get the other contract's owner reputation
+            while (rs.next()) {
+                otherID = rs.getInt("contract_id");
+                otherContractXML = rs.getString("contract_xml");
+                otherMapping = rs.getString("mapping");
+                otherChanList = rs.getString("aux"); // For TSTs, the channel list is stored in the auxiliary column
+                otherPreCheckType = rs.getString("type_pre_check");
+                otherDelay = rs.getInt("delay");
+                otherTimestamp= rs.getLong("tell_timestamp");
                 
-                if(rs2.next()){
+                if (otherDelay != 0 && otherTimestamp + otherDelay <= System.currentTimeMillis()) {
+                	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
+                	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
+                	continue;
+                }
+    
+                double preCheckValue = preCheck(preCheckType, otherPreCheckType);
+                
+                if (preCheckValue > 0) {
+                    queryText = "SELECT tv FROM " + DatabaseInterface.TABLE_CONTRACT + " JOIN " + DatabaseInterface.TABLE_USER + " ON owner_id = user_id WHERE contract_id = " + otherID;
                     
-                	int otherReputation = rs2.getInt("tv");
+                    try (
+                	    ResultSet rs2 = db.select(queryText);
+                	    ) {
                     
-                	// TODO: change the Quadruple to BasicPair<Double, Contract>, where Contract stores all data like the following, and String contains the precheck value
-                    String[] contractData = new String[3];
-                    contractData[0] = otherContractXML;
-                    contractData[1] = otherMapping;
-                    contractData[2] = otherChanList;
-                    
-                    preCheckCalculus.add(new Quadruple<Double, String[], Integer, Integer>(preCheckValue, contractData, otherID, otherReputation));
+                        if(rs2.next()){
+                            
+                        	int otherReputation = rs2.getInt("tv");
+                            
+                        	// TODO: change the Quadruple to BasicPair<Double, Contract>, where Contract stores all data like the following, and String contains the precheck value
+                            String[] contractData = new String[3];
+                            contractData[0] = otherContractXML;
+                            contractData[1] = otherMapping;
+                            contractData[2] = otherChanList;
+                            
+                            preCheckCalculus.add(new Quadruple<Double, String[], Integer, Integer>(preCheckValue, contractData, otherID, otherReputation));
+                        }
+                    }
                 }
             }
         }

@@ -1,8 +1,6 @@
 package it.unica.tcs;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -19,7 +17,7 @@ public class Debug {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public ResponsePacket trustGuard(QueryPacket postData) {
 		
-		DatabaseInterface db = MainApplication.getDBConnection();
+		DatabaseInterface db = DatabaseInterface.getInstance();
 		
 		Double[] ftv = new Double[4];
 		Double[] ftv1;
@@ -39,9 +37,9 @@ public class Debug {
 			ftv1 = db.getFTV("17584");
 			
 			if (ftv1[1] == 2.)
-				return new ResponsePacket(1, "Il risultato è corretto");
+				return new ResponsePacket(1, "Il risultato ï¿½ corretto");
 			else
-				return new ResponsePacket(-1, "Il risultato è sbagliato: " + ftv1[1]);
+				return new ResponsePacket(-1, "Il risultato ï¿½ sbagliato: " + ftv1[1]);
 			
 		} catch (SQLException e) {
 			return new ResponsePacket(-1, "errore mysql getFTV: " + e.getMessage());
@@ -62,7 +60,7 @@ public class Debug {
     		return new ResponsePacket(-1, "Your IP has been registered. Your violation will be reported to the Judicial Authority.");
     	}
 		
-		DatabaseInterface db = MainApplication.getDBConnection();
+		DatabaseInterface db = DatabaseInterface.getInstance();
     	
     	try {
 			db.deleteContracts();

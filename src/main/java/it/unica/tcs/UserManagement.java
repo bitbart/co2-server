@@ -28,7 +28,7 @@ public class UserManagement {
 			return new ResponsePacket(-1, "Username was not recognized as a valid email address.");
 		}
 		
-		DatabaseInterface db = MainApplication.getDBConnection();
+		DatabaseInterface db = DatabaseInterface.getInstance();
 		
 		try {
 			db.insertUser(username.split("@")[0], "", username, password);
@@ -59,7 +59,7 @@ public class UserManagement {
         }
 
         // 1) Connecting to db
-        DatabaseInterface db = MainApplication.getDBConnection();
+        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data
@@ -124,7 +124,7 @@ public class UserManagement {
         }
 
         // 1) Connecting to db
-        DatabaseInterface db = MainApplication.getDBConnection();
+        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data

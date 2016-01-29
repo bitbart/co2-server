@@ -1,7 +1,5 @@
 package it.unica.tcs;
 
-import it.unica.tcs.InternalException.ErrorTypes;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -13,12 +11,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileOwnerAttributeView;
-import java.nio.file.attribute.GroupPrincipal;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.MessageDigest;
@@ -32,6 +26,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
+
+import it.unica.tcs.InternalException.ErrorTypes;
 
 public class Tools {
 	
@@ -200,9 +196,6 @@ public class Tools {
 			//Log.message().warning("Caller: " + ste[2].getMethodName() + " | Path: " + path);
 		
 		String line;
-	    OutputStream stdin = null;
-	    InputStream stderr = null;
-	    InputStream stdout = null;
 	    
 	    String[] response = new String[2];
 	    response[0] = "";
@@ -215,36 +208,40 @@ public class Tools {
 			process = Runtime.getRuntime ().exec (path);
 
 	    
-		    stdin = process.getOutputStream ();
-		    stderr = process.getErrorStream ();
-		    stdout = process.getInputStream ();
-	
-		    // "write" the parms into stdin
-		    if (input != null) {
-		    	
-			    for (int i=0; i<input.length; i++) {
-			    	
-				    line = input[i] + "\n";
-				    stdin.write(line.getBytes() );
-				    stdin.flush();
+			try (
+	                OutputStream stdin = process.getOutputStream ();
+	                InputStream stderr = process.getErrorStream ();
+	                InputStream stdout = process.getInputStream ();
+	                ) {
+			    
+			    // "write" the parms into stdin
+			    if (input != null) {
+			        
+			        for (int i=0; i<input.length; i++) {
+			            
+			            line = input[i] + "\n";
+			            stdin.write(line.getBytes() );
+			            stdin.flush();
+			        }
 			    }
-		    }
-		    stdin.close();
+			    stdin.close();
+			    
+			    // clean up if any output in stdout
+			    BufferedReader brCleanUp = new BufferedReader (new InputStreamReader (stdout));
+			    
+			    while ((line = brCleanUp.readLine ()) != null) {
+			        response[0] += line;
+			    }
+			    brCleanUp.close();
+			    
+			    // clean up if any output in stderr
+			    brCleanUp = new BufferedReader (new InputStreamReader (stderr));
+			    while ((line = brCleanUp.readLine ()) != null) {
+			        response[1] += line;
+			    }
+			    brCleanUp.close();
+			}
 	
-		    // clean up if any output in stdout
-		    BufferedReader brCleanUp = new BufferedReader (new InputStreamReader (stdout));
-		    
-		    while ((line = brCleanUp.readLine ()) != null) {
-		    	response[0] += line;
-		    }
-		    brCleanUp.close();
-	
-		    // clean up if any output in stderr
-		    brCleanUp = new BufferedReader (new InputStreamReader (stderr));
-		    while ((line = brCleanUp.readLine ()) != null) {
-		    	response[1] += line;
-		    }
-		    brCleanUp.close();
 		    
 		} catch (IOException e) {
 			
@@ -335,12 +332,13 @@ public class Tools {
 			for (byte byt : bytes)
 				result.append(Integer.toString((byt & 0xff) + 0x100, 16).substring(1));
 
+			return result.toString();
 		}
 		catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-
-		return result.toString();
+		
+		return null;
 	}
 
 	/** Generate a unique contract hash for a given XML contract.
@@ -386,17 +384,20 @@ public class Tools {
 		}
 
 		// Checks if exists one and only one row in User table that matches passed values
-		ResultSet rs = db.select("SELECT COUNT(*) FROM user WHERE email = '" + user + "' AND password = '"
-		        + Tools.hash256(pass) + "';");
+		try (
+		        ResultSet rs = db.select("SELECT COUNT(*) FROM user WHERE email = '" + user + "' AND password = '"
+		                + Tools.hash256(pass) + "';");
+		        ) {
+		    rs.next();
+		    
+		    if (rs.getInt(1) == 1) 
+		        returnValue = true;
+		    
+		    cc.put(key, returnValue);
+		    
+		    return returnValue;
+		}
 
-		rs.next();
-
-		if (rs.getInt(1) == 1) 
-		    returnValue = true;
-		
-		cc.put(key, returnValue);
-
-		return returnValue;
 	}
 
 	/** Verifies permission to use a contract.
@@ -405,47 +406,42 @@ public class Tools {
 	 * @param user Client username
 	 * @param contractHash Contract hash
 	 * @return True if user is contract's owner */
-	public static boolean permissionContract(DatabaseInterface db, String username, String contractHash) {
+    public static boolean permissionContract(DatabaseInterface db, String username, String contractHash) {
 
-		ResultSet rs;
-		Integer contractOwner, userClient;
-		String key = username + "," + contractHash;
-		
-		Cache<String, Boolean> pc = MainApplication.getPermissionsCache();
-		
-		Boolean element = pc.get(key);
-		
-		if (element != null) {
-			
-			return element;
-		}
+        Integer contractOwner, userClient;
+        String key = username + "," + contractHash;
 
-		try {
-			contractOwner = new Contract().loadFromHash(contractHash).getOwnerID();
+        Cache<String, Boolean> pc = MainApplication.getPermissionsCache();
 
-			rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
-			rs.next();
-			userClient = rs.getInt(1);
+        Boolean element = pc.get(key);
 
-			if (!contractOwner.equals(userClient)) {
-				
-				pc.put(key, false);
-				return false;
-			}
-			else
-				pc.put(key, true);
-				return true;
+        if (element != null) {
 
-		}
-		catch (SQLException e) {
+            return element;
+        }
 
-			Log.message().warning(
-			        "Cannot determine if USER_EMAIL=" + Log.format(username) + " is the owner of CONTRACT_HASH="
-			                + Log.format(contractHash) + ". SQL says: " + e.getMessage());
+        try (ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");) {
+            contractOwner = new Contract().loadFromHash(contractHash).getOwnerID();
 
-			return false;
-		}
-	}
+            rs.next();
+            userClient = rs.getInt(1);
+
+            if (!contractOwner.equals(userClient)) {
+
+                pc.put(key, false);
+                return false;
+            } else
+                pc.put(key, true);
+            return true;
+
+        } catch (SQLException e) {
+
+            Log.message().warning("Cannot determine if USER_EMAIL=" + Log.format(username)
+                    + " is the owner of CONTRACT_HASH=" + Log.format(contractHash) + ". SQL says: " + e.getMessage());
+
+            return false;
+        }
+    }
 
 	/** Given a contract, returns its declared context.
 	 * 
@@ -484,24 +480,22 @@ public class Tools {
 	 * @param db Database
 	 * @param context Name of the context
 	 * @return The identifier of the context */
-	public static Integer getIDFromContext(DatabaseInterface db, String context) {
+    public static Integer getIDFromContext(DatabaseInterface db, String context) {
 
-		ResultSet exists;
-		Integer contextID;
+        Integer contextID;
 
-		try {
-			exists = db.select("SELECT context_id FROM context WHERE name = '" + context + "';");
-			exists.next();
-			contextID = exists.getInt(1);
-			
-		}
-		catch (SQLException e) {
-		    
-			return 0;
-		}
+        try (
+                ResultSet exists = db.select("SELECT context_id FROM context WHERE name = '" + context + "';")
+                ) {
+            exists.next();
+            contextID = exists.getInt(1);
+        } catch (SQLException e) {
 
-		return contextID;
-	}
+            return 0;
+        }
+
+        return contextID;
+    }
 
 	/** Given a fused contract, retrieves its state from db in a specific file, created using the input filename.
 	 * 
@@ -510,31 +504,34 @@ public class Tools {
 	 * @param fileName Name of the file that will be created
 	 * @return True if the the network is loaded correctly
 	 * @throws SQLException */
-	public static boolean loadNetworkFromDB(DatabaseInterface db, String contractHash, String fileName)
-	        throws SQLException {
+    public static boolean loadNetworkFromDB(DatabaseInterface db, String contractHash, String fileName)
+            throws SQLException {
 
-		ResultSet result;
-		Integer sessionID;
-		String query, sessionHash;
+        ResultSet result;
+        Integer sessionID;
+        String query, sessionHash;
 
-		// 2b) Load session.
-		query = "SELECT session_id FROM contract WHERE contract_hash='" + contractHash + "';";
-		result = db.select(query);
-		result.next();
-		sessionID = result.getInt(1);
+        // 2b) Load session.
+        query = "SELECT session_id FROM contract WHERE contract_hash='" + contractHash + "';";
+        result = db.select(query);
+        result.next();
+        sessionID = result.getInt(1);
+        result.close();
 
-		query = "SELECT session_hash FROM session WHERE session_id=" + sessionID;
-		result = db.select(query);
-		result.next();
-		sessionHash = result.getString(1);
+        query = "SELECT session_hash FROM session WHERE session_id=" + sessionID;
+        result = db.select(query);
+        result.next();
+        sessionHash = result.getString(1);
+        result.close();
 
-		// 2d) Load network
-		query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
-		        + "';";
-		result = db.select(query);
+        // 2d) Load network
+        query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
+                + "';";
+        result = db.select(query);
+        result.close();
 
-		return true;
-	}
+        return true;
+    }
 
 	/** Given an action and a contractHash, it verifies if is possible do the action in the contract.
 	 * 
@@ -547,7 +544,6 @@ public class Tools {
 		String query;
 		Integer contextID = -1;
 		int count = -1;
-		ResultSet result;
 		
 		// 2) Retrieves contract context
 		try {
@@ -555,9 +551,10 @@ public class Tools {
 
 			// 3) Checks if action is allowed in context
 			query = "SELECT COUNT(*) FROM context_action AS ca JOIN action AS a ON ca.action_id = a.action_id WHERE context_id='" + contextID + "' AND name='" + action + "';";
-			result = db.select(query);
+			ResultSet result = db.select(query);
 			result.next();
 			count = result.getInt(1);
+			result.close();
 		}
 		catch (SQLException e) {
 
@@ -596,6 +593,7 @@ public class Tools {
 		rs.next();
 		actionID = rs.getInt(1);
 		verificationURL = rs.getString(2);
+		rs.close();
 		
 		if (verificationURL.equals("true"))
 			return true;

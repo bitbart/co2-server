@@ -11,7 +11,6 @@ import javax.servlet.annotation.WebListener;
 @WebListener
 public class MainApplication implements ServletContextListener {
 
-	private static DatabaseInterface db;
 	private static Random rng; 
 	private static Mutex mutex;
 	private static Cache<String, Boolean> credentialsCache;
@@ -36,11 +35,6 @@ public class MainApplication implements ServletContextListener {
 	public static String getCtuID() {
 	    
 	    return (rng.nextInt(4) + 1) + "";
-	}
-	
-	public static DatabaseInterface getDBConnection() {
-	    
-	    return db;
 	}
 	
 	public static Cache<String, Boolean> getCredentialsCache() {
@@ -74,7 +68,7 @@ public class MainApplication implements ServletContextListener {
 	    // Initializes PRNG
 	    rng = new Random();
 	    mutex = new Mutex();
-	    db = new DatabaseInterface();
+	    DatabaseInterface db = DatabaseInterface.getInstance();
 	    
 	    try {
 	        db.open();
@@ -85,17 +79,17 @@ public class MainApplication implements ServletContextListener {
 	        Log.message().warning("SQL says: " + e.getMessage());
 	    }
 	    
-	    try {
-	    	
-			ResultSet rs = db.select("SELECT COUNT(*) FROM contract WHERE state=0");
+	    try (
+		    ResultSet rs = db.select("SELECT COUNT(*) FROM contract WHERE state=0");
+		    ResultSet rs2 = db.select("SELECT COUNT(*) FROM contract");
+		    ResultSet rs3 = db.select("SELECT COUNT(*) FROM session");
+		    ){
 			rs.next();
 			latent_cs = rs.getInt(1);
 			
-			ResultSet rs2 = db.select("SELECT COUNT(*) FROM contract");
 			rs2.next();
 			cs = rs2.getInt(1);
 			
-			ResultSet rs3 = db.select("SELECT COUNT(*) FROM session");
 			rs3.next();
 			active_ss = rs3.getInt(1);
 			

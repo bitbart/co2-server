@@ -1,19 +1,19 @@
 package it.unica.tcs;
 
 
-import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
-import it.unica.tcs.InternalException.ErrorTypes;
+import static org.apache.commons.lang.StringEscapeUtils.*;
 
 import java.io.FileNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
-import javax.ws.rs.Produces;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
+import it.unica.tcs.InternalException.ErrorTypes;
 
 /** Provides API to start a session between two contracts: 1) Insert a new contract; 2) Check if contract sent is fused. */
 @Path(value = "/handling")
@@ -55,7 +55,7 @@ public class SessionHandler {
         }
 
         // 1) Connecting to db
-        DatabaseInterface db = MainApplication.getDBConnection();
+        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data
@@ -169,8 +169,9 @@ public class SessionHandler {
 
         // 8) Adding contracts to database
         // 8a) Loads owner data
-        try {
-            ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
+        try (
+        	ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
+        	){
             rs.next();
             userID = rs.getInt(1);
         }
@@ -331,7 +332,7 @@ public class SessionHandler {
         AppResponse firstOutput, secondOutput;
 
         // 1) Connecting to db
-        DatabaseInterface db = MainApplication.getDBConnection();
+        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data
@@ -407,8 +408,9 @@ public class SessionHandler {
         
         // 4) Create the XML dual contract and adding contracts to database
         // 4a) Loads owner data
-        try {
-            ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
+        try (
+        	ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
+        	){
             rs.next();
             userID = rs.getInt(1);
         }
@@ -482,7 +484,7 @@ public class SessionHandler {
     	String pass = postData.getPassword();
     	String contractHash = postData.getContractHash();
     	
-        DatabaseInterface db = MainApplication.getDBConnection();
+        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data
@@ -536,7 +538,7 @@ public class SessionHandler {
     	
     	String key = contractHash;
     	
-    	DatabaseInterface db = MainApplication.getDBConnection();
+    	DatabaseInterface db = DatabaseInterface.getInstance();
     	
     	Cache<String, Integer[]> lc = MainApplication.getLatentCache();
     	
@@ -647,7 +649,7 @@ public class SessionHandler {
     	String pass = postData.getPassword();
     	String contractHash = postData.getContractHash();
     	
-        DatabaseInterface db = MainApplication.getDBConnection();
+        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data
@@ -809,8 +811,6 @@ public class SessionHandler {
      * @throws DBException if authentication, or permission, or queries fail */
     public static int getContractState(DatabaseInterface db, String username, String pass, String contractHash) throws DBException {
 
-        ResultSet rs;
-        
         try{
         // 2) Checks for valid user & pwd
             if (!Tools.authenticate(db, username, pass)) {
@@ -837,8 +837,9 @@ public class SessionHandler {
         }
 
         // 4) Retrieves contract state
-        try {
-            rs = db.select("SELECT state FROM contract WHERE contract_hash = '" + contractHash + "';");
+        try (
+        	ResultSet rs = db.select("SELECT state FROM contract WHERE contract_hash = '" + contractHash + "';");
+        	){
             rs.next();
             
             Integer result = rs.getInt(1);
@@ -875,7 +876,7 @@ public class SessionHandler {
 		} catch (InterruptedException e1) {}
 
         try {
-            DatabaseInterface db = MainApplication.getDBConnection();
+            DatabaseInterface db = DatabaseInterface.getInstance();
 
 	        if (!Tools.authenticate(db, username, pass)) {
 	        	Log.message().warning(

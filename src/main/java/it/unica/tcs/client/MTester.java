@@ -2,7 +2,6 @@ package it.unica.tcs.client;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.UUID;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -29,8 +28,6 @@ public class MTester {
 
 	private static void test1() {
 		
-		boolean result = false;
-		
 		final boolean aEnabled = true;
 		final boolean bEnabled = true; 
 		
@@ -40,7 +37,8 @@ public class MTester {
 		System.out.println("\\\\ ♣ It executes the contract !hello{x<10}.?good{x<20} (without performing 'good', at the moment) ♠\n"); 
 		
 		Thread pA = new Thread() {
-			public void run() {
+			@Override
+            public void run() {
 				
 				if (!aEnabled)
 					return;
@@ -159,7 +157,8 @@ public class MTester {
 		};
 
 		Thread pB = new Thread() {
-			public void run() {
+			@Override
+            public void run() {
 				
 				if (!bEnabled)
 					return;
@@ -307,25 +306,29 @@ public class MTester {
 		System.out.println(preface(n,p) + "*ERROR* | " + msg);
 	}
 
-	private static void printFinest(Integer n, String msg) {
+	@SuppressWarnings("unused")
+    private static void printFinest(Integer n, String msg) {
 
 		if (LOG_LEVEL <= 1)
 			System.out.println(preface(n) + "finest  | " + msg);
 	}
 
-	private static void printFine(Integer n, String msg) {
+	@SuppressWarnings("unused")
+    private static void printFine(Integer n, String msg) {
 
 		if (LOG_LEVEL <= 2)
 			System.out.println(preface(n) + "fine    | " + msg);
 	}
 
-	private static void printInfo(Integer n, String msg) {
+	@SuppressWarnings("unused")
+    private static void printInfo(Integer n, String msg) {
 
 		if (LOG_LEVEL <= 3)
 			System.out.println(preface(n) + "INFO    | " + msg);
 	}
 
-	private static void printError(Integer n, String msg) {
+	@SuppressWarnings("unused")
+    private static void printError(Integer n, String msg) {
 		System.out.println(preface(n) + "*ERROR* | " + msg);
 	}
 

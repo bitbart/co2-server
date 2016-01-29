@@ -22,7 +22,7 @@ public class User {
 
 	private User() {
 
-		this.db = MainApplication.getDBConnection();
+		this.db = DatabaseInterface.getInstance();
 	}
 	
 	public static User build(String username) throws SQLException {
@@ -41,50 +41,49 @@ public class User {
 		return tmp;
 	}
 	
-	private void loadFromUserID(Integer userID) throws SQLException {
-		
-			String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
-			ResultSet result;
+    private void loadFromUserID(Integer userID) throws SQLException {
 
-			result = db.select(query);
-			result.next();
+        String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
 
-			this.userID = result.getInt("user_id");
-			this.firstName = result.getString("first_name");
-			this.lastName = result.getString("last_name");
-			this.username = result.getString("email");
-			this.password = result.getString("password");
-			this.credit = result.getInt("credit");
-			this.reputation = result.getInt("reputation");
-			this.tv = result.getDouble("tv");
-			
-			try {
-			this.ftv = db.getFTV(userID + "");
-			}
-			catch (SQLException e) {
-				
-				Log.message().severe("SQLException in getFTV: " + e.getMessage());
-				throw e;
-			}
-	}
+        try (ResultSet result = db.select(query)) {
+            result.next();
+
+            this.userID = result.getInt("user_id");
+            this.firstName = result.getString("first_name");
+            this.lastName = result.getString("last_name");
+            this.username = result.getString("email");
+            this.password = result.getString("password");
+            this.credit = result.getInt("credit");
+            this.reputation = result.getInt("reputation");
+            this.tv = result.getDouble("tv");
+
+            this.ftv = db.getFTV(userID + "");
+        } catch (SQLException e) {
+
+            Log.message().severe("SQLException in getFTV: " + e.getMessage());
+            throw e;
+        }
+    }
 
 	private void loadFromUsername(String username) throws SQLException {
 		
 		String query = "SELECT * FROM user WHERE email = '" + username + "';";
-			ResultSet result;
-
-			result = db.select(query);
-			result.next();
-
-			this.userID = result.getInt("user_id");
-			this.firstName = result.getString("first_name");
-			this.lastName = result.getString("last_name");
-			this.username = result.getString("email");
-			this.password = result.getString("password");
-			this.credit = result.getInt("credit");
-			this.reputation = result.getInt("reputation");
-			this.tv = result.getDouble("tv");
-			this.ftv = db.getFTV(userID + "");
+			
+		try (
+		        ResultSet result = db.select(query);
+		        ) {
+		    result.next();
+		    
+		    this.userID = result.getInt("user_id");
+		    this.firstName = result.getString("first_name");
+		    this.lastName = result.getString("last_name");
+		    this.username = result.getString("email");
+		    this.password = result.getString("password");
+		    this.credit = result.getInt("credit");
+		    this.reputation = result.getInt("reputation");
+		    this.tv = result.getDouble("tv");
+		    this.ftv = db.getFTV(userID + "");
+		}
 	}
 	
 	public void store() throws SQLException {		
