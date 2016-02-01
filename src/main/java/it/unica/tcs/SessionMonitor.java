@@ -1252,6 +1252,23 @@ public class SessionMonitor {
 		c2_duty = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_DUTY);
 		c1_culpable = monitorContractProgress(db, contractHash, Tools.CTU_PARAM_CULPABLE);
 		c2_culpable = monitorContractProgress(db, compliantHash, Tools.CTU_PARAM_CULPABLE);
+
+		
+		// Updating db states
+		if (c1.getState() == DatabaseInterface.CONTRACT_OFF_DUTY && c1_duty == true)
+			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY);
+		
+		
+		if (c2.getState() == DatabaseInterface.CONTRACT_OFF_DUTY && c2_duty == true)
+			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_ON_DUTY);
+
+		
+		if (c1.getState() == DatabaseInterface.CONTRACT_ON_DUTY && c1_duty == false)
+			db.setContractState(c1.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY);
+
+		
+		if (c2.getState() == DatabaseInterface.CONTRACT_ON_DUTY && c2_duty == false)
+			db.setContractState(c2.getContractID(), DatabaseInterface.CONTRACT_OFF_DUTY);
 		
 		if (autoCulpable)
 			c1_culpable = true;

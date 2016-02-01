@@ -80,7 +80,7 @@ public class MTester {
 
 				Private<TST> pA;
 				try {
-					pA = new TST("!hello{x<10}.?good{x<20}").toPrivate(co2); 
+					pA = new TST("!hello{x<10}.?dong{x<20}").toPrivate(co2); 
 					printFinest(1, p, "created the private contract for user "+p +".");
 				} catch (ContractException e) {
 					printError(1, p, "can't create the private for user "+p +". " + e.getMessage());
@@ -145,11 +145,26 @@ public class MTester {
 				}
 				
 				try {
+					
+					if (!sA.amIOnDuty()) {
+						
+						printError(1,p, "I'm not on duty.");
+					}
+					else
+						printInfo(1,p, "I'm correctly on duty");
+					
 					if (sA == null)
 						throw new ContractException("The session object is null.");
 						
 					sA.send("hello"); // performs the action
 					printInfo(1,p, "action 'hello' correctly performed!");
+					
+					if (!sA.amIOnDuty()) {
+						
+						printInfo(1,p, "Now I'm not on duty too.");
+					}
+					else
+						printError(1,p, "Now I can't be on duty, but I am.");
 					
 				} catch (ContractException e) {
 					printError(1,p, "cannot perform the expected action 'hello'. " + e.getMessage());
@@ -203,7 +218,7 @@ public class MTester {
 				Private<TST> pB = null;
 
 				try {
-					pB = new TST("?hello{x<10}.!good{x<20}").toPrivate(co2bis);
+					pB = new TST("?hello{x<10}.!dong{x<20}").toPrivate(co2bis);
 					printFinest(1, q, "created the private contract for user "+q +".");
 				} catch (ContractException e) {
 					printError(1, q, "can't create the private for user "+q +". " + e.getMessage());
