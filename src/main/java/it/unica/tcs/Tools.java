@@ -17,13 +17,16 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -363,43 +366,6 @@ public class Tools {
 		return hashContract(contract, new Long(timestamp));
 	}
 
-	/** Verifies authentication user data.
-	 * 
-	 * @param db Application database
-	 * @param user Client username
-	 * @param pass Client password
-	 * @return True if user credentials are correct */
-	public static boolean authenticate(DatabaseInterface db, String user, String pass) throws SQLException {
-
-		boolean returnValue = false;
-		String key = user + "," + pass;
-		
-		Cache<String, Boolean> cc = MainApplication.getCredentialsCache();
-		
-		Boolean element = cc.get(key);
-		
-		if (element != null) {
-			
-			return element;
-		}
-
-		// Checks if exists one and only one row in User table that matches passed values
-		try (
-		        ResultSet rs = db.select("SELECT COUNT(*) FROM user WHERE email = '" + user + "' AND password = '"
-		                + Tools.hash256(pass) + "';");
-		        ) {
-		    rs.next();
-		    
-		    if (rs.getInt(1) == 1) 
-		        returnValue = true;
-		    
-		    cc.put(key, returnValue);
-		    
-		    return returnValue;
-		}
-
-	}
-
 	/** Verifies permission to use a contract.
 	 * 
 	 * @param db Application database
@@ -420,11 +386,9 @@ public class Tools {
             return element;
         }
 
-        try (ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");) {
+        try {
             contractOwner = new Contract().loadFromHash(contractHash).getOwnerID();
-
-            rs.next();
-            userClient = rs.getInt(1);
+            userClient = db.selectUserId(username);
 
             if (!contractOwner.equals(userClient)) {
 
@@ -475,28 +439,6 @@ public class Tools {
 		return result;
 	}
 
-	/** Given a context, returns its identifier.
-	 * 
-	 * @param db Database
-	 * @param context Name of the context
-	 * @return The identifier of the context */
-    public static Integer getIDFromContext(DatabaseInterface db, String context) {
-
-        Integer contextID;
-
-        try (
-                ResultSet exists = db.select("SELECT context_id FROM context WHERE name = '" + context + "';")
-                ) {
-            exists.next();
-            contextID = exists.getInt(1);
-        } catch (SQLException e) {
-
-            return 0;
-        }
-
-        return contextID;
-    }
-
 	/** Given a fused contract, retrieves its state from db in a specific file, created using the input filename.
 	 * 
 	 * @param db Database application
@@ -507,30 +449,38 @@ public class Tools {
     public static boolean loadNetworkFromDB(DatabaseInterface db, String contractHash, String fileName)
             throws SQLException {
 
-        ResultSet result;
-        Integer sessionID;
-        String query, sessionHash;
-
-        // 2b) Load session.
-        query = "SELECT session_id FROM contract WHERE contract_hash='" + contractHash + "';";
-        result = db.select(query);
-        result.next();
-        sessionID = result.getInt(1);
-        result.close();
-
-        query = "SELECT session_hash FROM session WHERE session_id=" + sessionID;
-        result = db.select(query);
-        result.next();
-        sessionHash = result.getString(1);
-        result.close();
-
-        // 2d) Load network
-        query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
-                + "';";
-        result = db.select(query);
-        result.close();
-
-        return true;
+        try (
+                Connection connection = db.getDatasource().getConnection()
+                ) {
+            
+            ResultSet result;
+            Integer sessionID;
+            String query, sessionHash;
+            
+            // 2b) Load session.
+            query = "SELECT session_id FROM contract WHERE contract_hash='" + contractHash + "';";
+            result = connection.createStatement().executeQuery(query);
+            result.next();
+            sessionID = result.getInt(1);
+            result.close();
+            
+            query = "SELECT session_hash FROM session WHERE session_id=" + sessionID;
+            result = connection.createStatement().executeQuery(query);
+            result.next();
+            sessionHash = result.getString(1);
+            result.close();
+            
+            // 2d) Load network
+            query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
+                    + "';";
+            result = connection.createStatement().executeQuery(query);
+            result.close();
+            
+            connection.close();
+            
+            return true;
+        }
+        
     }
 
 	/** Given an action and a contractHash, it verifies if is possible do the action in the contract.
@@ -541,20 +491,17 @@ public class Tools {
 	 * @return True if action is allowed in this context, false otherwise */
 	public static boolean actionAllowed(DatabaseInterface db, String contractHash, String action) {
 
-		String query;
 		Integer contextID = -1;
-		int count = -1;
 		
 		// 2) Retrieves contract context
 		try {
 			contextID = new Contract().loadFromHash(contractHash).getContextID();
 
-			// 3) Checks if action is allowed in context
-			query = "SELECT COUNT(*) FROM context_action AS ca JOIN action AS a ON ca.action_id = a.action_id WHERE context_id='" + contextID + "' AND name='" + action + "';";
-			ResultSet result = db.select(query);
-			result.next();
-			count = result.getInt(1);
-			result.close();
+			// 3) Get the context's actions
+			Set<String> actions = db.selectContextActions(contextID);
+			
+			// 4) Returns result
+			return actions.contains(action);
 		}
 		catch (SQLException e) {
 
@@ -563,11 +510,6 @@ public class Tools {
 			return false;
 		}
 		
-		// 4) Returns result
-		if (count == 1)
-			return true;
-		else
-			return false;
 	}
 
 	/** Given an action, it verifies if the action is done.
@@ -583,24 +525,20 @@ public class Tools {
 	 * @throws SQLException */
 	public static boolean verifyAction(DatabaseInterface db, String action, String value, Integer contextID, String user, String hash, Integer sessionID) throws SQLException, InternalException {
 
-		String query, verificationURL, verifierResponse;
-		ResultSet rs;
-		Integer actionID;
-
 		// Checks if action exists
-		query = "SELECT A.action_id, verification_link FROM action AS A LEFT JOIN context_action AS CA ON A.action_id = CA.action_id WHERE name='" + action + "' AND context_id='" + contextID + "';";
-		rs = db.select(query);
-		rs.next();
-		actionID = rs.getInt(1);
-		verificationURL = rs.getString(2);
-		rs.close();
+		
+		Pair<Integer, String> res = db.selectActionIdAndVerificationLink(action, contextID);
+		
+		Integer actionID = res.getLeft();
+		String verificationURL = res.getRight();
 		
 		if (verificationURL.equals("true"))
 			return true;
 		else if(verificationURL.equals("false"))
 			throw new InternalException(ErrorTypes.TYPE_ACTION_CULPABLE);
 		
-		verifierResponse = null;
+		
+		String verifierResponse = null;
 		
 		// 3) Calls verificationLink
 		try {

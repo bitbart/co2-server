@@ -2,6 +2,7 @@ package it.unica.tcs;
 
 import it.unica.tcs.InternalException.ErrorTypes;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -75,7 +76,7 @@ public class SessionMonitor {
 
         // 1) Verifies authentication and permissions
         try {
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -171,7 +172,7 @@ public class SessionMonitor {
 
         // 1) Verifies authentication and permissions
         try {
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -269,7 +270,7 @@ public class SessionMonitor {
 
         // 1) Verifies authentication and permissions
         try {
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -362,6 +363,7 @@ public class SessionMonitor {
         }
     }
 	
+    @SuppressWarnings("resource")
     @POST
     @Path(value = "/getSessionStartTime")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -380,7 +382,7 @@ public class SessionMonitor {
         // 1) Verifies authentication and permissions
         try {
             
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -419,14 +421,16 @@ public class SessionMonitor {
             
 	            query = "SELECT start_timestamp FROM session WHERE session_id = " + c.getSessionID();
 	            
-	            try (
-	        	    ResultSet rs = db.select(query);
-	        	    ) {
-	        	rs.next();
-	        	timestamp = rs.getLong(1);
-	        	
-	        	return new ResponsePacket(1, timestamp + "");
-	            }
+                try (
+                        Connection connection = db.getDatasource().getConnection()
+                        ) {
+                    ResultSet rs = connection.createStatement().executeQuery(query);
+                    rs.next();
+                    timestamp = rs.getLong(1);
+
+                    connection.close();
+                    return new ResponsePacket(1, timestamp + "");
+                }
             }
             else
             	return rp;
@@ -472,7 +476,7 @@ public class SessionMonitor {
         // 1) Verifies authentication and permissions
         try {
 
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -514,10 +518,14 @@ public class SessionMonitor {
             query = "SELECT start_timestamp FROM session WHERE session_id = " + sessionID;
             
             try (
-        	    ResultSet rs = db.select(query)
-        	    ) {
-        	rs.next();
-        	timestamp = rs.getLong(1);
+                    Connection connection = db.getDatasource().getConnection()
+                    ) {
+                @SuppressWarnings("resource")
+                ResultSet rs = connection.createStatement().executeQuery(query);
+                rs.next();
+                timestamp = rs.getLong(1);
+                
+                connection.close();
             }
             
             
@@ -598,18 +606,19 @@ public class SessionMonitor {
       
     }
     
+    @SuppressWarnings("resource")
     @POST
     @Path(value = "/receive")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket receive(QueryPacket postData) {
-    	
-    	if (HARD_DEBUGGING)
-    		Log.message().severe("Entering RECEIVE");
-    	
-    	String username = postData.getUsername();
-    	String pass = postData.getPassword();
-    	String contractHash = postData.getContractHash();
+
+        if (HARD_DEBUGGING)
+            Log.message().severe("Entering RECEIVE");
+
+        String username = postData.getUsername();
+        String pass = postData.getPassword();
+        String contractHash = postData.getContractHash();
 
         DatabaseInterface db = DatabaseInterface.getInstance();
         Integer sessionID;
@@ -619,124 +628,128 @@ public class SessionMonitor {
         // 1) Verifies authentication and permissions
         try {
 
-            if (!Tools.authenticate(db, username, pass)) {
-                Log.message().warning(
-                        "Authentication error. Cannot accept USERNAME=" + Log.format(username)
-                                + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
-                
-            	if (HARD_DEBUGGING)
-            		Log.message().severe("Leaving RECEIVE");
-                
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
+                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username)
+                        + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+
+                if (HARD_DEBUGGING)
+                    Log.message().severe("Leaving RECEIVE");
+
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
 
             }
             if (!Tools.permissionContract(db, username, contractHash)) {
 
-                Log.message().warning(
-                        "Access denied: user with USERNAME=" + Log.format(username)
-                                + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
-                
-            	if (HARD_DEBUGGING)
-            		Log.message().severe("Leaving RECEIVE");
-                
+                Log.message().warning("Access denied: user with USERNAME=" + Log.format(username)
+                        + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+
+                if (HARD_DEBUGGING)
+                    Log.message().severe("Leaving RECEIVE");
+
                 return new ResponsePacket(-1, Messages.PERMISSION_DENIED);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             Log.message().warning("Failed opening database. SQL says: " + e.getMessage());
-            
-        	if (HARD_DEBUGGING)
-        		Log.message().severe("Leaving RECEIVE");
-            
+
+            if (HARD_DEBUGGING)
+                Log.message().severe("Leaving RECEIVE");
+
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
 
         // 2) Retrieves contract state and decides if does the action
         try {
-            
+
             Integer count, dataType;
             String actionName;
 
             // 2a) Checks timestamp
             c = new Contract().loadFromHash(contractHash);
             sessionID = c.getSessionID();
-            
+
             query = "SELECT a.action_id,action_name,data_type,data_int_value,data_string_value,data_file_value,COUNT(*),trace_id "
-                    + "FROM `trace` AS t LEFT JOIN action AS a ON t.action_id = a.action_id WHERE session_id = " + sessionID + " "
-                    + "AND `read`=0 AND role=" + (1 - c.getRole()) + " ORDER BY timestamp;";  // counterpart's role
-            
-            try(
-        	    ResultSet rs = db.select(query);
-        	    ) {
-        	rs.next();
-        	count = rs.getInt(7); // returns COUNT(*)
-        	if (count < 1) {
-        	    
-        	    if (HARD_DEBUGGING)
-        		Log.message().severe("Leaving RECEIVE");
-        	    
-        	    return new ResponsePacket(0, "Nothing to receive (the buffer is empty)");
-        	}
-        	
-        	actionName = rs.getString(2);
-        	dataType = rs.getInt(3);
-        	
-        	if (rs.getInt(1) == -1)
-        	    dataType = 1;
-        	
-        	ResponsePacket response = new ResponsePacket(1, "Action received (check the actionName and actionValue fields)");
-        	response.setActionName(actionName);
-        	
-        	/*if (actionID == -1) {
-                
-                db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
-                
-                return response;
-            }*/
-        	
-        	if (dataType == 2) {
-        	    
-        	    String value = rs.getString(5);
-        	    db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
-        	    
-        	    response.setActionValue(value);
-        	    
-        	    if (HARD_DEBUGGING)
-        		Log.message().severe("Leaving RECEIVE");
-        	    return response;
-        	}
-        	else if (dataType == 1) {
-        	    
-        	    String value = rs.getString(5);
-        	    db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
-        	    
-        	    response.setActionValue(value);
-        	    
-        	    if (HARD_DEBUGGING)
-        		Log.message().severe("Leaving RECEIVE");
-        	    return response;
-        	}
-        	else {
-        	    
-        	    Integer value = rs.getInt(4);
-        	    db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
-        	    
-        	    response.setActionValue(value + "");
-        	    
-        	    if (HARD_DEBUGGING)
-        		Log.message().severe("Leaving RECEIVE");
-        	    return response;
-        	}
+                    + "FROM `trace` AS t LEFT JOIN action AS a ON t.action_id = a.action_id WHERE session_id = "
+                    + sessionID + " " + "AND `read`=0 AND role=" + (1 - c.getRole()) + " ORDER BY timestamp;"; // counterpart's
+                                                                                                               // role
+
+            try (
+                    Connection connection = db.getDatasource().getConnection()
+                    ) {
+                ResultSet rs = connection.createStatement().executeQuery(query);
+                rs.next();
+                count = rs.getInt(7); // returns COUNT(*)
+                if (count < 1) {
+
+                    if (HARD_DEBUGGING)
+                        Log.message().severe("Leaving RECEIVE");
+
+                    connection.close();
+                    return new ResponsePacket(0, "Nothing to receive (the buffer is empty)");
+                }
+
+                actionName = rs.getString(2);
+                dataType = rs.getInt(3);
+
+                if (rs.getInt(1) == -1)
+                    dataType = 1;
+
+                ResponsePacket response = new ResponsePacket(1,
+                        "Action received (check the actionName and actionValue fields)");
+                response.setActionName(actionName);
+
+                /*
+                 * if (actionID == -1) {
+                 * 
+                 * db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+                 * 
+                 * return response; }
+                 */
+
+                if (dataType == 2) {
+
+                    String value = rs.getString(5);
+                    db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+
+                    response.setActionValue(value);
+
+                    if (HARD_DEBUGGING)
+                        Log.message().severe("Leaving RECEIVE");
+                    
+                    connection.close();
+                    return response;
+                } else if (dataType == 1) {
+
+                    String value = rs.getString(5);
+                    db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+
+                    response.setActionValue(value);
+
+                    if (HARD_DEBUGGING)
+                        Log.message().severe("Leaving RECEIVE");
+                    
+                    connection.close();
+                    return response;
+                } else {
+
+                    Integer value = rs.getInt(4);
+                    db.setTraceRead(rs.getInt(8)); // traceID (set it as read)
+
+                    response.setActionValue(value + "");
+
+                    if (HARD_DEBUGGING)
+                        Log.message().severe("Leaving RECEIVE");
+                    
+                    connection.close();
+                    return response;
+                }
             }
-            
-        }
-        catch (SQLException e) {
-            
+
+        } catch (SQLException e) {
+
             Log.message().warning("Can't select data in receive(). SQL says: " + e.getMessage());
-            
-            
-        	if (HARD_DEBUGGING)
-        		Log.message().severe("Leaving RECEIVE");
+
+            if (HARD_DEBUGGING)
+                Log.message().severe("Leaving RECEIVE");
             return new ResponsePacket(-1, Messages.DB_CONN_FAILED);
         }
     }
@@ -760,7 +773,7 @@ public class SessionMonitor {
         // 1) Verifies authentication and permissions
         try {
 
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -830,7 +843,7 @@ public class SessionMonitor {
         // 1) Verifies authentication and permissions
         try {
 
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username)
                                 + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
@@ -1111,8 +1124,8 @@ public class SessionMonitor {
 			// Get action type and add trace (with message value)
 			Integer actionType, actionID;
 
-			actionType = retrieveActionType(db, contextID, action);
-			actionID = getActionID(db, contextID, action);
+			actionType = db.selectActionType(contextID, action);
+			actionID = db.selectActionId(contextID, action);
 
 			switch (actionType) {
 
@@ -1188,64 +1201,40 @@ public class SessionMonitor {
 		return new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
 	}
 
+    @SuppressWarnings("resource")
     private Float calculateDelay(DatabaseInterface db, Integer sessionID) throws SQLException {
 
-	String query;
-	Long timestamp;
-	Float elapsedTime;
+        String query;
+        Long timestamp;
+        Float elapsedTime;
 
-	query = "SELECT last_timestamp FROM session WHERE session_id=" + sessionID + ";"; // counterpart's
-											  // role
+        query = "SELECT last_timestamp FROM session WHERE session_id=" + sessionID + ";"; // counterpart's
+        // role
 
-	try (ResultSet rs = db.select(query);) {
-	    rs.next();
-	    timestamp = rs.getLong(1);
+        try (
+                Connection connection = db.getDatasource().getConnection()
+                ) {
+            ResultSet rs = connection.createStatement().executeQuery(query);
+            rs.next();
+            timestamp = rs.getLong(1);
 
-	    // /60 TODO: now using seconds... to be restored
-	    elapsedTime = (new Long(System.currentTimeMillis() - timestamp).floatValue()) / 1000;
+            // /60 TODO: now using seconds... to be restored
+            elapsedTime = (new Long(System.currentTimeMillis() - timestamp).floatValue()) / 1000;
 
-	    Log.message()
-		    .fine("DELAY: " + elapsedTime + " secs (last timestamp was "
-			    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(new Long(rs.getLong(1))))
-			    + ", current time is "
-			    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(System.currentTimeMillis()))
-			    + ").");
+            Log.message()
+                    .fine("DELAY: " + elapsedTime + " secs (last timestamp was "
+                            + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(new Long(rs.getLong(1))))
+                            + ", current time is "
+                            + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(System.currentTimeMillis()))
+                            + ").");
 
-	    return elapsedTime; // CHECK IF IT IS CORRECT
-	}
+            connection.close();
+            
+            return elapsedTime; // CHECK IF IT IS CORRECT
+        }
     }
 
-    private Integer retrieveActionType(DatabaseInterface db, Integer contextID, String action) throws SQLException {
-
-	String query;
-
-	if (contextID == 0) // No data_type allowed for empty context's actions
-	    return -1;
-
-	query = "SELECT action.data_type FROM action LEFT JOIN context_action ON action.action_id = context_action.action_id WHERE context_id = "
-		+ contextID + " AND name = '" + action + "';";
-
-	try (ResultSet rs = db.select(query)) {
-	    rs.next();
-
-	    return rs.getInt(1);
-	}
-    }
-
-    private Integer getActionID(DatabaseInterface db, Integer contextID, String action) throws SQLException {
-
-	String query;
-
-	if (contextID == 0)
-	    return -1;
-
-	query = "SELECT action.action_id FROM action LEFT JOIN context_action ON action.action_id = context_action.action_id WHERE context_id = "
-		+ contextID + " AND name = '" + action + "';";
-	try (ResultSet rs = db.select(query);) {
-	    rs.next();
-	    return rs.getInt(1);
-	}
-    }
+    
 	
 	private boolean handleSessionEnding(Contract c1, DatabaseInterface db, Boolean autoCulpable) throws DBException, SQLException, InternalException {
 		Contract c2;

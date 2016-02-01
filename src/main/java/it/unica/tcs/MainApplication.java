@@ -1,6 +1,5 @@
 package it.unica.tcs;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Random;
 
@@ -71,27 +70,9 @@ public class MainApplication implements ServletContextListener {
 	    DatabaseInterface db = DatabaseInterface.getInstance();
 	    
 	    try {
-	        db.open();
-	    }
-	    catch (SQLException e) {
-	        
-	        Log.message().severe("Failed opening the database connection, the webservice is down!");
-	        Log.message().warning("SQL says: " + e.getMessage());
-	    }
-	    
-	    try (
-		    ResultSet rs = db.select("SELECT COUNT(*) FROM contract WHERE state=0");
-		    ResultSet rs2 = db.select("SELECT COUNT(*) FROM contract");
-		    ResultSet rs3 = db.select("SELECT COUNT(*) FROM session");
-		    ){
-			rs.next();
-			latent_cs = rs.getInt(1);
-			
-			rs2.next();
-			cs = rs2.getInt(1);
-			
-			rs3.next();
-			active_ss = rs3.getInt(1);
+	        cs = db.countContracts();
+			latent_cs = db.countLatentContracts();
+			active_ss = db.countSessions();
 			
 			Log.message().info("New .WAR loaded. When starting, there were " + cs + " contracts in the database (" + latent_cs + " latents), and " + active_ss + " sessions.");
 		

@@ -59,11 +59,10 @@ public class UserManagement {
         }
 
         // 1) Connecting to db
-        DatabaseInterface db = DatabaseInterface.getInstance();
 
         try {
             // 2) Checking for valid auth data
-            if (!Tools.authenticate(db, username, password)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, password)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
                                 + Log.format(Tools.hash256(password)) + "");
@@ -128,7 +127,7 @@ public class UserManagement {
 
         try {
             // 2) Checking for valid auth data
-            if (!Tools.authenticate(db, username, oldPassword)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, oldPassword)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
                                 + Log.format(Tools.hash256(oldPassword)) + "");

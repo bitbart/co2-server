@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -151,11 +152,10 @@ public class ComplianceChecker {
         queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux, delay, tell_timestamp FROM `" + DatabaseInterface.TABLE_CONTRACT
         	+ "` WHERE context_id = " + contextID + " AND state = 0 AND private = 0 ORDER BY rand();";
 
-        try (
-        	ResultSet rs = db.select(queryText);
-        	)
-        
-        {
+        try (Connection connection = db.getDatasource().getConnection()) {
+//            @SuppressWarnings("resource")
+            ResultSet rs = connection.createStatement().executeQuery(queryText);
+            
             // 2) For every id get probability of compliance
             //    If the probability of compliance is bigger than zero, get the other contract's owner reputation
             while (rs.next()) {
@@ -166,7 +166,7 @@ public class ComplianceChecker {
                 otherPreCheckType = rs.getString("type_pre_check");
                 otherDelay = rs.getInt("delay");
                 otherTimestamp= rs.getLong("tell_timestamp");
-                
+                 
                 if (otherDelay != 0 && otherTimestamp + otherDelay <= System.currentTimeMillis()) {
                 	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
                 	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
@@ -178,25 +178,26 @@ public class ComplianceChecker {
                 if (preCheckValue > 0) {
                     queryText = "SELECT tv FROM " + DatabaseInterface.TABLE_CONTRACT + " JOIN " + DatabaseInterface.TABLE_USER + " ON owner_id = user_id WHERE contract_id = " + otherID;
                     
-                    try (
-                	    ResultSet rs2 = db.select(queryText);
-                	    ) {
-                    
-                        if(rs2.next()){
-                            
-                        	int otherReputation = rs2.getInt("tv");
-                            
-                        	// TODO: change the Quadruple to BasicPair<Double, Contract>, where Contract stores all data like the following, and String contains the precheck value
-                            String[] contractData = new String[3];
-                            contractData[0] = otherContractXML;
-                            contractData[1] = otherMapping;
-                            contractData[2] = otherChanList;
-                            
-                            preCheckCalculus.add(new Quadruple<Double, String[], Integer, Integer>(preCheckValue, contractData, otherID, otherReputation));
-                        }
+                    ResultSet rs2 = connection.createStatement().executeQuery(queryText);
+                
+                    if(rs2.next()){
+                        
+                    	int otherReputation = rs2.getInt("tv");
+                    	
+                    	// TODO: change the Quadruple to BasicPair<Double, Contract>, where Contract stores all data like the following, and String contains the precheck value
+                        String[] contractData = new String[3];
+                        contractData[0] = otherContractXML;
+                        contractData[1] = otherMapping;
+                        contractData[2] = otherChanList;
+                        
+                        preCheckCalculus.add(new Quadruple<Double, String[], Integer, Integer>(preCheckValue, contractData, otherID, otherReputation));
                     }
+                    
+                    rs2.close();
                 }
             }
+            
+            rs.close();
         }
         
         Log.message().finest("Searching a compliant for C1='" + Log.format(StringEscapeUtils.escapeHtml(contractXML)) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");

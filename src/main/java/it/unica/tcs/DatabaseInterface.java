@@ -7,30 +7,25 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.Blob;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
 // TODO: Create all javadocs
 
 /** */
 public class DatabaseInterface {
-
-    // Connection to database.
-    private Connection connection;
-
-    // Database's credentials.
-    public final static String DB_NAME = "co2_data";
-    public static final String DB_PATH = "localhost";
-    public static final String DB_USER = "root";
-    public static final String DB_PASS = "Hj94kld*(";
 
     // Database's tables
     public final static String TABLE_USER = "user";
@@ -96,7 +91,7 @@ public class DatabaseInterface {
             this.datasource = (DataSource) envCtx.lookup("jdbc/co2datasource");
             
         } catch (NamingException e) {
-            Log.message().severe("error istantiating the datasource: "+e.getMessage());
+            Log.message().severe("Error instantiating the datasource: "+e.getMessage());
         }
         
     }
@@ -108,55 +103,33 @@ public class DatabaseInterface {
         return instance;
     }
     
-    /** */
-    public void open() throws SQLException {
-
-        if (this.connection == null) {
-            Log.message().fine("opening a new connection");
-            
-            if (datasource!=null) {
-                Log.message().fine("using datasource");
-                this.connection = datasource.getConnection();
-            }
-            else {
-                Log.message().fine("using old method");
-                this.registerConnector();
-                this.connection = DriverManager.getConnection("jdbc:mysql://localhost/" + DB_NAME + "?autoReconnect=true",
-                        DB_USER, DB_PASS);
-            }
-        }
+    //TODO: this method should be removed
+    public DataSource getDatasource() {
+        return datasource;
     }
+    
 
-    /** */
-    public void close() {
-
-        try {
-            if (this.connection != null)
-                connection.close();
-        } catch (SQLException e) {
-
-            Log.message().warning("Can't close a opened connection. SQL says: " + e);
-        }
-
-        connection = null;
-    }
-
-    /**
-     * @throws SQLException
-     */
-    @SuppressWarnings("resource")
-    public ResultSet select(String query) throws SQLException {
-
-        ResultSet resultQuery;
-        this.open(); // Re-creates the connection, if lost
-
-        Statement stmt = this.connection.createStatement();
-        ResultSet rs = stmt.executeQuery(query);
-
-        resultQuery = rs;
-
-        return resultQuery;
-    }
+//    /**
+//     * @throws SQLException
+//     */
+//    @SuppressWarnings("resource")
+//    public ResultSet select(String query) throws SQLException {
+//
+//        final String query = "";
+//        
+//        try (
+//                Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
+//                ) {
+//            PreparedStatement stmt = connection.prepareStatement(query);
+//            ResultSet rs = stmt.executeQuery();
+//            
+//            //
+//            
+//            connection.close();
+//            
+//            return null;
+//        }
+//    }
 
     /**
      * @throws SQLException
@@ -212,11 +185,12 @@ public class DatabaseInterface {
     /**
      * @throws SQLException
      */
+    @SuppressWarnings("resource")
     public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID,
             Integer role, Integer state, Long randomLong, String typePreCheck, String mapping, String aux,
             Integer delay, boolean prv) throws SQLException {
 
-        String insertQuery, selectQuery;
+        String insertQuery;
         Integer identifier;
 
         String[] cols = new String[14];
@@ -257,14 +231,23 @@ public class DatabaseInterface {
         this.throwUpdate(insertQuery);
 
         // Returning ID of the new contract added.
-        selectQuery = "SELECT `contract_id` FROM contract WHERE `contract_hash` = '" + contractHash + "'";
 
-        try (ResultSet rs = this.select(selectQuery);) {
+        final String query = "SELECT contract_id FROM contract WHERE contract_hash = ?";
+        
+        try (
+                Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
+                ) {
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, contractHash);
+            
+            ResultSet rs = stmt.executeQuery();
             rs.next();
             identifier = rs.getInt(1);
-
+            connection.close();
+            
             return identifier;
         }
+        
     }
 
     public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID, String value,
@@ -378,10 +361,11 @@ public class DatabaseInterface {
     /**
      * @throws SQLException
      */
+    @SuppressWarnings("resource")
     public Integer insertSession(String sessionHash, Integer state, String lastState, Integer contextID)
             throws SQLException {
 
-        String insertQuery, selectQuery;
+        String insertQuery;
         Integer identifier;
 
         String[] cols = new String[6];
@@ -406,13 +390,21 @@ public class DatabaseInterface {
 
         this.throwUpdate(insertQuery);
 
-        // Returning ID of the new contract added.
-        selectQuery = "SELECT `session_id` FROM session WHERE `session_hash` = '" + sessionHash + "'";
-
-        try (ResultSet rs = this.select(selectQuery);) {
+        // Returning ID of the new session added.
+        
+        final String query = "SELECT session_id FROM session WHERE session_hash = ?";
+        
+        try (
+                Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
+                ) {
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, sessionHash);
+            
+            ResultSet rs = stmt.executeQuery();
             rs.next();
             identifier = rs.getInt(1);
-
+            connection.close();
+            
             return identifier;
         }
     }
@@ -688,8 +680,12 @@ public class DatabaseInterface {
         byte[] byteArray = null;
         String SQLQUERY_TO_SAVE_JAVAOBJECT = "UPDATE user SET ftv=? WHERE user_id=" + userID;
         int persistObjectID = -1;
-        try (PreparedStatement preparedStatement = connection.prepareStatement(SQLQUERY_TO_SAVE_JAVAOBJECT,
-                PreparedStatement.RETURN_GENERATED_KEYS)) {
+        
+        try (
+                Connection connection = datasource.getConnection()
+                    ) {
+            @SuppressWarnings("resource")
+            PreparedStatement preparedStatement = connection.prepareStatement(SQLQUERY_TO_SAVE_JAVAOBJECT, PreparedStatement.RETURN_GENERATED_KEYS);
 
             byteArray = convertObjectToByteArray(javaObject2Persist);
             preparedStatement.setBytes(1, byteArray);
@@ -717,25 +713,37 @@ public class DatabaseInterface {
         Blob blob = null;
         byte[] bytes = null;
 
-        try (ResultSet resultSet = select("SELECT ftv FROM user WHERE user_id = " + userID)) {
-            resultSet.next();
-            blob = resultSet.getBlob("ftv");
-
+        
+        final String query = "SELECT ftv FROM user WHERE user_id = ?";
+        
+        try (
+                Connection connection = datasource.getConnection()
+                ) {
+            @SuppressWarnings("resource")
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, userID);
+            
+            @SuppressWarnings("resource")
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            blob = rs.getBlob(1);
+            connection.close();
+            
             if (blob != null)
                 bytes = blob.getBytes(1, (int) (blob.length()));
-
+        
         } catch (SQLException e) {
-
+            
             throw e;
         } catch (Exception e) {
-
+            
             e.printStackTrace();
-
+            
             Log.message().severe("Unknown exception in getFTV: " + e.getMessage());
             throw new SQLException("unknown exception.");
-
+            
         }
-
+        
         ObjectInputStream objectInputStream = null;
 
         try {
@@ -838,7 +846,7 @@ public class DatabaseInterface {
             }
         }
 
-        insertQuery = "INSERT INTO `" + DB_NAME + "`.`" + table + "` (" + columns + ") VALUES (" + values + ");";
+        insertQuery = "INSERT INTO `" + table + "` (" + columns + ") VALUES (" + values + ");";
 
         Log.message().finest("Executed query: " + insertQuery);
 
@@ -877,42 +885,280 @@ public class DatabaseInterface {
     }
 
     /** */
-    private void registerConnector() {
-
-        // The following section of Java code shows how you might register MySQL
-        // Connector/J
-        try {
-            // The newInstance() call is a work around for some broken Java
-            // implementations
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
-
-        } catch (Exception ex) {
-
-            Log.message().severe("Error when loading JDBC driver!");
-        }
-    }
-
-    /** */
     private Integer throwUpdate(String queryUpdate) throws SQLException {
 
-        this.open(); // Re-creates the connection, if lost
-
-        try (Statement stmt = connection.createStatement()) {
+        try (Connection connection = datasource.getConnection()) {
+            
+            Statement stmt = connection.createStatement();
             Integer rs = stmt.executeUpdate(queryUpdate);
+            stmt.close();
             return rs;
         }
     }
 
     public Integer deleteContracts() throws SQLException {
 
-        this.open(); // Re-creates the connection, if lost
-
-        try (Statement stmt = connection.createStatement();) {
+        try (Connection connection = datasource.getConnection()) {
+            
+            Statement stmt = connection.createStatement();
             Integer rs = stmt.executeUpdate("DELETE FROM " + TABLE_CONTRACT + " WHERE context_id<>4");
             rs = stmt.executeUpdate("DELETE FROM " + TABLE_SESSION + " WHERE context_id<>4");
-
+            stmt.close();
             return rs;
         }
     }
 
+    
+    
+    
+    
+    
+    @SuppressWarnings("resource")
+    public int countSessions() throws SQLException {
+        
+        try (Connection connection = datasource.getConnection()) {
+            
+            ResultSet rs = connection.createStatement().executeQuery("SELECT COUNT(*) FROM session");
+            
+            rs.next();
+            return rs.getInt(1);
+        }
+    }
+    
+    @SuppressWarnings("resource")
+    public int countContracts() throws SQLException {
+        
+        try (Connection connection = datasource.getConnection()) {
+            
+            ResultSet rs = connection.createStatement().executeQuery("SELECT COUNT(*) FROM contract");
+            
+            rs.next();
+            return rs.getInt(1);
+        }
+    }
+
+    @SuppressWarnings("resource")
+    public int countLatentContracts() throws SQLException {
+        
+        try (Connection connection = datasource.getConnection()) {
+            
+            ResultSet rs = connection.createStatement().executeQuery("SELECT COUNT(*) FROM contract WHERE state=0");
+            
+            rs.next();
+            return rs.getInt(1);
+        }
+        
+    }
+    
+    @SuppressWarnings("resource")
+    public Pair<Integer, String> selectActionIdAndVerificationLink(String actionName, int contextId) throws SQLException {
+        final String query = "SELECT A.action_id, verification_link "
+                + "FROM action AS A LEFT JOIN context_action AS CA ON A.action_id = CA.action_id "
+                + "WHERE name=? AND context_id=?";
+        
+        try(
+                Connection connection = datasource.getConnection()
+                ) {
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setString(1, actionName);
+            ps.setInt(2, contextId);
+            
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            
+            int actionID = rs.getInt("action_id");
+            String verLink = rs.getString("verification_link");
+            
+            connection.close();
+            
+            return new MutablePair<>(actionID, verLink);
+        }
+        
+    }
+    
+    
+    @SuppressWarnings("resource")
+    public int selectContextId(String contextName) throws SQLException {
+        final String query = "SELECT context_id FROM context WHERE name = ?";
+        
+        try (
+                Connection connection = datasource.getConnection()
+                ) {
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setString(1, contextName);
+            
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            int contextId = rs.getInt("context_id");
+            
+            connection.close();
+            
+            return contextId;
+        }
+    }
+    
+    @SuppressWarnings("resource")
+    public Set<String> selectContextActions(int contextId) throws SQLException {
+        
+        final String query = "SELECT action.name "
+                + "FROM action JOIN context_action ON action.action_id=context_action.action_id "
+                + "WHERE context_action.context_id = ?";
+        
+        
+        try (
+                Connection connection = datasource.getConnection()
+                ){
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setInt(1, contextId);
+            
+            ResultSet rs = ps.executeQuery();
+            
+            Set<String> actions = new HashSet<>();
+            while (rs.next()) {
+
+                actions.add(rs.getString(1));
+            }
+            
+            connection.close();
+            
+            return actions;
+        }
+    }
+    
+    @SuppressWarnings("resource")
+    public int selectUserId(String username) throws SQLException {
+        final String query = "SELECT user_id FROM user WHERE email = ?";
+        
+        try (
+                Connection connection = datasource.getConnection()
+                ){
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setString(1, username);
+            
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            int userId = rs.getInt(1);
+            connection.close();
+            
+            return userId;
+        }
+    }
+    
+    
+    
+    public Integer selectActionId(Integer contextID, String actionName) throws SQLException {
+        return selectActionType(contextID, actionName, "action_id");
+    }
+    
+    public Integer selectActionType(Integer contextID, String actionName) throws SQLException {
+        return selectActionType(contextID, actionName, "data_type");
+    }
+
+    @SuppressWarnings("resource")
+    private Integer selectActionType(Integer contextID, String actionName, String column) throws SQLException {
+
+        if (contextID == 0) // No data_type allowed for empty context's actions
+            return -1;
+
+        final String query = 
+                "SELECT * "
+                + "FROM action LEFT JOIN context_action ON action.action_id = context_action.action_id "
+                + "WHERE context_id = ? AND name = ?";
+
+        try (
+                Connection connection = datasource.getConnection()
+                ){
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setInt(1, contextID);
+            ps.setString(2, actionName);
+            
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            int actionType = rs.getInt(column);
+            
+            connection.close();
+            
+            return actionType;
+        }
+        
+    }
+
+    /** Verifies authentication user data.
+     * 
+     * @param db Application database
+     * @param user Client username
+     * @param pass Client password
+     * @return True if user credentials are correct */
+    @SuppressWarnings("resource")
+    public boolean authenticate(String user, String pass) throws SQLException {
+
+        boolean returnValue = false;
+        String key = user + "," + pass;
+
+        Cache<String, Boolean> cc = MainApplication.getCredentialsCache();
+
+        Boolean element = cc.get(key);
+
+        if (element != null) {
+
+            return element;
+        }
+
+        // Checks if exists one and only one row in User table that matches
+        // passed values
+        final String query = "SELECT COUNT(*) FROM user WHERE email = ? AND password = ?";
+        
+        try (
+                Connection connection = datasource.getConnection()
+                ) {
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setString(1, user);
+            ps.setString(2, pass);
+            
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            
+            connection.close();
+            
+            if (rs.getInt(1) == 1)
+                returnValue = true;
+
+            cc.put(key, returnValue);
+
+            connection.close();
+            
+            return returnValue;
+        }
+            
+    }
+    
+    
+    /** Given a context, returns its identifier.
+     * 
+     * @param db Database
+     * @param context Name of the context
+     * @return The identifier of the context */
+    @SuppressWarnings("resource")
+    public Integer getIDFromContext(String context) {
+
+        final String query = "SELECT context_id FROM context WHERE name = ?";
+        
+        try (
+                Connection connection = datasource.getConnection();
+                ) {
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, context);
+            
+            ResultSet rs = stmt.executeQuery();
+            rs.next();
+            int contextID = rs.getInt(1);
+            
+            connection.close();
+            return contextID;
+            
+        } catch (SQLException e) {
+
+            return 0;
+        }
+    }
 }

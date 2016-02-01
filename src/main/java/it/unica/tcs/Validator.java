@@ -1,12 +1,9 @@
 package it.unica.tcs;
 
-import it.unica.tcs.InternalException.ErrorTypes;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,8 +13,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringEscapeUtils;
@@ -25,6 +22,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import it.unica.tcs.InternalException.ErrorTypes;
 
 /** Verifies the syntax of the XML contracts. */
 @Path(value = "/validation")
@@ -150,7 +149,6 @@ public class Validator {
 		Log.message().fine("ValidateContext of: " + StringEscapeUtils.escapeHtml(contract));
 
 		Set<String> elementsFound = new HashSet<>();
-		Set<String> elementsAllowed = new HashSet<>();
 		NodeList intaction, extaction;
 		String temp, contextNameDeclared;
 		Integer contextID;
@@ -159,25 +157,12 @@ public class Validator {
 		contextNameDeclared = Tools.getDeclaredStringContext(contract);
 
 		try {
-			db.open();
-		}
-		catch (SQLException e) {
-		    
-			Log.message().severe("Cannot open database or select 'context_id' with NAME=" + Log.format(contextNameDeclared) + ". SQL says: " + e.getMessage());
-
-			return Messages.DB_SELECT_FAILED;
-		}
-
-		try (
-		        ResultSet exists  = db.select("SELECT context_id FROM context WHERE name = '" + contextNameDeclared + "';")
-		        ) {
-		    exists.next();
-		    contextID = exists.getInt(1);
+		    contextID = db.selectContextId(contextNameDeclared);
 		    
 		} catch (SQLException e) {
 		    Log.message().severe("Error retrieving contextID: " + e.getMessage());
 
-            return Messages.ERROR_GENERIC_INTERNAL;
+		    return Messages.DB_SELECT_FAILED;
 		}
 		
 		// 2) Gets (from contract) all actions done
@@ -214,18 +199,16 @@ public class Validator {
 			}
 
 			// 3) Gets (from db) all the actions allowed for this context
-			try (
-			        ResultSet actionNamesRS = db.select(
-			                "SELECT action.name "
-			                + "FROM action JOIN context_action ON action.action_id=context_action.action_id "
-			                + "WHERE context_action.context_id = '" + contextID + "';");
-			        ){
+			try {
 
-				while (actionNamesRS.next()) {
-
-					elementsAllowed.add(actionNamesRS.getString(1));
-				}
+			    Set<String> elementsAllowed = db.selectContextActions(contextID);
+			    
 				
+			    // 4) Compares all actions done with the actions allowed
+			    for (String element : elementsFound) {
+			        if (!elementsAllowed.contains(element)) 
+			            return Messages.CONTRACT_ACTION_CONTEXT;
+			    }
 			}
 			catch (SQLException e) {
 
@@ -234,11 +217,6 @@ public class Validator {
 				return Messages.CONTRACT_ACTION_CONTEXT;
 			}
 
-			// 4) Compares all actions done with the actions allowed
-			for (String element : elementsFound) {
-				if (!elementsAllowed.contains(element)) 
-				    return Messages.CONTRACT_ACTION_CONTEXT;
-			}
 		}
 
 		return Messages.TYPE_SUCCESS;

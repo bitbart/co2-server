@@ -4,6 +4,7 @@ package it.unica.tcs;
 import static org.apache.commons.lang.StringEscapeUtils.*;
 
 import java.io.FileNotFoundException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -59,7 +60,7 @@ public class SessionHandler {
 
         try {
             // 2) Checking for valid auth data
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
                                 + Log.format(Tools.hash256(pass)) + "");
@@ -169,11 +170,8 @@ public class SessionHandler {
 
         // 8) Adding contracts to database
         // 8a) Loads owner data
-        try (
-        	ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
-        	){
-            rs.next();
-            userID = rs.getInt(1);
+        try {
+            userID = db.selectUserId(username);
         }
         catch (SQLException e) {
 
@@ -188,7 +186,7 @@ public class SessionHandler {
         		delay = 0;
         	
             contractHash = Tools.hashContract(contractXML, randomLong);
-            contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contractXML));
+            contextID = DatabaseInterface.getInstance().getIDFromContext(Tools.getDeclaredStringContext(contractXML));
             contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay, prv); 
             
             // The contract is under processing (not latent)
@@ -336,7 +334,7 @@ public class SessionHandler {
 
         try {
             // 2) Checking for valid auth data
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
                 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
@@ -408,11 +406,8 @@ public class SessionHandler {
         
         // 4) Create the XML dual contract and adding contracts to database
         // 4a) Loads owner data
-        try (
-        	ResultSet rs = db.select("SELECT user_id FROM user WHERE email = '" + username + "';");
-        	){
-            rs.next();
-            userID = rs.getInt(1);
+        try {
+            userID = db.selectUserId(username);
         }
         catch (SQLException e) {
             
@@ -428,7 +423,7 @@ public class SessionHandler {
             Log.message().info("Calling dual");
         	dualXML = Dualizer.getXMLDual(originalXML);
             dualHash = Tools.hashContract(dualXML, randLong);
-            contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(dualXML));  
+            contextID = DatabaseInterface.getInstance().getIDFromContext(Tools.getDeclaredStringContext(dualXML));  
             
             // TODO: is it the following part necessary for dual contracts?
             
@@ -488,7 +483,7 @@ public class SessionHandler {
 
         try {
             // 2) Checking for valid auth data
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
                 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
@@ -649,11 +644,9 @@ public class SessionHandler {
     	String pass = postData.getPassword();
     	String contractHash = postData.getContractHash();
     	
-        DatabaseInterface db = DatabaseInterface.getInstance();
-
         try {
             // 2) Checking for valid auth data
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
                 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
@@ -730,7 +723,7 @@ public class SessionHandler {
 
         // 2) Adds new session to DB
         try {
-            contextID = Tools.getIDFromContext(db, Tools.getDeclaredStringContext(contract));
+            contextID = DatabaseInterface.getInstance().getIDFromContext(Tools.getDeclaredStringContext(contract));
             sessionID = db.insertSession(sessionHash, (Integer) DatabaseInterface.SESSION_ACTIVE, fileName, contextID);
 
         }
@@ -809,11 +802,12 @@ public class SessionHandler {
      * @param contractHash Hash contract sent by client
      * @return An integer value that indicates the state of the contract
      * @throws DBException if authentication, or permission, or queries fail */
+    @SuppressWarnings("resource")
     public static int getContractState(DatabaseInterface db, String username, String pass, String contractHash) throws DBException {
 
         try{
         // 2) Checks for valid user & pwd
-            if (!Tools.authenticate(db, username, pass)) {
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
                 Log.message().warning(
                         "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
                                 + Log.format(Tools.hash256(pass)) + "");
@@ -837,15 +831,16 @@ public class SessionHandler {
         }
 
         // 4) Retrieves contract state
-        try (
-        	ResultSet rs = db.select("SELECT state FROM contract WHERE contract_hash = '" + contractHash + "';");
-        	){
+        String query = "SELECT state FROM contract WHERE contract_hash = '" + contractHash + "';";
+        
+        try (Connection connection = db.getDatasource().getConnection()) {
+            ResultSet rs = connection.createStatement().executeQuery(query);
             rs.next();
             
             Integer result = rs.getInt(1);
             
+            connection.close();
             return result;
-
         }
         catch (SQLException e) {
 
@@ -876,9 +871,8 @@ public class SessionHandler {
 		} catch (InterruptedException e1) {}
 
         try {
-            DatabaseInterface db = DatabaseInterface.getInstance();
 
-	        if (!Tools.authenticate(db, username, pass)) {
+	        if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
 	        	Log.message().warning(
 	        			"Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
 	                    + Log.format(Tools.hash256(pass)) + "");

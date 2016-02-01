@@ -1,5 +1,6 @@
 package it.unica.tcs;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -45,7 +46,9 @@ public class User {
 
         String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
 
-        try (ResultSet result = db.select(query)) {
+        try (Connection connection = db.getDatasource().getConnection()) {
+            @SuppressWarnings("resource")
+            ResultSet result = connection.createStatement().executeQuery(query);
             result.next();
 
             this.userID = result.getInt("user_id");
@@ -58,6 +61,7 @@ public class User {
             this.tv = result.getDouble("tv");
 
             this.ftv = db.getFTV(userID + "");
+            connection.close();
         } catch (SQLException e) {
 
             Log.message().severe("SQLException in getFTV: " + e.getMessage());
@@ -65,26 +69,28 @@ public class User {
         }
     }
 
-	private void loadFromUsername(String username) throws SQLException {
-		
-		String query = "SELECT * FROM user WHERE email = '" + username + "';";
-			
-		try (
-		        ResultSet result = db.select(query);
-		        ) {
-		    result.next();
-		    
-		    this.userID = result.getInt("user_id");
-		    this.firstName = result.getString("first_name");
-		    this.lastName = result.getString("last_name");
-		    this.username = result.getString("email");
-		    this.password = result.getString("password");
-		    this.credit = result.getInt("credit");
-		    this.reputation = result.getInt("reputation");
-		    this.tv = result.getDouble("tv");
-		    this.ftv = db.getFTV(userID + "");
-		}
-	}
+    private void loadFromUsername(String username) throws SQLException {
+
+        String query = "SELECT * FROM user WHERE email = '" + username + "';";
+
+        try (Connection connection = db.getDatasource().getConnection()) {
+            @SuppressWarnings("resource")
+            ResultSet result = connection.createStatement().executeQuery(query);
+            result.next();
+
+            this.userID = result.getInt("user_id");
+            this.firstName = result.getString("first_name");
+            this.lastName = result.getString("last_name");
+            this.username = result.getString("email");
+            this.password = result.getString("password");
+            this.credit = result.getInt("credit");
+            this.reputation = result.getInt("reputation");
+            this.tv = result.getDouble("tv");
+            this.ftv = db.getFTV(userID + "");
+
+            connection.close();
+        }
+    }
 	
 	public void store() throws SQLException {		
 		

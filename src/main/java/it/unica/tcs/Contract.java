@@ -1,5 +1,6 @@
 package it.unica.tcs;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -54,63 +55,68 @@ public class Contract {
 		return this;
 	} */
 
+    @SuppressWarnings("resource")
     public Contract loadFromID(Integer contractID) throws SQLException {
 
-	String query = "SELECT * FROM contract WHERE contract_id = '" + contractID + "';";
+        String query = "SELECT * FROM contract WHERE contract_id = '" + contractID + "';";
 
-	try (ResultSet result = db.select(query);) {
-	    result.next();
+        try (Connection connection = db.getDatasource().getConnection()) {
+            ResultSet result = connection.createStatement().executeQuery(query);
+            result.next();
 
-	    this.contractID = contractID;
-	    this.contractHash = result.getString("contract_hash");
-	    this.contractXML = result.getString("contract_xml");
-	    this.ownerID = result.getInt("owner_id");
-	    this.sessionID = result.getInt("session_id"); // 0 if session_id is
-							  // NULL
-	    this.contextID = result.getInt("context_id");
-	    this.role = result.getInt("role");
-	    this.state = result.getInt("state");
-	    this.randomLong = result.getLong("random_long");
-	    this.delay = result.getInt("delay");
-	    this.timestamp = result.getLong("tell_timestamp");
-	    this.typePreCheck = result.getString("type_pre_check");
-	    this.type = result.getString("type");
-	    this.prv = result.getInt("private");
+            this.contractID = contractID;
+            this.contractHash = result.getString("contract_hash");
+            this.contractXML = result.getString("contract_xml");
+            this.ownerID = result.getInt("owner_id");
+            this.sessionID = result.getInt("session_id"); // 0 if session_id is
+            // NULL
+            this.contextID = result.getInt("context_id");
+            this.role = result.getInt("role");
+            this.state = result.getInt("state");
+            this.randomLong = result.getLong("random_long");
+            this.delay = result.getInt("delay");
+            this.timestamp = result.getLong("tell_timestamp");
+            this.typePreCheck = result.getString("type_pre_check");
+            this.type = result.getString("type");
+            this.prv = result.getInt("private");
 
-	    this.initialized = true;
+            this.initialized = true;
 
-	    return this;
-	}
+            connection.close();
+            return this;
+        }
     }
 
+    @SuppressWarnings("resource")
     public Contract loadFromHash(String contractHash) throws SQLException {
 
-	String query = "SELECT * FROM contract WHERE contract_hash = '" + contractHash + "';";
+        String query = "SELECT * FROM contract WHERE contract_hash = '" + contractHash + "';";
 
-	try (ResultSet result = db.select(query)) {
+        try (Connection connection = db.getDatasource().getConnection()) {
+            ResultSet result = connection.createStatement().executeQuery(query);
+            result.next();
 
-	    result.next();
+            this.contractHash = contractHash;
+            this.contractID = result.getInt("contract_id");
+            this.contractXML = result.getString("contract_xml");
+            this.ownerID = result.getInt("owner_id");
+            this.sessionID = result.getInt("session_id"); // 0 if session_id is
+            // NULL
+            this.contextID = result.getInt("context_id");
+            this.role = result.getInt("role");
+            this.state = result.getInt("state");
+            this.randomLong = result.getLong("random_long");
+            this.delay = result.getInt("delay");
+            this.timestamp = result.getLong("tell_timestamp");
+            this.typePreCheck = result.getString("type_pre_check");
+            this.type = result.getString("type");
+            this.prv = result.getInt("private");
 
-	    this.contractHash = contractHash;
-	    this.contractID = result.getInt("contract_id");
-	    this.contractXML = result.getString("contract_xml");
-	    this.ownerID = result.getInt("owner_id");
-	    this.sessionID = result.getInt("session_id"); // 0 if session_id is
-							  // NULL
-	    this.contextID = result.getInt("context_id");
-	    this.role = result.getInt("role");
-	    this.state = result.getInt("state");
-	    this.randomLong = result.getLong("random_long");
-	    this.delay = result.getInt("delay");
-	    this.timestamp = result.getLong("tell_timestamp");
-	    this.typePreCheck = result.getString("type_pre_check");
-	    this.type = result.getString("type");
-	    this.prv = result.getInt("private");
-
-	    this.initialized = true;
-
-	    return this;
-	}
+            this.initialized = true;
+            
+            connection.close();
+            return this;
+        }
     }
 
 	public boolean isInitialized() {
@@ -118,32 +124,38 @@ public class Contract {
 		return this.initialized;
 	}
 
+    @SuppressWarnings("resource")
     public Integer getCompliantID() throws SQLException {
 
-	String query = "SELECT contract_id FROM contract WHERE session_id = '" + this.sessionID
-		+ "' AND contract_id <> '" + this.contractID + "';";
+        String query = "SELECT contract_id FROM contract WHERE session_id = '" + this.sessionID
+                + "' AND contract_id <> '" + this.contractID + "';";
 
-	try (ResultSet result = db.select(query)) {
-	    result.next();
+        try (Connection connection = db.getDatasource().getConnection()) {
+            ResultSet result = connection.createStatement().executeQuery(query);
+            result.next();
 
-	    Integer i = result.getInt(1);
+            Integer i = result.getInt(1);
 
-	    return i;
-	}
+            connection.close();
+            return i;
+        }
     }
 
+    @SuppressWarnings("resource")
     public String getCompliantHash() throws SQLException {
 
-	String query = "SELECT contract_hash FROM contract WHERE session_id = '" + this.sessionID
-		+ "' AND contract_id <> '" + this.contractID + "';";
+        String query = "SELECT contract_hash FROM contract WHERE session_id = '" + this.sessionID
+                + "' AND contract_id <> '" + this.contractID + "';";
 
-	try (ResultSet result = db.select(query)) {
-	    result.next();
+        try (Connection connection = db.getDatasource().getConnection()) {
+            ResultSet result = connection.createStatement().executeQuery(query);
+            result.next();
 
-	    String s = result.getString(1);
+            String s = result.getString(1);
 
-	    return s;
-	}
+            connection.close();
+            return s;
+        }
     }
 
 	public Integer getContractID() {
