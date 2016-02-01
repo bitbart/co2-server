@@ -13,6 +13,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
 // TODO: Create all javadocs
 
 /** */
@@ -81,7 +86,20 @@ public class DatabaseInterface {
     
     private static DatabaseInterface instance;
     
-    private DatabaseInterface() {}
+    private DataSource datasource;
+    
+    private DatabaseInterface() {
+        
+        try {
+            Context initCtx = new InitialContext();
+            Context envCtx = (Context) initCtx.lookup("java:comp/env");
+            this.datasource = (DataSource) envCtx.lookup("jdbc/co2datasource");
+            
+        } catch (NamingException e) {
+            Log.message().severe("error istantiating the datasource: "+e.getMessage());
+        }
+        
+    }
     
     public static DatabaseInterface getInstance() {
         if (instance==null)
@@ -94,10 +112,18 @@ public class DatabaseInterface {
     public void open() throws SQLException {
 
         if (this.connection == null) {
-
-            this.registerConnector();
-            this.connection = DriverManager.getConnection("jdbc:mysql://localhost/" + DB_NAME + "?autoReconnect=true",
-                    DB_USER, DB_PASS);
+            Log.message().fine("opening a new connection");
+            
+            if (datasource!=null) {
+                Log.message().fine("using datasource");
+                this.connection = datasource.getConnection();
+            }
+            else {
+                Log.message().fine("using old method");
+                this.registerConnector();
+                this.connection = DriverManager.getConnection("jdbc:mysql://localhost/" + DB_NAME + "?autoReconnect=true",
+                        DB_USER, DB_PASS);
+            }
         }
     }
 
