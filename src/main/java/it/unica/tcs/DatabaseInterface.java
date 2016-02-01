@@ -1113,7 +1113,7 @@ public class DatabaseInterface {
                 ) {
             PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, user);
-            ps.setString(2, pass);
+            ps.setString(2, Tools.hash256(pass));
             
             ResultSet rs = ps.executeQuery();
             rs.next();
