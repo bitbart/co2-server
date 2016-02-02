@@ -1,6 +1,7 @@
 package it.unica.tcs;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -42,13 +43,16 @@ public class User {
 		return tmp;
 	}
 	
+    @SuppressWarnings("resource")
     private void loadFromUserID(Integer userID) throws SQLException {
 
-        String query = "SELECT * FROM user WHERE user_id = '" + userID + "';";
+        String query = "SELECT * FROM user WHERE user_id = ?";
 
         try (Connection connection = db.getDatasource().getConnection()) {
-            @SuppressWarnings("resource")
-            ResultSet result = connection.createStatement().executeQuery(query);
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userID);
+            
+            ResultSet result = stmt.executeQuery();
             result.next();
 
             this.userID = result.getInt("user_id");
@@ -69,13 +73,16 @@ public class User {
         }
     }
 
+    @SuppressWarnings("resource")
     private void loadFromUsername(String username) throws SQLException {
 
-        String query = "SELECT * FROM user WHERE email = '" + username + "';";
+        String query = "SELECT * FROM user WHERE email = ?";
 
         try (Connection connection = db.getDatasource().getConnection()) {
-            @SuppressWarnings("resource")
-            ResultSet result = connection.createStatement().executeQuery(query);
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, username);
+            
+            ResultSet result = stmt.executeQuery();
             result.next();
 
             this.userID = result.getInt("user_id");
