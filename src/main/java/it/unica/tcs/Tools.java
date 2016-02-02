@@ -547,9 +547,11 @@ public class Tools {
 			URLConnection connection = url.openConnection();
 			connection.connect();
 			
-			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			verifierResponse = in.readLine();
-			in.close();
+            try (
+                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))
+                    ) {
+                verifierResponse = in.readLine();
+            }
 		}
 		catch (Exception e) {
 			

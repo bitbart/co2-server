@@ -168,10 +168,12 @@ public class Validator {
 		// 2) Gets (from contract) all actions done
 		if (!contextID.equals(DatabaseInterface.CONTEXT_EMPTY_ID)) {
 
-			try {
+			try (
+			        StringReader contractReader = new StringReader(contract)
+			        ){
 				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = factory.newDocumentBuilder();
-				InputSource is = new InputSource(new StringReader(contract));
+				InputSource is = new InputSource(contractReader);
 				Document doc = builder.parse(is);
 
 				// optional, but recommended

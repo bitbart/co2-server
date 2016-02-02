@@ -308,10 +308,12 @@ public class ComplianceChecker {
 
         String name, typePreCheck;
 
-        try {
+        try (
+                StringReader contractReader = new StringReader(contractXML)
+                ){
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            InputSource is = new InputSource(new StringReader(contractXML));
+            InputSource is = new InputSource(contractReader);
             Document doc = builder.parse(is);
 
             doc.getDocumentElement().normalize();

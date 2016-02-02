@@ -174,11 +174,13 @@ public class Dualizer {
 		
 		String result = Messages.ERROR_XML_PARSING;
 
-		try {
+		try (
+		        StringReader contractReader = new StringReader(contract)
+		        ){
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 
-			InputSource is = new InputSource(new StringReader(contract));
+			InputSource is = new InputSource(contractReader);
 			Document doc;
 			
 			doc = builder.parse(is);
