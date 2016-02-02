@@ -1118,8 +1118,6 @@ public class DatabaseInterface {
             ResultSet rs = ps.executeQuery();
             rs.next();
             
-            connection.close();
-            
             if (rs.getInt(1) == 1)
                 returnValue = true;
 
@@ -1145,8 +1143,8 @@ public class DatabaseInterface {
         
         try (
                 Connection connection = datasource.getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
                 ) {
-            PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setString(1, context);
             
             ResultSet rs = stmt.executeQuery();
