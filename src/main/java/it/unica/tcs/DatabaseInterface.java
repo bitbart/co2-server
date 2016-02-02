@@ -665,13 +665,18 @@ public class DatabaseInterface {
 
     // Methods for handling array storing
 
-    /** This method will help to convert any object into byte array */
+    /** This method will help to convert any object into byte array 
+     * @throws IOException */
     public byte[] convertObjectToByteArray(Object obj) throws IOException {
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-        objectOutputStream.writeObject(obj);
-        return byteArrayOutputStream.toByteArray();
+        try (
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+                ) {
+            objectOutputStream.writeObject(obj);
+            return byteArrayOutputStream.toByteArray();
+        }
+        
     }
 
     /** This method will help to save java objects into database */
@@ -744,14 +749,14 @@ public class DatabaseInterface {
             
         }
         
-        ObjectInputStream objectInputStream = null;
 
-        try {
+        Double[] res;
 
-            Double[] res;
+        if (bytes != null) {
 
-            if (bytes != null) {
-                objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
+            try (
+                    ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
+                    ) {
 
                 Object retrievingObject = objectInputStream.readObject();
 
@@ -765,21 +770,22 @@ public class DatabaseInterface {
                     res[2] = 0.;
                     res[3] = 0.;
                 }
-            } else {
 
-                res = new Double[4];
-                res[0] = 0.;
-                res[1] = 0.;
-                res[2] = 0.;
-                res[3] = 0.;
+                return res;
+            } catch (IOException | ClassNotFoundException e) {
+
+                throw new SQLException("IOException or ClassNotFoundException in getFTV: " + e.getMessage());
             }
 
+        } else {
+
+            res = new Double[4];
+            res[0] = 0.;
+            res[1] = 0.;
+            res[2] = 0.;
+            res[3] = 0.;
             return res;
-        } catch (IOException | ClassNotFoundException e) {
-
-            throw new SQLException("IOException or ClassNotFoundException in getFTV: " + e.getMessage());
         }
-
     }
 
     /*

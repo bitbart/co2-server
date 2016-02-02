@@ -215,6 +215,8 @@ public class Tools {
 	                OutputStream stdin = process.getOutputStream ();
 	                InputStream stderr = process.getErrorStream ();
 	                InputStream stdout = process.getInputStream ();
+			        BufferedReader brStdOut = new BufferedReader (new InputStreamReader (stdout));
+			        BufferedReader brStdErr = new BufferedReader (new InputStreamReader (stderr));
 	                ) {
 			    
 			    // "write" the parms into stdin
@@ -230,19 +232,18 @@ public class Tools {
 			    stdin.close();
 			    
 			    // clean up if any output in stdout
-			    BufferedReader brCleanUp = new BufferedReader (new InputStreamReader (stdout));
 			    
-			    while ((line = brCleanUp.readLine ()) != null) {
+			    while ((line = brStdOut.readLine ()) != null) {
 			        response[0] += line;
 			    }
-			    brCleanUp.close();
+			    brStdOut.close();
 			    
 			    // clean up if any output in stderr
-			    brCleanUp = new BufferedReader (new InputStreamReader (stderr));
-			    while ((line = brCleanUp.readLine ()) != null) {
+
+			    while ((line = brStdErr.readLine ()) != null) {
 			        response[1] += line;
 			    }
-			    brCleanUp.close();
+			    brStdErr.close();
 			}
 	
 		    
