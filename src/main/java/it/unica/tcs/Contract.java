@@ -1,6 +1,7 @@
 package it.unica.tcs;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -58,10 +59,13 @@ public class Contract {
     @SuppressWarnings("resource")
     public Contract loadFromID(Integer contractID) throws SQLException {
 
-        String query = "SELECT * FROM contract WHERE contract_id = '" + contractID + "';";
+        String query = "SELECT * FROM contract WHERE contract_id = ?";
 
         try (Connection connection = db.getDatasource().getConnection()) {
-            ResultSet result = connection.createStatement().executeQuery(query);
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, contractID);
+            
+            ResultSet result = stmt.executeQuery();
             result.next();
 
             this.contractID = contractID;
@@ -90,10 +94,13 @@ public class Contract {
     @SuppressWarnings("resource")
     public Contract loadFromHash(String contractHash) throws SQLException {
 
-        String query = "SELECT * FROM contract WHERE contract_hash = '" + contractHash + "';";
+        String query = "SELECT * FROM contract WHERE contract_hash = ?";
 
         try (Connection connection = db.getDatasource().getConnection()) {
-            ResultSet result = connection.createStatement().executeQuery(query);
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, contractHash);
+            
+            ResultSet result = stmt.executeQuery();
             result.next();
 
             this.contractHash = contractHash;
@@ -144,11 +151,14 @@ public class Contract {
     @SuppressWarnings("resource")
     public String getCompliantHash() throws SQLException {
 
-        String query = "SELECT contract_hash FROM contract WHERE session_id = '" + this.sessionID
-                + "' AND contract_id <> '" + this.contractID + "';";
+        String query = "SELECT contract_hash FROM contract WHERE session_id = ? AND contract_id <> ?";
 
         try (Connection connection = db.getDatasource().getConnection()) {
-            ResultSet result = connection.createStatement().executeQuery(query);
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, sessionID);
+            stmt.setInt(2, contractID);
+            
+            ResultSet result = stmt.executeQuery();
             result.next();
 
             String s = result.getString(1);
