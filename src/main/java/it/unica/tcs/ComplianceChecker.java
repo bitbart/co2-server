@@ -1,11 +1,5 @@
 package it.unica.tcs;
 
-import it.unica.tcs.InternalException;
-import it.unica.tcs.Log;
-import it.unica.tcs.Messages;
-import it.unica.tcs.Tools;
-
-import java.util.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -13,15 +7,17 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.core.MediaType;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -31,6 +27,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
 
 @Path("/compliance")
 public class ComplianceChecker {
@@ -152,9 +149,11 @@ public class ComplianceChecker {
         queryText = "SELECT contract_id, contract_xml, type_pre_check, mapping, aux, delay, tell_timestamp FROM `" + DatabaseInterface.TABLE_CONTRACT
         	+ "` WHERE context_id = " + contextID + " AND state = 0 AND private = 0 ORDER BY rand();";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-//            @SuppressWarnings("resource")
-            ResultSet rs = connection.createStatement().executeQuery(queryText);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                Statement stmt = connection.createStatement();
+                ) {
+            ResultSet rs = stmt.executeQuery(queryText);
             
             // 2) For every id get probability of compliance
             //    If the probability of compliance is bigger than zero, get the other contract's owner reputation

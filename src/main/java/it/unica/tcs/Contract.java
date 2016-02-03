@@ -56,13 +56,14 @@ public class Contract {
 		return this;
 	} */
 
-    @SuppressWarnings("resource")
     public Contract loadFromID(Integer contractID) throws SQLException {
 
         String query = "SELECT * FROM contract WHERE contract_id = ?";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-            PreparedStatement stmt = connection.prepareStatement(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
             stmt.setInt(1, contractID);
             
             ResultSet result = stmt.executeQuery();
@@ -86,18 +87,19 @@ public class Contract {
 
             this.initialized = true;
 
-            connection.close();
+            result.close();
             return this;
         }
     }
 
-    @SuppressWarnings("resource")
     public Contract loadFromHash(String contractHash) throws SQLException {
 
         String query = "SELECT * FROM contract WHERE contract_hash = ?";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-            PreparedStatement stmt = connection.prepareStatement(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
             stmt.setString(1, contractHash);
             
             ResultSet result = stmt.executeQuery();
@@ -121,7 +123,7 @@ public class Contract {
 
             this.initialized = true;
             
-            connection.close();
+            result.close();
             return this;
         }
     }
@@ -131,30 +133,33 @@ public class Contract {
 		return this.initialized;
 	}
 
-    @SuppressWarnings("resource")
     public Integer getCompliantID() throws SQLException {
 
         String query = "SELECT contract_id FROM contract WHERE session_id = '" + this.sessionID
                 + "' AND contract_id <> '" + this.contractID + "';";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-            ResultSet result = connection.createStatement().executeQuery(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
+            ResultSet result = stmt.executeQuery(query);
             result.next();
 
             Integer i = result.getInt(1);
 
-            connection.close();
+            result.close();
             return i;
         }
     }
 
-    @SuppressWarnings("resource")
     public String getCompliantHash() throws SQLException {
 
         String query = "SELECT contract_hash FROM contract WHERE session_id = ? AND contract_id <> ?";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-            PreparedStatement stmt = connection.prepareStatement(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
             stmt.setInt(1, sessionID);
             stmt.setInt(2, contractID);
             
@@ -163,7 +168,7 @@ public class Contract {
 
             String s = result.getString(1);
 
-            connection.close();
+            result.close();
             return s;
         }
     }

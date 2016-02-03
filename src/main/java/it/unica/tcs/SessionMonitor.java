@@ -5,6 +5,7 @@ import it.unica.tcs.InternalException.ErrorTypes;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -363,7 +364,6 @@ public class SessionMonitor {
         }
     }
 	
-    @SuppressWarnings("resource")
     @POST
     @Path(value = "/getSessionStartTime")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -422,13 +422,14 @@ public class SessionMonitor {
 	            query = "SELECT start_timestamp FROM session WHERE session_id = " + c.getSessionID();
 	            
                 try (
-                        Connection connection = db.getDatasource().getConnection()
+                        Connection connection = db.getDatasource().getConnection();
+                        Statement stmt = connection.createStatement();
                         ) {
-                    ResultSet rs = connection.createStatement().executeQuery(query);
+                    ResultSet rs = stmt.executeQuery(query);
                     rs.next();
                     timestamp = rs.getLong(1);
 
-                    connection.close();
+                    rs.close();
                     return new ResponsePacket(1, timestamp + "");
                 }
             }
@@ -518,14 +519,14 @@ public class SessionMonitor {
             query = "SELECT start_timestamp FROM session WHERE session_id = " + sessionID;
             
             try (
-                    Connection connection = db.getDatasource().getConnection()
+                    Connection connection = db.getDatasource().getConnection();
+                    Statement stmt = connection.createStatement();
                     ) {
-                @SuppressWarnings("resource")
-                ResultSet rs = connection.createStatement().executeQuery(query);
+                ResultSet rs = stmt.executeQuery(query);
                 rs.next();
                 timestamp = rs.getLong(1);
                 
-                connection.close();
+                rs.close();
             }
             
             
@@ -606,7 +607,6 @@ public class SessionMonitor {
       
     }
     
-    @SuppressWarnings("resource")
     @POST
     @Path(value = "/receive")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -673,9 +673,10 @@ public class SessionMonitor {
                                                                                                                // role
 
             try (
-                    Connection connection = db.getDatasource().getConnection()
+                    Connection connection = db.getDatasource().getConnection();
+                    Statement stmt = connection.createStatement();
                     ) {
-                ResultSet rs = connection.createStatement().executeQuery(query);
+                ResultSet rs = stmt.executeQuery(query);
                 rs.next();
                 count = rs.getInt(7); // returns COUNT(*)
                 if (count < 1) {
@@ -683,7 +684,7 @@ public class SessionMonitor {
                     if (HARD_DEBUGGING)
                         Log.message().severe("Leaving RECEIVE");
 
-                    connection.close();
+                    rs.close();
                     return new ResponsePacket(0, "Nothing to receive (the buffer is empty)");
                 }
 
@@ -715,7 +716,7 @@ public class SessionMonitor {
                     if (HARD_DEBUGGING)
                         Log.message().severe("Leaving RECEIVE");
                     
-                    connection.close();
+                    rs.close();
                     return response;
                 } else if (dataType == 1) {
 
@@ -727,7 +728,7 @@ public class SessionMonitor {
                     if (HARD_DEBUGGING)
                         Log.message().severe("Leaving RECEIVE");
                     
-                    connection.close();
+                    rs.close();
                     return response;
                 } else {
 
@@ -739,7 +740,7 @@ public class SessionMonitor {
                     if (HARD_DEBUGGING)
                         Log.message().severe("Leaving RECEIVE");
                     
-                    connection.close();
+                    rs.close();
                     return response;
                 }
             }
@@ -1201,7 +1202,6 @@ public class SessionMonitor {
 		return new ResponsePacket(1, Messages.SESSION_ACTION_DONE);
 	}
 
-    @SuppressWarnings("resource")
     private Float calculateDelay(DatabaseInterface db, Integer sessionID) throws SQLException {
 
         String query;
@@ -1212,9 +1212,10 @@ public class SessionMonitor {
         // role
 
         try (
-                Connection connection = db.getDatasource().getConnection()
+                Connection connection = db.getDatasource().getConnection();
+                Statement stmt = connection.createStatement();
                 ) {
-            ResultSet rs = connection.createStatement().executeQuery(query);
+            ResultSet rs = stmt.executeQuery(query);
             rs.next();
             timestamp = rs.getLong(1);
 
@@ -1228,7 +1229,7 @@ public class SessionMonitor {
                             + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(new Date(System.currentTimeMillis()))
                             + ").");
 
-            connection.close();
+            rs.close();
             
             return elapsedTime; // CHECK IF IT IS CORRECT
         }

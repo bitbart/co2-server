@@ -43,13 +43,14 @@ public class User {
 		return tmp;
 	}
 	
-    @SuppressWarnings("resource")
     private void loadFromUserID(Integer userID) throws SQLException {
 
         String query = "SELECT * FROM user WHERE user_id = ?";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-            PreparedStatement stmt = connection.prepareStatement(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
             stmt.setInt(1, userID);
             
             ResultSet result = stmt.executeQuery();
@@ -65,7 +66,7 @@ public class User {
             this.tv = result.getDouble("tv");
 
             this.ftv = db.getFTV(userID + "");
-            connection.close();
+            result.close();
         } catch (SQLException e) {
 
             Log.message().severe("SQLException in getFTV: " + e.getMessage());
@@ -73,13 +74,14 @@ public class User {
         }
     }
 
-    @SuppressWarnings("resource")
     private void loadFromUsername(String username) throws SQLException {
 
         String query = "SELECT * FROM user WHERE email = ?";
 
-        try (Connection connection = db.getDatasource().getConnection()) {
-            PreparedStatement stmt = connection.prepareStatement(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
             stmt.setString(1, username);
             
             ResultSet result = stmt.executeQuery();
@@ -95,7 +97,7 @@ public class User {
             this.tv = result.getDouble("tv");
             this.ftv = db.getFTV(userID + "");
 
-            connection.close();
+            result.close();
         }
     }
 	

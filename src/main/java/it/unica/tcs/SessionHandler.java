@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -56,8 +57,7 @@ public class SessionHandler {
         }
 
         // 1) Connecting to db
-        DatabaseInterface db = DatabaseInterface.getInstance();
-
+        
         try {
             // 2) Checking for valid auth data
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
@@ -171,7 +171,7 @@ public class SessionHandler {
         // 8) Adding contracts to database
         // 8a) Loads owner data
         try {
-            userID = db.selectUserId(username);
+            userID = DatabaseInterface.getInstance().selectUserId(username);
         }
         catch (SQLException e) {
 
@@ -187,7 +187,7 @@ public class SessionHandler {
         	
             contractHash = Tools.hashContract(contractXML, randomLong);
             contextID = DatabaseInterface.getInstance().getIDFromContext(Tools.getDeclaredStringContext(contractXML));
-            contractID = db.insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay, prv); 
+            contractID = DatabaseInterface.getInstance().insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay, prv); 
             
             // The contract is under processing (not latent)
             Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
@@ -205,7 +205,7 @@ public class SessionHandler {
         while (endWhile) {
             // 9) Checking contract compliance
             try {
-                BasicPair<Integer, String> compliantData = ComplianceChecker.getCompliant(db, contractXML,firstOutputOcaml, secondOutputOcaml, contextID, typePreCheck);
+                BasicPair<Integer, String> compliantData = ComplianceChecker.getCompliant(DatabaseInterface.getInstance(), contractXML,firstOutputOcaml, secondOutputOcaml, contextID, typePreCheck);
                 
                 // 9a) Checks if compliant ID exists
                 if (!compliantData.isEmpty()) {
@@ -216,7 +216,7 @@ public class SessionHandler {
                 // Else, no compliant is found
                 else {
                 	
-                    db.setContractState(contractID, DatabaseInterface.CONTRACT_LATENT); // Now it is really latent
+                    DatabaseInterface.getInstance().setContractState(contractID, DatabaseInterface.CONTRACT_LATENT); // Now it is really latent
     
                     Log.message().fine("No compliant contract found for C1=" + contractID + "");
                     
@@ -265,7 +265,7 @@ public class SessionHandler {
             // 10) Merging contracts
             if (compliant.getState() == DatabaseInterface.CONTRACT_LATENT) {
             	
-                areFused = fuse(db, contractXML, compliantContract, contractID, compliantID);
+                areFused = fuse(DatabaseInterface.getInstance(), contractXML, compliantContract, contractID, compliantID);
                 endWhile = false;
                 
             }
@@ -374,7 +374,8 @@ public class SessionHandler {
             if (!originalType.equals(type)) {
             	
             	Log.message().fine("The contract that a user tried to accept is not of the specified type (" + Log.format(type) + ").");
-            	return new ResponsePacket(0, "The contract you tried to accept is not of the specified type (" + type + ")."); // serialize this message
+            	MainApplication.mutexRelease(originalID);
+                return new ResponsePacket(0, "The contract you tried to accept is not of the specified type (" + type + ")."); // serialize this message
             }
 
 	        if (originalState != DatabaseInterface.CONTRACT_LATENT) {
@@ -382,7 +383,7 @@ public class SessionHandler {
 	        	// Log.message().info("Checked if the contract with HASH=" + originalHash + " is latent: NO!");
 	        	MainApplication.mutexRelease(originalID);
 	        	
-	        	new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+	        	return new ResponsePacket(-1, Messages.CONTRACT_NOT_PUBLISHED);
 	        }
 	        
 	        if (original.isExpired()) {
@@ -391,7 +392,7 @@ public class SessionHandler {
             	Log.message().info("Contract with ID=" + originalID + " is declared expired.");
 	        	MainApplication.mutexRelease(originalID);
 	        	
-	        	new ResponsePacket(-1, Messages.PERMISSION_DENIED);
+	        	return new ResponsePacket(-1, Messages.CONTRACT_EXPIRED_MESSAGE);
 	        }
 	        
 			Log.message().info("Contract loaded from hash; ID: " + originalID + ", HASH: " + originalHash + ", XML: " + Log.format(originalXML) + ", STATE: " + originalState);
@@ -802,7 +803,6 @@ public class SessionHandler {
      * @param contractHash Hash contract sent by client
      * @return An integer value that indicates the state of the contract
      * @throws DBException if authentication, or permission, or queries fail */
-    @SuppressWarnings("resource")
     public static int getContractState(DatabaseInterface db, String username, String pass, String contractHash) throws DBException {
 
         try{
@@ -833,13 +833,16 @@ public class SessionHandler {
         // 4) Retrieves contract state
         String query = "SELECT state FROM contract WHERE contract_hash = '" + contractHash + "';";
         
-        try (Connection connection = db.getDatasource().getConnection()) {
-            ResultSet rs = connection.createStatement().executeQuery(query);
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                Statement stmt = connection.createStatement();
+                ) {
+            ResultSet rs = stmt.executeQuery(query);
             rs.next();
             
             Integer result = rs.getInt(1);
             
-            connection.close();
+            rs.close();
             return result;
         }
         catch (SQLException e) {

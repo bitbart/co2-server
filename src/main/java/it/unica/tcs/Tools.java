@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Random;
 import java.util.Set;
 
@@ -451,7 +452,8 @@ public class Tools {
             throws SQLException {
 
         try (
-                Connection connection = db.getDatasource().getConnection()
+                Connection connection = db.getDatasource().getConnection();
+                Statement stmt = connection.createStatement();
                 ) {
             
             ResultSet result;
@@ -460,13 +462,13 @@ public class Tools {
             
             // 2b) Load session.
             query = "SELECT session_id FROM contract WHERE contract_hash='" + contractHash + "';";
-            result = connection.createStatement().executeQuery(query);
+            result = stmt.executeQuery(query);
             result.next();
             sessionID = result.getInt(1);
             result.close();
             
             query = "SELECT session_hash FROM session WHERE session_id=" + sessionID;
-            result = connection.createStatement().executeQuery(query);
+            result = stmt.executeQuery(query);
             result.next();
             sessionHash = result.getString(1);
             result.close();
@@ -474,10 +476,10 @@ public class Tools {
             // 2d) Load network
             query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
                     + "';";
-            result = connection.createStatement().executeQuery(query);
+            result = stmt.executeQuery(query);
             result.close();
             
-            connection.close();
+            result.close();
             
             return true;
         }

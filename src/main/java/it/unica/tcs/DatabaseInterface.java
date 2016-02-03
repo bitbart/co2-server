@@ -86,6 +86,7 @@ public class DatabaseInterface {
     private DatabaseInterface() {
         
         try {
+            Log.message().info("Initializing datasource");
             Context initCtx = new InitialContext();
             Context envCtx = (Context) initCtx.lookup("java:comp/env");
             this.datasource = (DataSource) envCtx.lookup("jdbc/co2datasource");
@@ -108,28 +109,6 @@ public class DatabaseInterface {
         return datasource;
     }
     
-
-//    /**
-//     * @throws SQLException
-//     */
-//    @SuppressWarnings("resource")
-//    public ResultSet select(String query) throws SQLException {
-//
-//        final String query = "";
-//        
-//        try (
-//                Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
-//                ) {
-//            PreparedStatement stmt = connection.prepareStatement(query);
-//            ResultSet rs = stmt.executeQuery();
-//            
-//            //
-//            
-//            connection.close();
-//            
-//            return null;
-//        }
-//    }
 
     /**
      * @throws SQLException
@@ -185,7 +164,6 @@ public class DatabaseInterface {
     /**
      * @throws SQLException
      */
-    @SuppressWarnings("resource")
     public Integer insertContract(String contractHash, String contractXML, Integer ownerID, Integer contextID,
             Integer role, Integer state, Long randomLong, String typePreCheck, String mapping, String aux,
             Integer delay, boolean prv) throws SQLException {
@@ -236,14 +214,14 @@ public class DatabaseInterface {
         
         try (
                 Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
                 ) {
-            PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setString(1, contractHash);
             
             ResultSet rs = stmt.executeQuery();
             rs.next();
             identifier = rs.getInt(1);
-            connection.close();
+            rs.close();
             
             return identifier;
         }
@@ -361,7 +339,6 @@ public class DatabaseInterface {
     /**
      * @throws SQLException
      */
-    @SuppressWarnings("resource")
     public Integer insertSession(String sessionHash, Integer state, String lastState, Integer contextID)
             throws SQLException {
 
@@ -396,14 +373,14 @@ public class DatabaseInterface {
         
         try (
                 Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
                 ) {
-            PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setString(1, sessionHash);
             
             ResultSet rs = stmt.executeQuery();
             rs.next();
             identifier = rs.getInt(1);
-            connection.close();
+            rs.close();
             
             return identifier;
         }
@@ -687,23 +664,21 @@ public class DatabaseInterface {
         int persistObjectID = -1;
         
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement(SQLQUERY_TO_SAVE_JAVAOBJECT, PreparedStatement.RETURN_GENERATED_KEYS);
                     ) {
-            @SuppressWarnings("resource")
-            PreparedStatement preparedStatement = connection.prepareStatement(SQLQUERY_TO_SAVE_JAVAOBJECT, PreparedStatement.RETURN_GENERATED_KEYS);
 
             byteArray = convertObjectToByteArray(javaObject2Persist);
             preparedStatement.setBytes(1, byteArray);
             preparedStatement.executeUpdate();
 
-            @SuppressWarnings("resource") // closing the PreparedStatement
-            // automatically close the ResultSet
             ResultSet rs = preparedStatement.getGeneratedKeys();
 
             if (rs.next()) {
                 persistObjectID = rs.getInt(1);
             }
 
+            rs.close();
         } catch (SQLException e) {
             throw e;
         } catch (Exception e) {
@@ -722,17 +697,15 @@ public class DatabaseInterface {
         final String query = "SELECT ftv FROM user WHERE user_id = ?";
         
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
                 ) {
-            @SuppressWarnings("resource")
-            PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setString(1, userID);
             
-            @SuppressWarnings("resource")
             ResultSet rs = stmt.executeQuery();
             rs.next();
             blob = rs.getBlob(1);
-            connection.close();
+            rs.close();
             
             if (blob != null)
                 bytes = blob.getBytes(1, (int) (blob.length()));
@@ -893,9 +866,11 @@ public class DatabaseInterface {
     /** */
     private Integer throwUpdate(String queryUpdate) throws SQLException {
 
-        try (Connection connection = datasource.getConnection()) {
+        try (
+                Connection connection = datasource.getConnection();
+                Statement stmt = connection.createStatement();
+                ) {
             
-            Statement stmt = connection.createStatement();
             Integer rs = stmt.executeUpdate(queryUpdate);
             stmt.close();
             return rs;
@@ -904,12 +879,13 @@ public class DatabaseInterface {
 
     public Integer deleteContracts() throws SQLException {
 
-        try (Connection connection = datasource.getConnection()) {
+        try (
+                Connection connection = datasource.getConnection();
+                Statement stmt = connection.createStatement();
+                ) {
             
-            Statement stmt = connection.createStatement();
             Integer rs = stmt.executeUpdate("DELETE FROM " + TABLE_CONTRACT + " WHERE context_id<>4");
             rs = stmt.executeUpdate("DELETE FROM " + TABLE_SESSION + " WHERE context_id<>4");
-            stmt.close();
             return rs;
         }
     }
@@ -918,54 +894,52 @@ public class DatabaseInterface {
     
     
     
-    
-    @SuppressWarnings("resource")
     public int countSessions() throws SQLException {
         
-        try (Connection connection = datasource.getConnection()) {
-            
-            ResultSet rs = connection.createStatement().executeQuery("SELECT COUNT(*) FROM session");
-            
+        try (
+                Connection connection = datasource.getConnection();
+                Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM session");
+                ) {
             rs.next();
             return rs.getInt(1);
         }
     }
     
-    @SuppressWarnings("resource")
     public int countContracts() throws SQLException {
         
-        try (Connection connection = datasource.getConnection()) {
-            
-            ResultSet rs = connection.createStatement().executeQuery("SELECT COUNT(*) FROM contract");
-            
+        try (
+                Connection connection = datasource.getConnection();
+                Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM contract");
+                ) {
             rs.next();
             return rs.getInt(1);
         }
     }
 
-    @SuppressWarnings("resource")
     public int countLatentContracts() throws SQLException {
         
-        try (Connection connection = datasource.getConnection()) {
-            
-            ResultSet rs = connection.createStatement().executeQuery("SELECT COUNT(*) FROM contract WHERE state=0");
-            
+        try (
+                Connection connection = datasource.getConnection();
+                Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM contract WHERE state=0");
+                ) {
             rs.next();
             return rs.getInt(1);
         }
         
     }
     
-    @SuppressWarnings("resource")
     public Pair<Integer, String> selectActionIdAndVerificationLink(String actionName, int contextId) throws SQLException {
         final String query = "SELECT A.action_id, verification_link "
                 + "FROM action AS A LEFT JOIN context_action AS CA ON A.action_id = CA.action_id "
                 + "WHERE name=? AND context_id=?";
         
         try(
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(query);
                 ) {
-            PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, actionName);
             ps.setInt(2, contextId);
             
@@ -975,7 +949,7 @@ public class DatabaseInterface {
             int actionID = rs.getInt("action_id");
             String verLink = rs.getString("verification_link");
             
-            connection.close();
+            rs.close();
             
             return new MutablePair<>(actionID, verLink);
         }
@@ -983,27 +957,25 @@ public class DatabaseInterface {
     }
     
     
-    @SuppressWarnings("resource")
     public int selectContextId(String contextName) throws SQLException {
         final String query = "SELECT context_id FROM context WHERE name = ?";
         
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(query);
                 ) {
-            PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, contextName);
             
             ResultSet rs = ps.executeQuery();
             rs.next();
             int contextId = rs.getInt("context_id");
             
-            connection.close();
+            rs.close();
             
             return contextId;
         }
     }
     
-    @SuppressWarnings("resource")
     public Set<String> selectContextActions(int contextId) throws SQLException {
         
         final String query = "SELECT action.name "
@@ -1012,9 +984,9 @@ public class DatabaseInterface {
         
         
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(query);
                 ){
-            PreparedStatement ps = connection.prepareStatement(query);
             ps.setInt(1, contextId);
             
             ResultSet rs = ps.executeQuery();
@@ -1025,26 +997,25 @@ public class DatabaseInterface {
                 actions.add(rs.getString(1));
             }
             
-            connection.close();
+            rs.close();
             
             return actions;
         }
     }
     
-    @SuppressWarnings("resource")
     public int selectUserId(String username) throws SQLException {
         final String query = "SELECT user_id FROM user WHERE email = ?";
         
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(query);
                 ){
-            PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, username);
             
             ResultSet rs = ps.executeQuery();
             rs.next();
             int userId = rs.getInt(1);
-            connection.close();
+            rs.close();
             
             return userId;
         }
@@ -1060,7 +1031,6 @@ public class DatabaseInterface {
         return selectActionType(contextID, actionName, "data_type");
     }
 
-    @SuppressWarnings("resource")
     private Integer selectActionType(Integer contextID, String actionName, String column) throws SQLException {
 
         if (contextID == 0) // No data_type allowed for empty context's actions
@@ -1072,9 +1042,9 @@ public class DatabaseInterface {
                 + "WHERE context_id = ? AND name = ?";
 
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(query);
                 ){
-            PreparedStatement ps = connection.prepareStatement(query);
             ps.setInt(1, contextID);
             ps.setString(2, actionName);
             
@@ -1082,7 +1052,7 @@ public class DatabaseInterface {
             rs.next();
             int actionType = rs.getInt(column);
             
-            connection.close();
+            rs.close();
             
             return actionType;
         }
@@ -1095,7 +1065,6 @@ public class DatabaseInterface {
      * @param user Client username
      * @param pass Client password
      * @return True if user credentials are correct */
-    @SuppressWarnings("resource")
     public boolean authenticate(String user, String pass) throws SQLException {
 
         boolean returnValue = false;
@@ -1115,9 +1084,9 @@ public class DatabaseInterface {
         final String query = "SELECT COUNT(*) FROM user WHERE email = ? AND password = ?";
         
         try (
-                Connection connection = datasource.getConnection()
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(query);
                 ) {
-            PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, user);
             ps.setString(2, Tools.hash256(pass));
             
@@ -1129,7 +1098,7 @@ public class DatabaseInterface {
 
             cc.put(key, returnValue);
 
-            connection.close();
+            rs.close();
             
             return returnValue;
         }
@@ -1142,7 +1111,6 @@ public class DatabaseInterface {
      * @param db Database
      * @param context Name of the context
      * @return The identifier of the context */
-    @SuppressWarnings("resource")
     public Integer getIDFromContext(String context) {
 
         final String query = "SELECT context_id FROM context WHERE name = ?";
@@ -1157,7 +1125,7 @@ public class DatabaseInterface {
             rs.next();
             int contextID = rs.getInt(1);
             
-            connection.close();
+            rs.close();
             return contextID;
             
         } catch (SQLException e) {
