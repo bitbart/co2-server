@@ -27,7 +27,7 @@ public class InternalException extends Exception {
 				break;
 
 			case TYPE_CONTEXT_ERROR:
-				outputType = 0;
+				outputType = -1;
 				outputMessage =  Messages.CONTRACT_INVALID + " (" + Messages.CONTEXT_ERROR + ")";
 				break;
 				

@@ -2,6 +2,8 @@ package it.unica.tcs;
 
 import java.sql.SQLException;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -15,6 +17,7 @@ public class MainApplication implements ServletContextListener {
 	private static Cache<String, Boolean> credentialsCache;
 	private static Cache<String, Boolean> permissionsCache;	
 	private static Cache<String, Integer[]> latentCache;
+	private static ExecutorService executor;
 	
 	public static void mutexAcquire(Integer cID) {
 	    
@@ -51,18 +54,30 @@ public class MainApplication implements ServletContextListener {
 	    return latentCache;
 	}
 	
+	public static ExecutorService getExecutorService() {
+	    
+	    if (executor==null) {
+	        Log.message().info("Starting the executor service");
+	        executor = Executors.newCachedThreadPool();
+	    }
+	    
+	    return executor;
+	}
+	
 	@Override
 	public void contextDestroyed(ServletContextEvent arg0) {
 
 
-		Log.message().severe("The webservice has been killed by another process.");
+		Log.message().info("The webservice has been killed by another process.");
 		
+		Log.message().info("Shutting down the executor service");
+		executor.shutdownNow();
 	}
 	
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-		
-		Integer latent_cs, cs, active_ss;
+
+	    Integer latent_cs, cs, active_ss;
 		
 	    // Initializes PRNG
 	    rng = new Random();
@@ -90,5 +105,6 @@ public class MainApplication implements ServletContextListener {
 	    credentialsCache = new Cache<String, Boolean>(24*60*60, 24*60*60, 10000);
 	    permissionsCache = new Cache<String, Boolean>(24*60*60, 24*60*60, 10000);
 	    latentCache = new Cache<String, Integer[]>(24*60*60, 24*60*60, 10000);
+	    
 	}
 }

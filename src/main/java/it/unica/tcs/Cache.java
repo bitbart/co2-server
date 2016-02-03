@@ -26,21 +26,27 @@ public class Cache<K, T> {
  
         if (timeToLive > 0 && timerInterval > 0) {
  
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try {
-                            Thread.sleep(timerInterval * 1000);
-                        } catch (InterruptedException ex) {
+            MainApplication.getExecutorService().execute(
+
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            
+                            boolean running = true;
+                            
+                            while (running) {
+                                try {
+                                    Thread.sleep(timerInterval * 1000);
+                                    cleanup();
+                                } catch (InterruptedException ex) {
+                                    Log.message().info("Cache. Interrupt received, terminating..");
+                                    running = false;
+                                }
+                            }
                         }
-                        cleanup();
                     }
-                }
-            });
- 
-            t.setDaemon(true);
-            t.start();
+
+            );
         }
     }
  
@@ -104,7 +110,6 @@ public class Cache<K, T> {
                 cacheMap.remove(key);
             }
  
-            Thread.yield();
         }
     }
 }
