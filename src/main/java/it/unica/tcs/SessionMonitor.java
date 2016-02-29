@@ -1326,4 +1326,41 @@ public class SessionMonitor {
 		
 		return false; // session is not ended
 	}
+	
+	/** 
+     * Return the session hash of the given contract.
+     * @param username Client username
+     * @param pass Client password
+     * @param contractHash Xml contract sent by client
+     * @return Xml response that communicates if the contract is fused 
+     */
+    @POST
+    @Path(value = "/getSessionId")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket getSessionId(QueryPacket postData) {
+        
+        String username = postData.getUsername();
+        String pass = postData.getPassword();
+        String contractHash = postData.getContractHash();
+        
+        try {
+            // 2) Checking for valid auth data
+            if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
+                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                
+                return new ResponsePacket(-1, Messages.AUTH_FAILED);
+            }
+
+            Contract contract = new Contract().loadFromHash(contractHash);
+            ResponsePacket rp = new ResponsePacket(0, contract.getSessionHash());
+            
+            return rp;
+        }catch (SQLException e) {
+            
+            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            
+            return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+    }
 }

@@ -71,4 +71,5 @@ public class ResponsePacket {
 	public void setActionValue(String actionValue) {
 		this.actionValue = actionValue;
 	}
+
 }

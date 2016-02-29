@@ -172,6 +172,29 @@ public class Contract {
             return s;
         }
     }
+    
+    public String getSessionHash() throws SQLException {
+
+        if (sessionID<=0)
+            return "";
+                    
+        String query = "SELECT session_hash FROM session WHERE session_id = ?";
+
+        try (
+                Connection connection = db.getDatasource().getConnection();
+                PreparedStatement stmt = connection.prepareStatement(query);
+                ) {
+            stmt.setInt(1, sessionID);
+            
+            ResultSet result = stmt.executeQuery();
+            result.next();
+
+            String s = result.getString(1);
+
+            result.close();
+            return s;
+        }
+    }
 
 	public Integer getContractID() {
 
