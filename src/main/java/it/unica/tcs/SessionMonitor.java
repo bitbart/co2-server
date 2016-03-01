@@ -1,19 +1,20 @@
 package it.unica.tcs;
 
-import it.unica.tcs.InternalException.ErrorTypes;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+
+import it.unica.tcs.InternalException.ErrorTypes;
 
 @Path(value = "/monitoring")
 public class SessionMonitor {
@@ -619,7 +620,8 @@ public class SessionMonitor {
         String username = postData.getUsername();
         String pass = postData.getPassword();
         String contractHash = postData.getContractHash();
-
+        List<String> actions = postData.getActions();
+        
         DatabaseInterface db = DatabaseInterface.getInstance();
         Integer sessionID;
         String query;
@@ -691,11 +693,19 @@ public class SessionMonitor {
                 actionName = rs.getString(2);
                 dataType = rs.getInt(3);
 
+                // if the user specify a list of actions, consume the action only if present in the list
+                if (actions!=null && !actions.isEmpty() && !actions.contains(actionName)) {
+                    if (HARD_DEBUGGING)
+                        Log.message().severe("Leaving RECEIVE");
+
+                    rs.close();
+                    return new ResponsePacket(0, "Nothing to receive (the buffer contains the action '"+actionName+"', but you specify the list '"+actions+"')");
+                }
+                
                 if (rs.getInt(1) == -1)
                     dataType = 1;
 
-                ResponsePacket response = new ResponsePacket(1,
-                        "Action received (check the actionName and actionValue fields)");
+                ResponsePacket response = new ResponsePacket(1, "Action received (check the actionName and actionValue fields)");
                 response.setActionName(actionName);
 
                 /*

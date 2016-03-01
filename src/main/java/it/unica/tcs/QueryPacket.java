@@ -1,5 +1,7 @@
 package it.unica.tcs;
 
+import java.util.List;
+
 public class QueryPacket {
 
 	private String username;
@@ -13,7 +15,8 @@ public class QueryPacket {
 	private Integer delay;
 	private String contractType;
 	private boolean prv;
-
+	private List<String> actions;
+	
 	// Must have no-argument constructor
 	public QueryPacket() {
 
@@ -116,5 +119,13 @@ public class QueryPacket {
 	public void setNewPassword(String newPassword) {
 		this.newPassword = newPassword;
 	}
+
+    public List<String> getActions() {
+        return actions;
+    }
+
+    public void setActions(List<String> actions) {
+        this.actions = actions;
+    }
 	
 }
