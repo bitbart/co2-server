@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import it.unica.tcs.DatabaseInterface;
+import it.unica.tcs.database.DatabaseInterface;
 
 /** 
  */

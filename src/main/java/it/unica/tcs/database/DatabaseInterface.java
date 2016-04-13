@@ -1,4 +1,4 @@
-package it.unica.tcs;
+package it.unica.tcs.database;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,6 +22,10 @@ import javax.sql.DataSource;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import it.unica.tcs.Cache;
+import it.unica.tcs.Contract;
+import it.unica.tcs.MainApplication;
+import it.unica.tcs.Tools;
 import it.unica.tcs.logging.Log;
 
 // TODO: Create all javadocs

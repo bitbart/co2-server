@@ -9,6 +9,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import it.unica.tcs.database.DatabaseInterface;
 import it.unica.tcs.logging.Log;
 
 @WebListener

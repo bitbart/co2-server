@@ -1,4 +1,4 @@
-package it.unica.tcs;
+package it.unica.tcs.database;
 
 public class DBException extends Exception {
 	

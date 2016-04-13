@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import it.unica.tcs.database.DatabaseInterface;
 import it.unica.tcs.logging.Log;
 
 public class User {

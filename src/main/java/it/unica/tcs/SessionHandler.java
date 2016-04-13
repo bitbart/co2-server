@@ -16,6 +16,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.database.DBException;
+import it.unica.tcs.database.DatabaseInterface;
 import it.unica.tcs.logging.Log;
 
 /** Provides API to start a session between two contracts: 1) Insert a new contract; 2) Check if contract sent is fused. */
