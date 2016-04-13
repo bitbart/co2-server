@@ -11,47 +11,40 @@ import java.util.logging.Logger;
 public class Log {
 		 
 	public static final Logger log = Logger.getLogger("Co2log");
-	private static boolean init = false;
 	
-	private static void init() {
+	static {
+			
+		// Removes log files of previous WAR versions
+		Tools.callApplication("rm " + Tools.HOME_DIR + "/logs/*", null);
 		
-		if (init == false) {
+		FileHandler myFileHandler = null;
+		
+		try {
 			
-			// Removes log files of previous WAR versions
-			Tools.callApplication("rm " + Tools.HOME_DIR + "/logs/*", null);
+			String fileName = "serverlog_" + Long.toString(System.currentTimeMillis()) + ".txt";
 			
-			FileHandler myFileHandler = null;
+			myFileHandler = new FileHandler(Tools.HOME_DIR + "/logs/" + fileName , true);
 			
-			try {
-				
-				String fileName = "serverlog_" + Long.toString(System.currentTimeMillis()) + ".txt";
-				
-				myFileHandler = new FileHandler(Tools.HOME_DIR + "/logs/" + fileName , true);
-				
-				PrintWriter writer;
-				
-				writer = new PrintWriter(Tools.HOME_DIR + "/upload/log_position.txt", "UTF-8");
-				writer.print(fileName);
-				writer.close();
+			PrintWriter writer;
 			
-				myFileHandler.setFormatter(new LogFormatter());
-				
-				log.addHandler(myFileHandler);
-				log.setUseParentHandlers(false);
-				log.setLevel(Level.INFO);
-				
-				init = true;
+			writer = new PrintWriter(Tools.HOME_DIR + "/upload/log_position.txt", "UTF-8");
+			writer.print(fileName);
+			writer.close();
+		
+			myFileHandler.setFormatter(new LogFormatter());
+			
+			log.addHandler(myFileHandler);
+			log.setUseParentHandlers(false);
+			log.setLevel(Level.INFO);
 
-			} catch (SecurityException | IOException e) {
-				e.printStackTrace();
-			}
-			
+		} catch (SecurityException | IOException e) {
+			e.printStackTrace();
 		}
+			
 	}
 	
 	public static Logger message() {
 		
-		init();
 		return log; 
 	}
 	
@@ -66,7 +59,4 @@ public class Log {
 		return "'<i>" + escapeHtml(s.substring(0, sLength)).replaceAll("\n", "") + dots + "</i>'";
 	}
 	
-	public static boolean isInitialized() {
-		return init;
-	}
 }
