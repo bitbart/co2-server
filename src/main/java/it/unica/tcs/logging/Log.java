@@ -1,4 +1,4 @@
-package it.unica.tcs;
+package it.unica.tcs.logging;
 
 import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
 
@@ -7,6 +7,8 @@ import java.io.PrintWriter;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import it.unica.tcs.Tools;
 
 public class Log {
 		 

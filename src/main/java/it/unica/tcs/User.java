@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import it.unica.tcs.logging.Log;
+
 public class User {
 	
 	public static final Integer REP_TELL = -1;

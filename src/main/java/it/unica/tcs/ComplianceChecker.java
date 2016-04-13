@@ -28,6 +28,8 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import it.unica.tcs.logging.Log;
+
 
 @Path("/compliance")
 public class ComplianceChecker {

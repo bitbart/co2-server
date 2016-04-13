@@ -3,6 +3,8 @@ package it.unica.tcs;
 import java.util.ArrayList;
 import org.apache.commons.collections.MapIterator;
 import org.apache.commons.collections.map.LRUMap;
+
+import it.unica.tcs.logging.Log;
  
 public class Cache<K, T> {
  

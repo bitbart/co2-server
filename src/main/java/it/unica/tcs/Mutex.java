@@ -2,6 +2,8 @@ package it.unica.tcs;
 
 import java.util.TreeSet;
 
+import it.unica.tcs.logging.Log;
+
 public class Mutex {
     
     TreeSet<Integer> ts;

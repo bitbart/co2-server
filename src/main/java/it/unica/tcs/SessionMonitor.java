@@ -15,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.logging.Log;
 
 @Path(value = "/monitoring")
 public class SessionMonitor {

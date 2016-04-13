@@ -22,6 +22,8 @@ import javax.sql.DataSource;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import it.unica.tcs.logging.Log;
+
 // TODO: Create all javadocs
 
 /** */

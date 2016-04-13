@@ -32,6 +32,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.logging.Log;
 
 public class Tools {
 	

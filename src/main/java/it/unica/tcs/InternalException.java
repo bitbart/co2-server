@@ -1,6 +1,7 @@
 package it.unica.tcs;
 
 import it.unica.tcs.Messages;
+import it.unica.tcs.logging.Log;
 
 public class InternalException extends Exception {
 

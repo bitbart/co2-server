@@ -24,6 +24,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.logging.Log;
 
 /** Verifies the syntax of the XML contracts. */
 @Path(value = "/validation")

@@ -1,4 +1,4 @@
-package it.unica.tcs;
+package it.unica.tcs.logging;
 
 import java.util.Date;
 import java.util.logging.Formatter;

@@ -23,6 +23,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
+import it.unica.tcs.logging.Log;
+
 @Path(value = "/dualize")
 public class Dualizer {
 

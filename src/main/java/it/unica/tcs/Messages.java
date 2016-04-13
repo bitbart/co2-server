@@ -1,5 +1,7 @@
 package it.unica.tcs;
 
+import it.unica.tcs.logging.Log;
+
 /** Supports communication between client and server. 1) Collects all messages that server uses to respond at client
  * requests. 2) Provides methods to build xml custom responses with one or more messages. */
 public class Messages {

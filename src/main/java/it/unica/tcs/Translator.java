@@ -8,6 +8,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import it.unica.tcs.logging.Log;
+
 /** Translates a string contract to a xml contract. */
 @Path(value = "/translation")
 public class Translator {
