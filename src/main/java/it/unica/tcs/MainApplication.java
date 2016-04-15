@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import it.unica.tcs.database.DatabaseInterface;
-import it.unica.tcs.logging.Log;
 
 @WebListener
 public class MainApplication implements ServletContextListener {
@@ -65,7 +64,7 @@ public class MainApplication implements ServletContextListener {
 	public static ExecutorService getExecutorService() {
 	    
 	    if (executor==null) {
-	        Log.message().info("Starting the executor service");
+	        logger.info("Starting the executor service");
 	        executor = Executors.newCachedThreadPool();
 	    }
 	    
@@ -76,9 +75,9 @@ public class MainApplication implements ServletContextListener {
 	public void contextDestroyed(ServletContextEvent arg0) {
 
 
-		Log.message().info("The webservice has been killed by another process.");
+		logger.info("The webservice has been killed by another process.");
 		
-		Log.message().info("Shutting down the executor service");
+		logger.info("Shutting down the executor service");
 		executor.shutdownNow();
 	}
 	
@@ -99,16 +98,16 @@ public class MainApplication implements ServletContextListener {
 			latent_cs = db.countLatentContracts();
 			active_ss = db.countSessions();
 			
-			Log.message().info("New .WAR loaded. When starting, there were " + cs + " contracts in the database (" + latent_cs + " latents), and " + active_ss + " sessions.");
+			logger.info("New .WAR loaded. When starting, there were " + cs + " contracts in the database (" + latent_cs + " latents), and " + active_ss + " sessions.");
 		
 	    } catch (SQLException e) {
 	    	
-	    	Log.message().warning("New .WAR loaded, can't read the number of active contracts/sessions in the database.");
-	    	Log.message().warning("SQL says: " + e.getMessage());
+	    	logger.warn("New .WAR loaded, can't read the number of active contracts/sessions in the database.");
+	    	logger.warn("SQL says: " + e.getMessage());
 		}
 	    
 	    if (!SessionMonitor.MONITOR_ENABLED)
-	    	Log.message().warning("The execution monitor is currently disabled.");
+	    	logger.warn("The execution monitor is currently disabled.");
 	    
 	    // Creating caches
 	    

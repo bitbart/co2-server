@@ -18,6 +18,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -26,13 +28,14 @@ import org.xml.sax.SAXException;
 import it.unica.tcs.InternalException.ErrorTypes;
 import it.unica.tcs.database.DBException;
 import it.unica.tcs.database.DatabaseInterface;
-import it.unica.tcs.logging.Log;
 
 /** Verifies the syntax of the XML contracts. */
 @Path(value = "/validation")
 public class Validator {
 
-	@POST
+    private static final Logger logger = LoggerFactory.getLogger(Validator.class);
+    
+    @POST
 	@Path(value = "/validate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -52,14 +55,14 @@ public class Validator {
 		}
 		catch (InternalException iie) {
 
-			Log.message().severe("Illegal input in validateXML: " + iie.getMessage());
+			logger.error("Illegal input in validateXML: " + iie.getMessage());
 
 			return new ResponsePacket(iie.getType(), iie.getMessage());
 
 		}
 		catch (FileNotFoundException fnfe) {
 
-			Log.message().severe("File not found exception in validateXML: " + fnfe.getMessage());
+			logger.error("File not found exception in validateXML: " + fnfe.getMessage());
 
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 
@@ -114,7 +117,7 @@ public class Validator {
 		}
 		catch (Exception e) {
 
-			Log.message().severe("Substring length exception in localValidateXML(): " + e.getMessage());
+			logger.error("Substring length exception in localValidateXML(): " + e.getMessage());
 			return false;
 		}
 
@@ -130,7 +133,7 @@ public class Validator {
 		path = Tools.PATH_VALIDATOR + Tools.PATH_VALIDATOR_SCHEMA + " " + fileName;
 		outputXmllint = Tools.callApplication(path, null); // Pay attention. It uses the errorStream as output
 		
-		//Log.message().severe("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());
+		//logger.error("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());
 
 		// Remove the temp file
 		//Tools.callApplication("rm " + fileName, null);
@@ -149,7 +152,7 @@ public class Validator {
 	 * @return Message success or message error */
 	public static String validateContext(DatabaseInterface db, String contract) {
 		
-		Log.message().fine("ValidateContext of: " + StringEscapeUtils.escapeHtml(contract));
+		logger.trace("ValidateContext of: " + StringEscapeUtils.escapeHtml(contract));
 
 		Set<String> elementsFound = new HashSet<>();
 		NodeList intaction, extaction;
@@ -163,7 +166,7 @@ public class Validator {
 		    contextID = db.selectContextId(contextNameDeclared);
 		    
 		} catch (SQLException e) {
-		    Log.message().severe("Error retrieving contextID: " + e.getMessage());
+		    logger.error("Error retrieving contextID: " + e.getMessage());
 
 		    return Messages.DB_SELECT_FAILED;
 		}
@@ -188,7 +191,7 @@ public class Validator {
 			}
 			catch (ParserConfigurationException | IOException | SAXException e) {
 
-				Log.message().severe("Unknow error while analyzing DOM: " + e.getMessage());
+				logger.error("Unknow error while analyzing DOM: " + e.getMessage());
 
 				return Messages.ERROR_GENERIC_INTERNAL;
 			}
@@ -217,7 +220,7 @@ public class Validator {
 			}
 			catch (SQLException e) {
 
-				Log.message().severe(
+				logger.error(
 				        "Failed SELECT for checking if an action belong to a context. SQL says: " + e.getMessage());
 				return Messages.CONTRACT_ACTION_CONTEXT;
 			}

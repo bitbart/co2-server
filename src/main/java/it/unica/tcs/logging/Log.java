@@ -9,14 +9,11 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.slf4j.LoggerFactory;
-
 import it.unica.tcs.Tools;
 
+@Deprecated
 public class Log {
 		 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(Log.class);
-    
     public static final Logger log = Logger.getLogger("Co2log");
 	
 	static {

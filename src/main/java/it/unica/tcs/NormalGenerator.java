@@ -2,7 +2,6 @@ package it.unica.tcs;
 
 import cern.jet.random.Normal;
 import cern.jet.random.engine.RandomEngine;
-import java.lang.Math;
 
 /**Generates normal distributed random integers  */
 public class NormalGenerator {
@@ -45,7 +44,7 @@ public class NormalGenerator {
 			n = (normalGen.nextDouble() * limit);
 			n = Math.abs(n); // Takes always the absolute
 		
-			// Log.message().fine("Extracted: " + n);
+			// logger.trace("Extracted: " + n);
 		}
 		
 		return (int) Math.floor(n);		

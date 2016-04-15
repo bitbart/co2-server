@@ -8,12 +8,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import it.unica.tcs.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Translates a string contract to a xml contract. */
 @Path(value = "/translation")
 public class Translator {
 
+    private static final Logger logger = LoggerFactory.getLogger(Translator.class);
+    
     @POST
     @Path(value = "translate")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -27,7 +30,7 @@ public class Translator {
         
         AppResponse ar;
         
-        //Log.message().finest("Starting translator module.");
+        //logger.trace("Starting translator module.");
 
         try {
             // 1) Creates Ocaml process
@@ -49,7 +52,7 @@ public class Translator {
             
             if (translated == null) {
                 
-                Log.message().severe("Error from CTU while translating contract C1=" + Log.format(input[0]) + ": response is empty.");
+                logger.error("Error from CTU while translating contract C1=" + input[0] + ": response is empty.");
 
                 return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
             }
@@ -59,7 +62,7 @@ public class Translator {
                 
                 translated = ar.getErrors();
 
-                Log.message().fine("Error from CTU while translating contract C1=" + Log.format(input[0]) + ": " + translated);
+                logger.trace("Error from CTU while translating contract C1=" + input[0] + ": " + translated);
 
                 return new ResponsePacket(-1, translated);
             }
@@ -67,12 +70,12 @@ public class Translator {
         }
         catch (Exception e) {
 
-            Log.message().severe("Unknown error while translating contract C1=" + Log.format(input[0]) + ": " + e.getMessage());
+            logger.error("Unknown error while translating contract C1=" + input[0] + ": " + e.getMessage());
 
             return new ResponsePacket(-1, Messages.ERROR_TRANSLATION);
         }
         
-        Log.message().finest("Translation step passed without errors!");
+        logger.trace("Translation step passed without errors!");
 
         try {
             // 2) Checks XML input
@@ -82,18 +85,18 @@ public class Translator {
         }
         catch (InternalException iie) {
 
-            Log.message().severe("IllegalInputException thrown when calling localValidateXML: " + iie.getMessage());
+            logger.error("IllegalInputException thrown when calling localValidateXML: " + iie.getMessage());
 
             return new ResponsePacket(iie.getType(), iie.getMessage());
         }
         catch (FileNotFoundException fnfe) {
 
-            Log.message().severe("File not found exception while validating a translated contract: " + fnfe.getMessage());
+            logger.error("File not found exception while validating a translated contract: " + fnfe.getMessage());
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
         
-        Log.message().fine("Validating step passed without errors. Returning translated contract!");
+        logger.trace("Validating step passed without errors. Returning translated contract!");
 
         // Returns valid contract
         return new ResponsePacket(1, translated);

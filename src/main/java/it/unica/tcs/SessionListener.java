@@ -4,18 +4,21 @@ import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-import it.unica.tcs.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebListener
 public class SessionListener implements HttpSessionListener {
 
+    private static final Logger logger = LoggerFactory.getLogger(SessionListener.class);
+    
     private static int activeSessions;
     
     public SessionListener() {
     	
     	activeSessions = 0;
     	
-    	//Log.message().severe("SessionListener created");
+    	//logger.error("SessionListener created");
     }
 
     @Override
@@ -23,7 +26,7 @@ public class SessionListener implements HttpSessionListener {
         activeSessions++;
         
         if (activeSessions > 1)
-        	Log.message().severe("Too many sessions: " + activeSessions);
+        	logger.error("Too many sessions: " + activeSessions);
     }
 
     @Override

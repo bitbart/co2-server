@@ -1,11 +1,14 @@
 package it.unica.tcs;
 
-import it.unica.tcs.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Supports communication between client and server. 1) Collects all messages that server uses to respond at client
  * requests. 2) Provides methods to build xml custom responses with one or more messages. */
 public class Messages {
-
+    
+    private static final Logger logger = LoggerFactory.getLogger(Messages.class);
+    
 	/* Possible types of response */
 	public static final String TYPE_AUTH_ERROR = "auth_error";
 	public static final String TYPE_GENERIC_ERROR = "error";
@@ -97,7 +100,7 @@ public class Messages {
 		String tmp = new String("<xml>");
 
 		if (types.length != messages.length) {
-			Log.message().severe("Error passing types and messages to printMessage(): different array sizes!");
+			logger.error("Error passing types and messages to printMessage(): different array sizes!");
 			return "<response type=\"error\">Internal error.</response>";
 		}
 

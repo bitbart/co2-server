@@ -21,18 +21,21 @@ import javax.sql.DataSource;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import it.unica.tcs.Cache;
 import it.unica.tcs.Contract;
 import it.unica.tcs.MainApplication;
 import it.unica.tcs.Tools;
-import it.unica.tcs.logging.Log;
 
 // TODO: Create all javadocs
 
 /** */
 public class DatabaseInterface {
 
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseInterface.class);
+    
     // Database's tables
     public final static String TABLE_USER = "user";
     public final static String TABLE_CONTRACT = "contract";
@@ -92,13 +95,13 @@ public class DatabaseInterface {
     private DatabaseInterface() {
         
         try {
-            Log.message().info("Initializing datasource");
+            logger.info("Initializing datasource");
             Context initCtx = new InitialContext();
             Context envCtx = (Context) initCtx.lookup("java:comp/env");
             this.datasource = (DataSource) envCtx.lookup("jdbc/co2datasource");
             
         } catch (NamingException e) {
-            Log.message().severe("Error instantiating the datasource: "+e.getMessage());
+            logger.error("Error instantiating the datasource: "+e.getMessage());
         }
         
     }
@@ -723,7 +726,7 @@ public class DatabaseInterface {
             
             e.printStackTrace();
             
-            Log.message().severe("Unknown exception in getFTV: " + e.getMessage());
+            logger.error("Unknown exception in getFTV: " + e.getMessage());
             throw new SQLException("unknown exception.");
             
         }
@@ -833,7 +836,7 @@ public class DatabaseInterface {
 
         insertQuery = "INSERT INTO `" + table + "` (" + columns + ") VALUES (" + values + ");";
 
-        Log.message().finest("Executed query: " + insertQuery);
+        logger.trace("Executed query: " + insertQuery);
 
         return insertQuery;
     }

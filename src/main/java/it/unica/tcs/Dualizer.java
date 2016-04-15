@@ -19,14 +19,16 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
-import it.unica.tcs.logging.Log;
-
 @Path(value = "/dualize")
 public class Dualizer {
+
+    private static final Logger logger = LoggerFactory.getLogger(Dualizer.class);
 
 	@POST
 	@Path(value = "/admitsCompliant")
@@ -43,13 +45,13 @@ public class Dualizer {
 		}
 		catch (InternalException iie) {
 			
-			Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
+			logger.error("InternalException thrown in localValidateXML: " + iie.getMessage());
 
 			return new ResponsePacket(iie.getType(), iie.getMessage());			
 		}
 		catch (FileNotFoundException fnfe) {
 			
-			Log.message().severe("File not found exception while validating both contracts:" + fnfe.getMessage());
+			logger.error("File not found exception while validating both contracts:" + fnfe.getMessage());
 			
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}
@@ -82,13 +84,13 @@ public class Dualizer {
 		}
 		catch (InternalException iie) {
 			
-			Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
+			logger.error("InternalException thrown in localValidateXML: " + iie.getMessage());
 			
 			return new ResponsePacket(iie.getType(), iie.getMessage());	
 		}
 		catch (FileNotFoundException fnfe) {
 			
-			Log.message().severe("File not found exception while validating both contracts:" + fnfe.getMessage());
+			logger.error("File not found exception while validating both contracts:" + fnfe.getMessage());
 			
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}
@@ -117,13 +119,13 @@ public class Dualizer {
 		}
 		catch (InternalException iie) {
 			
-			Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
+			logger.error("InternalException thrown in localValidateXML: " + iie.getMessage());
 			
 			return new ResponsePacket(iie.getType(), iie.getMessage());	
 		}
 		catch (FileNotFoundException fnfe) {
 			
-			Log.message().severe("File not found exception while validating both contracts:" + fnfe.getMessage());
+			logger.error("File not found exception while validating both contracts:" + fnfe.getMessage());
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}
 
@@ -203,7 +205,7 @@ public class Dualizer {
 			return out.toString();
 
 		} catch (Exception e) {
-			Log.message().warning("A dual building was aborted because the passed contract (" + Log.format(StringEscapeUtils.escapeHtml(contract)) + ") has an error: " + e.getMessage());
+			logger.warn("A dual building was aborted because the passed contract (" + StringEscapeUtils.escapeHtml(contract) + ") has an error: " + e.getMessage());
 		}
 
 		return result;

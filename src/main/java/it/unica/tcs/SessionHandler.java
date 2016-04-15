@@ -15,15 +15,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import it.unica.tcs.InternalException.ErrorTypes;
 import it.unica.tcs.database.DBException;
 import it.unica.tcs.database.DatabaseInterface;
-import it.unica.tcs.logging.Log;
 
 /** Provides API to start a session between two contracts: 1) Insert a new contract; 2) Check if contract sent is fused. */
 @Path(value = "/handling")
 public class SessionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
     // TODO: Add comments for timestamp param (in all the sources).
 	
     /** Receives contracts from client: decides if accept or reject a contract.
@@ -55,7 +58,7 @@ public class SessionHandler {
         
         if (Tools.isNotValid(username, Tools.USERNAME_REGEX) || Tools.isNotValid(pass, Tools.PASSWORD_REGEX) || Tools.isNotValid(contractXML, Tools.XML_CONTRACT_REGEX)) {// TODO: to be completed
             
-            Log.message().warning("The tellContract() was called with wrong parameters.");
+            logger.warn("The tellContract() was called with wrong parameters.");
             return new ResponsePacket(-1, "The TELLCONTRACT api was called with wrong parameters.");
         }
 
@@ -64,15 +67,15 @@ public class SessionHandler {
         try {
             // 2) Checking for valid auth data
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
-                Log.message().warning(
-                        "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
-                                + Log.format(Tools.hash256(pass)) + "");
+                logger.warn(
+                        "Authentication error. Cannot accept USERNAME=" + username + " and hashed PASSWORD="
+                                + Tools.hash256(pass) + "");
     
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
         }catch (SQLException e) {
 
-            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            logger.error("Thrown SQL exception while opening database: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -81,19 +84,19 @@ public class SessionHandler {
         try {
             if (!Validator.localValidateXML(contractXML)) {
          
-                Log.message().warning("Invalid contract passed to tell().");
+                logger.warn("Invalid contract passed to tell().");
                 return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
             }
         }
         catch (InternalException iie) {
 
-            Log.message().severe("IllegalInputException thrown in localValidateXML: " + iie.getMessage());
+            logger.error("IllegalInputException thrown in localValidateXML: " + iie.getMessage());
             
             return new ResponsePacket(iie.getType(), iie.getMessage());
         }
         catch (FileNotFoundException e) {
 
-            Log.message().severe("FileNotFoundException thrown in localValidateXML: " + e.getMessage());
+            logger.error("FileNotFoundException thrown in localValidateXML: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -101,7 +104,7 @@ public class SessionHandler {
         // 4) Checking if the contract admits a compliant
         if (!Dualizer.localAdmitsCompliant(contractXML)){
 
-            Log.message().info("The contract C1= " + escapeHtml(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
+            logger.info("The contract C1= " + escapeHtml(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
             
             return new ResponsePacket(-1, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }
@@ -123,7 +126,7 @@ public class SessionHandler {
         // Sanity check of the CTU's response
         if (outputCTU.isEmpty()) {
         	
-        	Log.message().warning("CTU returns an empty mapping for a contract. Retrying.");
+        	logger.warn("CTU returns an empty mapping for a contract. Retrying.");
         	
         	try {
 				Thread.sleep(500);
@@ -134,9 +137,9 @@ public class SessionHandler {
         	
             if (outputCTU.isEmpty()) {
             	
-            	Log.message().fine("UPPAAL errors:" + outputCTU.getErrors());
+            	logger.trace("UPPAAL errors:" + outputCTU.getErrors());
             		
-            	Log.message().severe("CTU still returns an empty mapping for a contract. Rejecting tell.");
+            	logger.error("CTU still returns an empty mapping for a contract. Rejecting tell.");
             	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
             }
         }
@@ -150,7 +153,7 @@ public class SessionHandler {
         // Sanity check of the CTU's response
         if (outputCTU_second.isEmpty()) {
         	
-        	Log.message().warning("CTU returns an empty getLabel for a contract. Retrying.");
+        	logger.warn("CTU returns an empty getLabel for a contract. Retrying.");
         	
         	try {
 				Thread.sleep(500);
@@ -161,7 +164,7 @@ public class SessionHandler {
         	
             if (outputCTU_second.isEmpty()) {
             		
-            	Log.message().severe("CTU still returns an empty getLabel for a contract. Rejecting tell.");
+            	logger.error("CTU still returns an empty getLabel for a contract. Rejecting tell.");
             	return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
             }
         }
@@ -178,7 +181,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().warning("Failed SELECT when loading owner data in tell(). SQL says: " + e.getMessage());
+            logger.warn("Failed SELECT when loading owner data in tell(). SQL says: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -193,12 +196,12 @@ public class SessionHandler {
             contractID = DatabaseInterface.getInstance().insertContract(contractHash, contractXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randomLong), typePreCheck, firstOutputOcaml, secondOutputOcaml, delay, prv); 
             
             // The contract is under processing (not latent)
-            Log.message().info("Added new contract with ID=" + contractID + ", HASH=" + Log.format(contractHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
+            logger.info("Added new contract with ID=" + contractID + ", HASH=" + contractHash + ", OWNER=" + userID + " and CONTEXT=" + contextID);
         }
         catch (SQLException e) {
         	
         	
-            Log.message().warning("Cannot add a contract to DB. SQL says: " + e.getMessage());
+            logger.warn("Cannot add a contract to DB. SQL says: " + e.getMessage());
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
         }
                 
@@ -221,7 +224,7 @@ public class SessionHandler {
                 	
                     DatabaseInterface.getInstance().setContractState(contractID, DatabaseInterface.CONTRACT_LATENT); // Now it is really latent
     
-                    Log.message().fine("No compliant contract found for C1=" + contractID + "");
+                    logger.trace("No compliant contract found for C1=" + contractID + "");
                     
                     // 9b) Decrements the user's reputation
                     try {
@@ -229,7 +232,7 @@ public class SessionHandler {
             			
             		} catch (SQLException sqle) {
             			
-            			Log.message().severe("SQLException thrown while decrementing the reputation in 'tell()': " + sqle.getMessage());
+            			logger.error("SQLException thrown while decrementing the reputation in 'tell()': " + sqle.getMessage());
             		}
                     
                     return new ResponsePacket(0, Messages.CONTRACT_REGISTERED + ". " + Messages.SESSION_COMPLIANT_NO, contractHash);
@@ -237,13 +240,13 @@ public class SessionHandler {
             }
             catch (SQLException sqle) {
     
-                Log.message().warning("Cannot find a compliant contract. SQL says: " + sqle.getMessage());
+                logger.warn("Cannot find a compliant contract. SQL says: " + sqle.getMessage());
                 
                 return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             }
             catch (FileNotFoundException fnfe) {
     
-                Log.message().severe("FileNotFoundException thrown in tell(): " + fnfe.getMessage());
+                logger.error("FileNotFoundException thrown in tell(): " + fnfe.getMessage());
                 
                 return new ResponsePacket(-1, Messages.TYPE_GENERIC_ERROR);
             }
@@ -260,7 +263,7 @@ public class SessionHandler {
             catch (SQLException sqle) {
     
                 MainApplication.mutexRelease(compliantID);
-                Log.message().severe("Cannot retrieve compliant contract data. SQL says: " + sqle.getMessage());
+                logger.error("Cannot retrieve compliant contract data. SQL says: " + sqle.getMessage());
                 
                 return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             }
@@ -283,7 +286,7 @@ public class SessionHandler {
 			
 		} catch (SQLException sqle) {
 			
-			Log.message().severe("SQLException thrown while decrementing the reputation in 'tell()': " + sqle.getMessage());
+			logger.error("SQLException thrown while decrementing the reputation in 'tell()': " + sqle.getMessage());
 		}
 
         // 12) Returning response
@@ -291,7 +294,7 @@ public class SessionHandler {
             return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +". " + Messages.SESSION_COMPLIANT_YES, contractHash);
         }
         else{
-            Log.message().severe("Cannot fuse two compliant contracts, unknown cause.");
+            logger.error("Cannot fuse two compliant contracts, unknown cause.");
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -326,7 +329,7 @@ public class SessionHandler {
         
         if (type==null || !type.equals(Contract.TYPE_TST)) { // TODO: handle other contract types here
         	
-        	Log.message().fine("A user tried to accept a contract of an unknown or null contract type: " + Log.format(type));
+        	logger.trace("A user tried to accept a contract of an unknown or null contract type: " + type);
         	return new ResponsePacket(-1, "The specified contract type doesn't exist or you haven't specified the type."); // serialize this message
         }
         
@@ -338,13 +341,13 @@ public class SessionHandler {
         try {
             // 2) Checking for valid auth data
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
-                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                logger.warn("Authentication error. Cannot accept USERNAME=" + username + " and hashed PASSWORD=" + Tools.hash256(pass) + "");
                 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
         }catch (SQLException e) {
             
-            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            logger.error("Thrown SQL exception while opening database: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -357,7 +360,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 		    
-            Log.message().warning("Failed while checking if the requested CONTRACT='"+ originalHash +"' exists and is latent: " + e.getMessage());
+            logger.warn("Failed while checking if the requested CONTRACT='"+ originalHash +"' exists and is latent: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
 		}
@@ -376,14 +379,14 @@ public class SessionHandler {
             
             if (!originalType.equals(type)) {
             	
-            	Log.message().fine("The contract that a user tried to accept is not of the specified type (" + Log.format(type) + ").");
+            	logger.trace("The contract that a user tried to accept is not of the specified type (" + type + ").");
             	MainApplication.mutexRelease(originalID);
                 return new ResponsePacket(0, "The contract you tried to accept is not of the specified type (" + type + ")."); // serialize this message
             }
 
 	        if (originalState != DatabaseInterface.CONTRACT_LATENT) {
 	        	
-	        	// Log.message().info("Checked if the contract with HASH=" + originalHash + " is latent: NO!");
+	        	// logger.info("Checked if the contract with HASH=" + originalHash + " is latent: NO!");
 	        	MainApplication.mutexRelease(originalID);
 	        	
 	        	return new ResponsePacket(-1, Messages.CONTRACT_NOT_PUBLISHED);
@@ -392,18 +395,18 @@ public class SessionHandler {
 	        if (original.isExpired()) {
 	        	
 	        	db.setContractState(originalID, DatabaseInterface.CONTRACT_EXPIRED);
-            	Log.message().info("Contract with ID=" + originalID + " is declared expired.");
+            	logger.info("Contract with ID=" + originalID + " is declared expired.");
 	        	MainApplication.mutexRelease(originalID);
 	        	
 	        	return new ResponsePacket(-1, Messages.CONTRACT_EXPIRED_MESSAGE);
 	        }
 	        
-			Log.message().info("Contract loaded from hash; ID: " + originalID + ", HASH: " + originalHash + ", XML: " + Log.format(originalXML) + ", STATE: " + originalState);
+			logger.info("Contract loaded from hash; ID: " + originalID + ", HASH: " + originalHash + ", XML: " + originalXML + ", STATE: " + originalState);
 	        
 		} catch (SQLException e) {
 		    
 			MainApplication.mutexRelease(originalID);
-            Log.message().warning("Failed while checking if the requested CONTRACT='"+ originalHash +"' exists and is latent: " + e.getMessage());
+            logger.warn("Failed while checking if the requested CONTRACT='"+ originalHash +"' exists and is latent: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
 		}
@@ -416,7 +419,7 @@ public class SessionHandler {
         catch (SQLException e) {
             
         	MainApplication.mutexRelease(originalID);
-            Log.message().warning("Failed SELECT when loading owner data in accept(). SQL says: " + e.getMessage());
+            logger.warn("Failed SELECT when loading owner data in accept(). SQL says: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -424,7 +427,7 @@ public class SessionHandler {
         // 4b) Loads contract data
         try {
         	// Load dual contract data
-            Log.message().info("Calling dual");
+            logger.info("Calling dual");
         	dualXML = Dualizer.getXMLDual(originalXML);
             dualHash = Tools.hashContract(dualXML, randLong);
             contextID = DatabaseInterface.getInstance().getIDFromContext(Tools.getDeclaredStringContext(dualXML));  
@@ -444,17 +447,17 @@ public class SessionHandler {
             
             dualID = db.insertContract(dualHash, dualXML, userID, contextID, DatabaseInterface.CONTRACT_ROLE_LATENT, DatabaseInterface.CONTRACT_HANDLED, new Long(randLong), "5", firstOutputOcaml, secondOutputOcaml, 0);
 
-            Log.message().info("Added new contract with XML=" + Log.format(dualXML) + ", ID=" + dualID + ", HASH=" + Log.format(dualHash) + ", OWNER=" + userID + " and CONTEXT=" + contextID);
+            logger.info("Added new contract with XML=" + dualXML + ", ID=" + dualID + ", HASH=" + dualHash + ", OWNER=" + userID + " and CONTEXT=" + contextID);
       
         } catch (SQLException e) {
             
-            Log.message().warning("Cannot add a contract to DB. SQL says: " + e.getMessage());
+            logger.warn("Cannot add a contract to DB. SQL says: " + e.getMessage());
             MainApplication.mutexRelease(originalID);
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             
         } catch (Exception e){
             
-            Log.message().warning("XML error: " + e.getMessage());
+            logger.warn("XML error: " + e.getMessage());
             MainApplication.mutexRelease(originalID);
             return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
         }
@@ -468,7 +471,7 @@ public class SessionHandler {
             return new ResponsePacket(1, Messages.CONTRACT_REGISTERED +"." + Messages.SESSION_COMPLIANT_YES, dualHash);
         }
         else {
-            Log.message().warning("Cannot fuse two compliant contracts, unknown cause.");
+            logger.warn("Cannot fuse two compliant contracts, unknown cause.");
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
     }
@@ -488,13 +491,13 @@ public class SessionHandler {
         try {
             // 2) Checking for valid auth data
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
-                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                logger.warn("Authentication error. Cannot accept USERNAME=" + username + " and hashed PASSWORD=" + Tools.hash256(pass) + "");
                 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
         }catch (SQLException e) {
             
-            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            logger.error("Thrown SQL exception while opening database: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -527,7 +530,7 @@ public class SessionHandler {
 			
 		} catch (SQLException e) {
 			
-			Log.message().severe("Thrown SQL exception while trying to retract the contract with hash " + Log.format(contractHash)+ ": " + e.getMessage());
+			logger.error("Thrown SQL exception while trying to retract the contract with hash " + contractHash+ ": " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
 		}
@@ -553,12 +556,12 @@ public class SessionHandler {
         		
     	    		case DatabaseInterface.CONTRACT_LATENT: 
     	    		case DatabaseInterface.CONTRACT_HANDLED:
-    	    			//Log.message().fine("Checked if contract with hash=" + Log.format(contractHash) + " is fused (in cache). Expire time is '" + response[1] + "' "
+    	    			//logger.trace("Checked if contract with hash=" + Log.format(contractHash) + " is fused (in cache). Expire time is '" + response[1] + "' "
     	    			//		+ "and actual time is '" + actualTime + "'.");
     	    			if (response[1] == -1 || response[1] > actualTime)
     	    				return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
     	    			else {
-    	    				Log.message().fine("Updated state in db and cache for contract with HASH=" + Log.format(contractHash) + ": " + "EXPIRED");
+    	    				logger.trace("Updated state in db and cache for contract with HASH=" + contractHash + ": " + "EXPIRED");
     	    				lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_EXPIRED});
     	    				db.updateContractState(contractHash, DatabaseInterface.CONTRACT_EXPIRED);
     	    				
@@ -581,50 +584,50 @@ public class SessionHandler {
         	Contract c = new Contract().loadFromHash(contractHash);
             Integer state;
             Integer expireTime = c.getDelay() == 0 ? -1 : (int) (c.getTimestamp()/1000) + c.getDelay()/1000;
-            String logmsg = "Checked state for contract with HASH=" + Log.format(contractHash) + ": ";
+            String logmsg = "Checked state for contract with HASH=" + contractHash + ": ";
         	
             state = c.getState();
 
             switch (state) {
                 case DatabaseInterface.CONTRACT_LATENT:
-                    Log.message().fine(logmsg + "LATENT");
+                    logger.trace(logmsg + "LATENT");
                     lc.put(key, new Integer[] { DatabaseInterface.CONTRACT_LATENT , expireTime});
                     return new ResponsePacket(0, Messages.CONTRACT_LATENT_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_ON_DUTY:
-                    Log.message().fine(logmsg + "ON_DUTY");
+                    logger.trace(logmsg + "ON_DUTY");
                     lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_ON_DUTY});
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_OFF_DUTY:
-                    Log.message().fine(logmsg + "OFF_DUTY");
+                    logger.trace(logmsg + "OFF_DUTY");
                     lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_OFF_DUTY});
                     return new ResponsePacket(1, Messages.CONTRACT_FUSED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_INNOCENT:
-                    Log.message().fine(logmsg + "INNOCENT");
+                    logger.trace(logmsg + "INNOCENT");
                     lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_INNOCENT});
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
 
                 case DatabaseInterface.CONTRACT_CULPABLE:
-                    Log.message().fine(logmsg + "CULPABLE");
+                    logger.trace(logmsg + "CULPABLE");
                     lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_CULPABLE});
                     return new ResponsePacket(1, Messages.CONTRACT_COMPLETED_MESSAGE);
                     
                 case DatabaseInterface.CONTRACT_EXPIRED:
-                    Log.message().fine(logmsg + "EXPIRED");
+                    logger.trace(logmsg + "EXPIRED");
                     lc.put(key, new Integer[] {DatabaseInterface.CONTRACT_EXPIRED});
                     return new ResponsePacket(-2, Messages.CONTRACT_EXPIRED_MESSAGE);
 
                 default:
-                    Log.message().fine(logmsg + "ERROR");
+                    logger.trace(logmsg + "ERROR");
                     return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
             }
 
         }
         catch (SQLException e) {
 
-            Log.message().warning("Database exception thrown when checking fusion: " + e.getMessage());
+            logger.warn("Database exception thrown when checking fusion: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -651,13 +654,13 @@ public class SessionHandler {
         try {
             // 2) Checking for valid auth data
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
-                Log.message().warning("Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD=" + Log.format(Tools.hash256(pass)) + "");
+                logger.warn("Authentication error. Cannot accept USERNAME=" + username + " and hashed PASSWORD=" + Tools.hash256(pass) + "");
                 
                 return new ResponsePacket(-1, Messages.AUTH_FAILED);
             }
         }catch (SQLException e) {
             
-            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            logger.error("Thrown SQL exception while opening database: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
         }
@@ -695,7 +698,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().severe(
+            logger.error(
                     "Cannot retrieve data for C1=" + contractID + " and C2=" + compliantID + ". SQL says: "
                             + e.getMessage());
 
@@ -714,9 +717,9 @@ public class SessionHandler {
         
         if (ocamlResults.hasErrors()) {
         	
-            Log.message().severe(
+            logger.error(
                     "Error while creating the initial state for a session. CTU error: " + ocamlResults.getErrors());
-            Log.message().finest("Ocaml filename: " + fileName);
+            logger.trace("Ocaml filename: " + fileName);
             return false;
         }
         
@@ -733,9 +736,9 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().severe(
+            logger.error(
                     "Cannot insert new session in database (when fusing), SQL says: " + e.getMessage());
-            Log.message().fine("Ocaml filename: " + fileName);
+            logger.trace("Ocaml filename: " + fileName);
             return false;
         }
 
@@ -749,9 +752,9 @@ public class SessionHandler {
 
             // 6b) Checks who is on duty
             c1_result = new SessionMonitor().monitorContractProgress(db, c1.getContractHash(), Tools.CTU_PARAM_DUTY);
-            Log.message().finest("First monitorContractProgress() completed without problems.");
+            logger.trace("First monitorContractProgress() completed without problems.");
             c2_result = new SessionMonitor().monitorContractProgress(db, c2.getContractHash(), Tools.CTU_PARAM_DUTY);
-            Log.message().finest("Second monitorContractProgress() completed without problems.");
+            logger.trace("Second monitorContractProgress() completed without problems.");
             
             if (c1_result) {
                 c1_progress = DatabaseInterface.CONTRACT_ON_DUTY;
@@ -776,10 +779,10 @@ public class SessionHandler {
             lc.put(c1.getContractHash(), new Integer[]{c1_progress});
             lc.put(c2.getContractHash(), new Integer[]{c2_progress});
 
-            Log.message().info(
+            logger.info(
                     "Contract with ID=" + contractID + " and contract with ID=" + compliantID
                             + " have been fused in a new session with ID=" + sessionID + " and HASH="
-                            + Log.format(sessionHash));
+                            + sessionHash);
 
             return true;
         }
@@ -788,12 +791,12 @@ public class SessionHandler {
         }
         catch (DBException e) {
 
-            Log.message().severe(
+            logger.error(
                     "Error while checking participant status in monitorContractProgress: " + e.getMessage());
         }
         catch (SQLException e) {
 
-            Log.message().severe("Failed updating a contract. SQL says: " + e.getMessage());
+            logger.error("Failed updating a contract. SQL says: " + e.getMessage());
         }
 
         return false;
@@ -811,24 +814,24 @@ public class SessionHandler {
         try{
         // 2) Checks for valid user & pwd
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
-                Log.message().warning(
-                        "Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
-                                + Log.format(Tools.hash256(pass)) + "");
+                logger.warn(
+                        "Authentication error. Cannot accept USERNAME=" + username + " and hashed PASSWORD="
+                                + Tools.hash256(pass) + "");
                 
                 throw new DBException(Messages.AUTH_FAILED);
             }
         } catch (SQLException e) {
         
-            Log.message().severe("Thrown SQL exception while opening database: " + e.getMessage());
+            logger.error("Thrown SQL exception while opening database: " + e.getMessage());
             
             throw new DBException(Messages.AUTH_FAILED);
         }
 
         // 3) Verifies contract's owner
         if (!Tools.permissionContract(db, username, contractHash)) {
-            Log.message().warning(
-                    "Access denied: user with USERNAME=" + Log.format(username)
-                            + " tried to access contract with CONTRACT_HASH=" + Log.format(contractHash));
+            logger.warn(
+                    "Access denied: user with USERNAME=" + username
+                            + " tried to access contract with CONTRACT_HASH=" + contractHash);
 
             throw new DBException(Messages.PERMISSION_DENIED);
         }
@@ -850,7 +853,7 @@ public class SessionHandler {
         }
         catch (SQLException e) {
 
-            Log.message().severe(
+            logger.error(
                     "Cannot retrieve 'state' from contract with CONTRACT_HASH=" + contractHash + ". SQL says: "
                             + e.getMessage());
 
@@ -879,9 +882,9 @@ public class SessionHandler {
         try {
 
 	        if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
-	        	Log.message().warning(
-	        			"Authentication error. Cannot accept USERNAME=" + Log.format(username) + " and hashed PASSWORD="
-	                    + Log.format(Tools.hash256(pass)) + "");
+	        	logger.warn(
+	        			"Authentication error. Cannot accept USERNAME=" + username + " and hashed PASSWORD="
+	                    + Tools.hash256(pass) + "");
 	    
 	            return new ResponsePacket(-1, Messages.AUTH_FAILED);
 	        }
@@ -890,7 +893,7 @@ public class SessionHandler {
 			
 		} catch (SQLException e) {
 			
-            Log.message().severe("SQL Exception thrown when verifying credentials: " + e.getMessage());
+            logger.error("SQL Exception thrown when verifying credentials: " + e.getMessage());
             
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}

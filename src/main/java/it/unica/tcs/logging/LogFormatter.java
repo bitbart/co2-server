@@ -5,6 +5,7 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+@Deprecated
 public class LogFormatter extends Formatter {
 	
     @Override

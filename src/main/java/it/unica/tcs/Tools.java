@@ -28,16 +28,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import it.unica.tcs.InternalException.ErrorTypes;
 import it.unica.tcs.database.DatabaseInterface;
-import it.unica.tcs.logging.Log;
 
 public class Tools {
 	
-	private static Random rng;
+    private static final Logger logger = LoggerFactory.getLogger(Tools.class);
+    private static Random rng;
     
     public static final String HOME_DIR = "/home/ubuntu/debianadmin";
 //  public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
@@ -199,7 +201,7 @@ public class Tools {
 		//StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		
 		//if (Log.isInitialized())
-			//Log.message().warning("Caller: " + ste[2].getMethodName() + " | Path: " + path);
+			//logger.warn("Caller: " + ste[2].getMethodName() + " | Path: " + path);
 		
 		String line;
 	    
@@ -252,8 +254,8 @@ public class Tools {
 		    
 		} catch (IOException e) {
 			
-			Log.message().severe("Cannot execute the process: " + path);
-			Log.message().warning("Exception message: " + e.getMessage());
+			logger.error("Cannot execute the process: " + path);
+			logger.warn("Exception message: " + e.getMessage());
 		}
 	    
 	    AppResponse ar = new AppResponse(response[0], response[1]);
@@ -272,7 +274,7 @@ public class Tools {
 		    Files.setOwner(path, userPrincipal);
 			
 		} catch (IOException e) {
-			Log.message().severe("Can change the group owner of " + filename + " to mysql: " + e.getMessage());
+			logger.error("Can change the group owner of " + filename + " to mysql: " + e.getMessage());
 		}
 	}
 
@@ -404,8 +406,8 @@ public class Tools {
 
         } catch (SQLException e) {
 
-            Log.message().warning("Cannot determine if USER_EMAIL=" + Log.format(username)
-                    + " is the owner of CONTRACT_HASH=" + Log.format(contractHash) + ". SQL says: " + e.getMessage());
+            logger.warn("Cannot determine if USER_EMAIL=" + username
+                    + " is the owner of CONTRACT_HASH=" + contractHash + ". SQL says: " + e.getMessage());
 
             return false;
         }
@@ -436,7 +438,7 @@ public class Tools {
 		}
 		catch (Exception e) {
 
-			Log.message().info(
+			logger.info(
 			        "A context retrieving was aborted because the passed contract (" + contract + ") have an error: " + e.getMessage());
 			result = DatabaseInterface.CONTEXT_EMPTY_NAME;
 		}
@@ -510,7 +512,7 @@ public class Tools {
 		}
 		catch (SQLException e) {
 
-			Log.message().warning("The contract with HASH='" + contractHash + "' and CONTEXT_ID="+ contextID + " can't perform the action with NAME='" + action + "'. SQL says: " + e.getMessage());
+			logger.warn("The contract with HASH='" + contractHash + "' and CONTEXT_ID="+ contextID + " can't perform the action with NAME='" + action + "'. SQL says: " + e.getMessage());
 			
 			return false;
 		}
@@ -559,17 +561,17 @@ public class Tools {
 		}
 		catch (Exception e) {
 			
-			Log.message().severe("The verifier cannot check if it is possible to perform ACTION=" + actionID + " with VALUE=" + Log.format("") + ". The returned exception is: " + e.getMessage());
+			logger.error("The verifier cannot check if it is possible to perform ACTION=" + actionID + " with VALUE=" + "" + ". The returned exception is: " + e.getMessage());
 			return false;
 		}
 		
 		if (verifierResponse == null) {
 			
-			Log.message().severe("The verifier returned a <i>null</i> response when validating the ACTION=" + actionID + " with VALUE=" + Log.format("") + ".");
+			logger.error("The verifier returned a <i>null</i> response when validating the ACTION=" + actionID + " with VALUE=" + "" + ".");
 			return false;
 		}
 		
-		Log.message().info("Response:" + verifierResponse);
+		logger.info("Response:" + verifierResponse);
 		
 		if (verifierResponse.equals("true"))
 			return true;
