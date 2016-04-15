@@ -1,16 +1,43 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+	
+	<property name="DATABASE_LOG_FILE" value="database.log" />
+	<property name="GLOBAL_LOG_FILE" value="${catalina.base}/logs/middleware.html" />
+	
+	
+	
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+	
+	<appender name="GLOBAL_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${GLOBAL_LOG_FILE}</file>
+	
+		<encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+			<layout class="ch.qos.logback.classic.html.HTMLLayout">
+				<pattern>%relative%thread%mdc%level%logger%msg</pattern>
+			</layout>
+		</encoder>
 
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <!-- encoders are assigned the type
-         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
-    <encoder>
-      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
+		
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>mylog-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+			<!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
+			<maxFileSize>100MB</maxFileSize>
+			<maxHistory>60</maxHistory>
+			<totalSizeCap>20GB</totalSizeCap>
+		</rollingPolicy>		
+		
+	</appender>
 
-  <root level="debug">
-    <appender-ref ref="STDOUT" />
-  </root>
-  
+	<root level="debug">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="GLOBAL_LOG" />
+	</root>
+	
 </configuration>

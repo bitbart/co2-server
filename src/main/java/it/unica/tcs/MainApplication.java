@@ -9,12 +9,17 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import it.unica.tcs.database.DatabaseInterface;
 import it.unica.tcs.logging.Log;
 
 @WebListener
 public class MainApplication implements ServletContextListener {
 
+    private static final Logger logger = LoggerFactory.getLogger(MainApplication.class);
+    
 	private static Random rng; 
 	private static Mutex mutex;
 	private static Cache<String, Boolean> credentialsCache;
@@ -80,6 +85,8 @@ public class MainApplication implements ServletContextListener {
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
 
+        logger.info("contextInitialized() - {}", System.getProperty("catalina.base"));
+        
 	    Integer latent_cs, cs, active_ss;
 		
 	    // Initializes PRNG
