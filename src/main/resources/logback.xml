@@ -1,8 +1,9 @@
 <configuration>
 	
-	<property name="GLOBAL_LOG_FILE_DEPRECATED" value="/srv/http/log/middleware.html" />
+	
+	<property name="SWEETLOG_FILE" value="/srv/http/log/middleware.html"/>
 	<property name="GLOBAL_LOG_FILE" value="${catalina.base}/logs/middleware.log" />
-
+	
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
 			by default -->
@@ -30,8 +31,8 @@
 		
 	</appender>
 
-	<appender name="GLOBAL_LOG_DEPRECATED" class="ch.qos.logback.core.FileAppender">
-		<file>${GLOBAL_LOG_FILE_DEPRECATED}</file>
+	<appender name="SWEETLOG" class="ch.qos.logback.core.FileAppender">
+		<file>${SWEETLOG_FILE}</file>
 		
 		<!-- delete the file each time the middleware restart-->
 		<append>false</append>
@@ -47,7 +48,7 @@
 	<root level="debug">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="GLOBAL_LOG" />
-		<appender-ref ref="GLOBAL_LOG_DEPRECATED" />
+		<appender-ref ref="SWEETLOG" />
 	</root>
 		
 </configuration>
