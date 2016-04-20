@@ -16,7 +16,6 @@ import java.util.Set;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -102,6 +101,13 @@ public class DatabaseInterface {
             
             logger.trace("trying to get a connection...");
             this.datasource.getConnection();
+            
+            int cs = countContracts();
+            int latent_cs = countLatentContracts();
+            int active_ss = countSessions();
+            
+            logger.info("New .WAR loaded. When starting, there were " + cs + " contracts in the database (" + latent_cs + " latents), and " + active_ss + " sessions.");
+                
             
         } catch (Exception e) {
             logger.error("Error instantiating the datasource: "+e.getMessage());

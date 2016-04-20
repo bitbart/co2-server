@@ -11,22 +11,6 @@ public class LogbackLayout extends LayoutBase<ILoggingEvent> {
 
     @Override
     public String doLayout(ILoggingEvent event) {
-//        StringBuilder sbuf = new StringBuilder();
-//        
-//        
-//        
-//        sbuf.append(event.getTimeStamp() - event.getLoggerContextVO().getBirthTime());
-//        sbuf.append(" ");
-//        sbuf.append(event.getLevel());
-//        sbuf.append(" [");
-//        sbuf.append(event.getThreadName());
-//        sbuf.append("] ");
-//        sbuf.append(event.getLoggerName());
-//        sbuf.append(" - ");
-//        sbuf.append(event.getFormattedMessage());
-//        sbuf.append(CoreConstants.LINE_SEPARATOR);
-//        return sbuf.toString();
-
         
         StringBuilder logmsg = new StringBuilder();
         StringBuilder info = new StringBuilder();
