@@ -71,20 +71,11 @@ public class MainApplication implements ServletContextListener {
 	    return executor;
 	}
 	
-	@Override
-	public void contextDestroyed(ServletContextEvent arg0) {
-
-
-		logger.info("The webservice has been killed by another process.");
-		
-		logger.info("Shutting down the executor service");
-		executor.shutdownNow();
-	}
 	
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
 
-        logger.info("contextInitialized() - {}", System.getProperty("catalina.base"));
+        logger.info("Starting the middleware application");
         
 	    Integer latent_cs, cs, active_ss;
 		
@@ -116,4 +107,14 @@ public class MainApplication implements ServletContextListener {
 	    latentCache = new Cache<String, Integer[]>(24*60*60, 24*60*60, 10000);
 	    
 	}
+	
+	@Override
+    public void contextDestroyed(ServletContextEvent arg0) {
+
+
+        logger.info("The webservice has been killed by another process.");
+        
+        logger.info("Shutting down the executor service");
+        executor.shutdownNow();
+    }
 }

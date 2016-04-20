@@ -95,12 +95,15 @@ public class DatabaseInterface {
     private DatabaseInterface() {
         
         try {
-            logger.info("Initializing datasource");
             Context initCtx = new InitialContext();
+            logger.trace("Initializing datasource...");
             Context envCtx = (Context) initCtx.lookup("java:comp/env");
             this.datasource = (DataSource) envCtx.lookup("jdbc/co2datasource");
             
-        } catch (NamingException e) {
+            logger.trace("trying to get a connection...");
+            this.datasource.getConnection();
+            
+        } catch (Exception e) {
             logger.error("Error instantiating the datasource: "+e.getMessage());
         }
         
