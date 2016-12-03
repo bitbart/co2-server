@@ -65,7 +65,9 @@ public class Tools {
 	public static final String CTU_PARAM_DUAL_OF = "-dd";
 	public static final String CTU_PARAM_BUILD_AUTOMATON = "-ba";
 	public static final String CTU_PARAM_GET_LABELS = "-gl";
-
+	public static final String CTU_PARAM_TO_STRING = "--to-string";
+    
+	
 	// Uppaal's paths and files
 	public static final String PATH_UPPAAL = HOME_DIR + "/uppaal/bin-Linux/verifyta ";
 	public static final String UPPAAL_PARAMS = " " + HOME_DIR + "/uppaal/bin-Linux/test_compliance.q"; // | grep -e '--' | cut -d'-' -f 3"; // do not remove the initial space

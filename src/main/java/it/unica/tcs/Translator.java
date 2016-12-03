@@ -101,4 +101,54 @@ public class Translator {
         // Returns valid contract
         return new ResponsePacket(1, translated);
     }
+    
+    
+    @POST
+    @Path(value = "/xmlToString")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponsePacket xmlToString(QueryPacket postData) {
+        
+        String contract = postData.getFirstContract();
+        
+        // 1) Checks XML input
+        try {
+            if (!Validator.localValidateXML(contract))
+                return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
+        }
+        catch (InternalException iie) {
+            
+            logger.error("InternalException thrown in localValidateXML: " + iie.getMessage());
+
+            return new ResponsePacket(iie.getType(), iie.getMessage());         
+        }
+        catch (FileNotFoundException fnfe) {
+            
+            logger.error("File not found exception while validating both contracts:" + fnfe.getMessage());
+            
+            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+        }
+        
+        AppResponse response = ctuXmlToString(contract);
+        
+        if (!response.hasErrors()) {
+            logger.trace("Contract serialized: "+response.getOutput());
+            return new ResponsePacket(1, response.getOutput());            
+        }
+        else {
+            logger.error("Error during the serialization of the contract: "+response.getErrors());
+            return new ResponsePacket(-1, Messages.ERROR_TO_STRING);
+        }
+        
+    }
+    
+    public static AppResponse ctuXmlToString(String contract) {
+        
+        String path;
+        String[] input = new String[1]; 
+
+        path = Tools.getCtuPath() + Tools.CTU_PARAM_TO_STRING;
+        input[0] = contract;
+        return Tools.callApplication(path, input);
+    }
 }

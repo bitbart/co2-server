@@ -59,7 +59,8 @@ public class Messages {
 	public static final String ERROR_GENERIC_INTERNAL = "Service not available";
 	public static final String ERROR_NO_SUCH_ALGORITHM = "Service not available";
 	public static final String ERROR_TIME_EXPIRED = "Time expired";
-	public static final String ERROR_TRANSLATION = "Error during translation";
+    public static final String ERROR_TRANSLATION = "Error during translation";
+    public static final String ERROR_TO_STRING = "Error during the serialization of the contract";
 	public static final String ERROR_VALIDATION = "Error during validation";
 	public static final String ERROR_XML_PARSING = "Service not available";
 
