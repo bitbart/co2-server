@@ -45,7 +45,7 @@ public class Tools {
 //  public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
 
 	// CTU's (Convert To Uppaal) paths and files
-	public static final String PATH_CTU = HOME_DIR + "/ctu";
+	private static final String PATH_CTU = HOME_DIR + "/ctu";
 //	public static final String PATH_CONS = CO2_DIR + "/cons";
 	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
 //	public static final String PATH_NETS = CO2_DIR + "/nets";

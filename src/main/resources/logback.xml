@@ -1,8 +1,7 @@
-<configuration>
+<configuration scan="true">
 	
-	
-	<property name="SWEETLOG_FILE" value="/srv/http/log/middleware.html"/>
-	<property name="GLOBAL_LOG_FILE" value="${catalina.base}/logs/middleware.log" />
+	<property name="SWEETLOG_FILE" value="${catalina.base}/logs/middleware/middleware.html"/>
+	<property name="GLOBAL_LOG_FILE" value="${catalina.base}/logs/middleware/middleware.log" />
 	
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 

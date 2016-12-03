@@ -95,7 +95,7 @@ public class Dualizer {
 			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}
 
-		path = Tools.PATH_CTU + Tools.CTU_PARAM_KIND_OF;
+		path = Tools.getCtuPath() + Tools.CTU_PARAM_KIND_OF;
 		
 		input[0] = postData.getFirstContract();
 		standardOutputOcaml = Tools.callApplication(path, input);
