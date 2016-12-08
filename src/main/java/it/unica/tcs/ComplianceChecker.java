@@ -97,7 +97,7 @@ public class ComplianceChecker {
         }
 
         // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
+        path = Tools.PATH_UPPAAL + fileName +" "+ Tools.UPPAAL_PARAMS;
         outputUppaal = Tools.callApplication(path, null);
 
         // 4) Returns XML response
@@ -289,7 +289,7 @@ public class ComplianceChecker {
         p.close();
 
         // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
+        path = Tools.PATH_UPPAAL + fileName + " " + Tools.UPPAAL_PARAMS;
 
         outputUppaal = Tools.callApplication(path, null);
         

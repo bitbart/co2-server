@@ -42,17 +42,12 @@ public class Tools {
     private static Random rng;
     
     public static final String HOME_DIR = "/home/ubuntu/debianadmin";
-//  public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
 
 	// CTU's (Convert To Uppaal) paths and files
 	private static final String PATH_CTU = HOME_DIR + "/ctu";
-//	public static final String PATH_CONS = CO2_DIR + "/cons";
 	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
-//	public static final String PATH_NETS = CO2_DIR + "/nets";
 	public static final String PATH_CTU_NETS = HOME_DIR + "/tmp/nets/OcamlNetworks_";
-//	public static final String PATH_AUTOMATA = CO2_DIR + "/automata";
 	public static final String PATH_CTU_AUTOMATA = HOME_DIR + "/tmp/nets/OcamlAutomata_";
-//	public static final String PATH_LABELS = CO2_DIR + "/labels";
 	public static final String PATH_CTU_LABELS = HOME_DIR + "/tmp/nets/OcamlLabels_";
 	public static final String CTU_PARAM_TRANSLATE = "-s";
 	public static final String CTU_PARAM_BINDING = "-v";
@@ -70,7 +65,7 @@ public class Tools {
 	
 	// Uppaal's paths and files
 	public static final String PATH_UPPAAL = HOME_DIR + "/uppaal/bin-Linux/verifyta ";
-	public static final String UPPAAL_PARAMS = " " + HOME_DIR + "/uppaal/bin-Linux/test_compliance.q"; // | grep -e '--' | cut -d'-' -f 3"; // do not remove the initial space
+	public static final String UPPAAL_PARAMS = HOME_DIR + "/uppaal/bin-Linux/test_compliance.q"; // | grep -e '--' | cut -d'-' -f 3";
 
 	// Xmllint's path and files
 	public static final String PATH_VALIDATOR = "xmllint --schema ";
@@ -89,22 +84,24 @@ public class Tools {
 	
 	
 	// Input checking
-	public static final Integer USERNAME_REGEX = 0;
-	public static final Integer PASSWORD_REGEX = 1;
-	public static final Integer XML_CONTRACT_REGEX = 2;
+	public static final Regex USERNAME_REGEX = Regex.USERNAME_REGEX;
+	public static final Regex PASSWORD_REGEX = Regex.PASSWORD_REGEX;
+	public static final Regex XML_CONTRACT_REGEX = Regex.XML_CONTRACT_REGEX;
+	
+	public enum Regex {USERNAME_REGEX, PASSWORD_REGEX, XML_CONTRACT_REGEX}
 	
 	public static String getCtuPath() {
 		
 		return PATH_CTU + MainApplication.getCtuID() + " ";
 	}
 	
-	public static boolean isNotValid(String param, Integer type) {
+	public static boolean isNotValid(String param, Regex type) {
 	    
 	    switch (type) {
 	        
-	        case 0: return false;
-	        case 1: return false;
-	        case 2: return false;
+	        case USERNAME_REGEX: return false;
+	        case PASSWORD_REGEX: return false;
+	        case XML_CONTRACT_REGEX: return false;
 	        default: return false;
 	    }
 	    
