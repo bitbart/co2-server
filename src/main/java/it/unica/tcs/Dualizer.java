@@ -18,7 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -205,7 +205,7 @@ public class Dualizer {
 			return out.toString();
 
 		} catch (Exception e) {
-			logger.warn("A dual building was aborted because the passed contract (" + StringEscapeUtils.escapeHtml(contract) + ") has an error: " + e.getMessage());
+			logger.warn("A dual building was aborted because the passed contract (" + StringEscapeUtils.escapeXml11(contract) + ") has an error: " + e.getMessage());
 		}
 
 		return result;

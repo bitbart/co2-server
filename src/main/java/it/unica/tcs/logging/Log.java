@@ -1,6 +1,6 @@
 package it.unica.tcs.logging;
 
-import static org.apache.commons.lang.StringEscapeUtils.*;
+import static org.apache.commons.lang3.StringEscapeUtils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class Log {
 		int sLength = s.length() < 50 ? s.length() : 50;
 		String dots = s.length() == sLength ? "" : "...";
 		
-		return "'<i>" + escapeHtml(s.substring(0, sLength)).replaceAll("\n", "") + dots + "</i>'";
+		return "'<i>" + escapeHtml4(s.substring(0, sLength)).replaceAll("\n", "") + dots + "</i>'";
 	}
 	
 }

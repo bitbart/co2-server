@@ -17,7 +17,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -152,7 +152,7 @@ public class Validator {
 	 * @return Message success or message error */
 	public static String validateContext(DatabaseInterface db, String contract) {
 		
-		logger.trace("ValidateContext of: " + StringEscapeUtils.escapeHtml(contract));
+		logger.trace("ValidateContext of: " + StringEscapeUtils.escapeXml11(contract));
 
 		Set<String> elementsFound = new HashSet<>();
 		NodeList intaction, extaction;

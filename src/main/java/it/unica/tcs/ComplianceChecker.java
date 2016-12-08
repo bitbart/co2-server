@@ -23,7 +23,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -205,7 +205,7 @@ public class ComplianceChecker {
             rs.close();
         }
         
-        logger.trace("Searching a compliant for C1='" + StringEscapeUtils.escapeHtml(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
+        logger.trace("Searching a compliant for C1='" + StringEscapeUtils.escapeXml11(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
 
         // 3) Sort the contracts captured by the probability value calculated and the other contract's owner reputation.
         Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String[], Integer, Integer>>() {

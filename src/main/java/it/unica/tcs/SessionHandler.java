@@ -1,8 +1,6 @@
 package it.unica.tcs;
 
 
-import static org.apache.commons.lang.StringEscapeUtils.*;
-
 import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -15,6 +13,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +103,7 @@ public class SessionHandler {
         // 4) Checking if the contract admits a compliant
         if (!Dualizer.localAdmitsCompliant(contractXML)){
 
-            logger.info("The contract C1= " + escapeHtml(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
+            logger.info("The contract C1= " + StringEscapeUtils.escapeXml11(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
             
             return new ResponsePacket(-1, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }
