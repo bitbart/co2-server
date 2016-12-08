@@ -34,6 +34,7 @@ import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,12 +59,14 @@ public class Tools {
 
         try {
             config = builder.getConfiguration();
-        } catch (ConfigurationException e) {
+            
+            FileUtils.forceMkdir(new File(config.getString("tmp-dir")));
+            
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
     }
-
     
 	// CTU's (Convert To Uppaal) paths and files
 	private static final String CTU_EXEC =         config.getString("ctu.exec");
@@ -71,6 +74,7 @@ public class Tools {
 	public static final String CTU_PATH_NETS =     config.getString("ctu.path.nets");
 	public static final String CTU_PATH_AUTOMATA = config.getString("ctu.path.automata");
 	public static final String CTU_PATH_LABELS =   config.getString("ctu.path.labels");
+	
 	public static final String CTU_PARAM_TRANSLATE =           config.getString("ctu.param.translate");
 	public static final String CTU_PARAM_BINDING =             config.getString("ctu.param.binding");
 	public static final String CTU_PARAM_CULPABLE =            config.getString("ctu.param.culpable");
