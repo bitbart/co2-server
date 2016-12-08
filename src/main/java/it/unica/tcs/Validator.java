@@ -135,7 +135,6 @@ public class Validator {
 		//logger.error("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());
 
 		// Remove the temp file
-		//Tools.callApplication("rm " + fileName, null);
 		Tools.rm(fileName);
 		
 		logger.trace("xmllint output: {}",outputXmllint.getErrors());

@@ -100,6 +100,8 @@ public class ComplianceChecker {
         path = Tools.PATH_UPPAAL +" "+ fileName +" "+ Tools.UPPAAL_PARAMS;
         outputUppaal = Tools.callApplication(path, null);
 
+        Tools.rm(fileName);
+        
         // 4) Returns XML response
         if (outputUppaal.getOutput().contains("is satisfied")) {
             logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they are compliant!");
@@ -280,7 +282,6 @@ public class ComplianceChecker {
 
         // 2) Saves XML automata (Uppaal software needs an input file)
         fileName = Tools.getFile(mapping1.concat(mapping2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
-        Tools.chmod(fileName);
         
         logger.trace("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 

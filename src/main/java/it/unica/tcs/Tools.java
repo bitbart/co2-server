@@ -33,6 +33,7 @@ import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,16 +126,14 @@ public class Tools {
 	    
 	}
 	
-	/* Chmods a file/dir */
-	public static void chmod(String path) {
-	    
-	    callApplication("chmod 777 " + path, null);
-	}
 	
 	/* Deletes all files and folders inside a specified directory */
-	public static void rm(String dir) {
+	public static void rm(String path) {
         
-        callApplication("rm " + dir, null);
+	    logger.trace("removing file/directory '{}'", path);
+	    
+	    if (! FileUtils.deleteQuietly(new File(path))) 
+	        logger.warn("unable to delete the file/directory '{}'", path);
 	}
 	
 	public static AppResponse callApplication(String path, String input[]) {

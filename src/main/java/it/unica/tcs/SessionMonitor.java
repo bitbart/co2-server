@@ -81,6 +81,8 @@ public class SessionMonitor {
         Contract c;
         String fileName, newFileName;
 
+        fileName = newFileName = null;
+        
         // 1) Verifies authentication and permissions
         try {
             if (!DatabaseInterface.getInstance().authenticate(username, pass)) {
@@ -153,6 +155,10 @@ public class SessionMonitor {
         	logger.trace("Leaving GET_POSSIBLE_ACTIONS");
 
             return new ResponsePacket(-1, Messages.DB_SELECT_FAILED);
+        }
+        finally {
+            Tools.rm(fileName);
+            Tools.rm(newFileName);
         }
     }
     
@@ -785,6 +791,8 @@ public class SessionMonitor {
             
             AppResponse ar = Tools.callApplication(Tools.getCtuPath()+ "-isa " + fileName + " " + c.getRole() + " " + action, null);
             
+            Tools.rm(fileName);
+            
             if (ar.hasErrors()) {
             	
             	throw new Exception("errors inside the CTU response of isAllowedActions.");
@@ -935,7 +943,9 @@ public class SessionMonitor {
 
         }
         catch (SQLException e) {
-
+            Tools.rm(fileName);
+            Tools.rm(newFileName);
+            
             logger.warn("SQLException thrown in loadNetworkFromDB or calculateDelay: " + e.getMessage());
             throw new DBException(Messages.DB_SELECT_FAILED);
         }
@@ -954,6 +964,10 @@ public class SessionMonitor {
         catch (SQLException e) {
           
             throw new DBException("Cannot save the updated network. SQL says: " + e.getMessage());
+        }
+        finally {
+            Tools.rm(fileName);
+            Tools.rm(newFileName);
         }
         
         // Remove the temp file
@@ -1011,11 +1025,9 @@ public class SessionMonitor {
 		if (SessionMonitor.MONITOR_ENABLED) {
 			
 			// 3) Loads data from db to do the action
-			beforeFileName = Tools.getFile(contractHash + action,
-					Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+			beforeFileName = Tools.getFile(contractHash + action, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
 			Tools.loadNetworkFromDB(db, contractHash, beforeFileName);
-			afterFileName = Tools.getFile(contractHash + action,
-					Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+			afterFileName = Tools.getFile(contractHash + action, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
 	
 			// 4) Calls CTU and does action		
 			path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
@@ -1163,6 +1175,10 @@ public class SessionMonitor {
 			logger.trace("Leaving EXECUTE_ACTION (with errors)");
 
 			return new ResponsePacket(iie.getType(), iie.getMessage());
+		}
+		finally {
+		    Tools.rm(beforeFileName);
+		    Tools.rm(afterFileName);
 		}
 
 		//db.updateContract(contractHash, sessionID, c1.getRole(), c1_progress);

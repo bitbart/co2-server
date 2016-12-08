@@ -719,26 +719,25 @@ public class SessionHandler {
             logger.error(
                     "Error while creating the initial state for a session. CTU error: " + ocamlResults.getErrors());
             logger.trace("Ocaml filename: " + fileName);
+            Tools.rm(fileName);
             return false;
         }
         
-        //Tools.mysqlChown(fileName);
-        //Tools.callApplication("chown mysql " + fileName, null); // Change the proprietary of the file (mysql) due to an error bug
-
         sessionHash = Tools.hash256(c1.getContractHash() + c2.getContractHash());
 
         // 2) Adds new session to DB
         try {
             contextID = DatabaseInterface.getInstance().getIDFromContext(Tools.getDeclaredStringContext(contract));
             sessionID = db.insertSession(sessionHash, (Integer) DatabaseInterface.SESSION_ACTIVE, fileName, contextID);
-
         }
         catch (SQLException e) {
 
-            logger.error(
-                    "Cannot insert new session in database (when fusing), SQL says: " + e.getMessage());
+            logger.error("Cannot insert new session in database (when fusing), SQL says: " + e.getMessage());
             logger.trace("Ocaml filename: " + fileName);
             return false;
+        }
+        finally {
+            Tools.rm(fileName);
         }
 
         // 3) Update state of contract and compliant contract.
