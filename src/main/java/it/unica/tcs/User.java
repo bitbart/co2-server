@@ -223,23 +223,19 @@ public class User {
 	}
 	
 	public void reward() {
-		
+		logger.trace("rewarding user '{}' ({})", userID, username);
 		this.reputation = REP_SUCCESS;
 	}
 	
 	public void rewardAndStore() throws SQLException {
 		
-		logger.info("Fatto RAS 1");
 		reward();
-		logger.info("Fatto RAS 2");
 		updateReputation();
-		logger.info("Fatto RAS 3");
 		store();
-		logger.info("Fatto RAS 4");
 	}
 	
 	public void penalize() {
-		
+	    logger.trace("penalizing user '{}' ({})", userID, username);
 		this.reputation = REP_CULPABLE;
 	}
 	
