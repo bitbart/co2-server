@@ -2,9 +2,9 @@ syntax: glob
 
 *.war
 
-#.settings
+.settings
 .project
-#.classpath
+.classpath
 
 target
 
