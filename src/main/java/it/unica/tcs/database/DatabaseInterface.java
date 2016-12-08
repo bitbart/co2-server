@@ -2,6 +2,7 @@ package it.unica.tcs.database;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -82,7 +83,6 @@ public class DatabaseInterface {
     // Action types
     public final static int ACTION_TYPE_INT = 0;
     public final static int ACTION_TYPE_STRING = 1;
-    public final static int ACTION_TYPE_FILE = 2;
 
     // Public query functions called by the server.
 
@@ -246,8 +246,7 @@ public class DatabaseInterface {
         
     }
 
-    public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID, String value,
-            boolean isFile) throws SQLException {
+    public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID, String value) throws SQLException {
 
         String insertQuery;
 
@@ -261,9 +260,6 @@ public class DatabaseInterface {
         cols[4] = "timestamp";
         cols[5] = "data_string_value";
 
-        if (isFile)
-            cols[4] = "data_file_value";
-
         vals[0] = actionID + "";
         vals[1] = actionName;
         vals[2] = role + "";
@@ -271,12 +267,13 @@ public class DatabaseInterface {
         vals[4] = Long.toString(System.currentTimeMillis());
         vals[5] = value;
 
-        if (isFile)
-            insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals, true);
-        else
-            insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals);
+        insertQuery = generateInsertQuery(TABLE_TRACE, cols, vals);
 
         this.throwUpdate(insertQuery);
+        
+        
+        
+        
     }
 
     public void insertTrace(Integer actionID, String actionName, Integer role, Integer sessionID) throws SQLException {
@@ -355,52 +352,48 @@ public class DatabaseInterface {
     }
 
     /**
+     * Insert a new session.
+     * 
+     * @param sessionHash the hash of the session
+     * @param state the state of the session
+     * @param lastState the filepath representing the last state (binary file)
+     * @param contextID the context id
+     * 
+     * @return the ID of the newly created session
      * @throws SQLException
      */
-    public Integer insertSession(String sessionHash, Integer state, String lastState, Integer contextID)
-            throws SQLException {
+    public Integer insertSession(String sessionHash, Integer state, String lastState, Integer contextID) throws SQLException {
 
-        String insertQuery;
-        Integer identifier;
-
-        String[] cols = new String[6];
-        String[] vals = new String[6];
-
-        cols[0] = "session_hash";
-        cols[1] = "state";
-        cols[2] = "context_id";
-        cols[3] = "start_timestamp";
-        cols[4] = "last_timestamp";
-        cols[5] = "last_state"; // A "load_file" column must be the last in the
-        // string array
-
-        vals[0] = sessionHash;
-        vals[1] = state + "";
-        vals[2] = contextID + "";
-        vals[3] = (System.currentTimeMillis() + SESSION_STARTING_DELAY) + "";
-        vals[4] = (System.currentTimeMillis() + SESSION_STARTING_DELAY) + "";
-        vals[5] = lastState;
-
-        insertQuery = generateInsertQuery(TABLE_SESSION, cols, vals, true);
-
-        this.throwUpdate(insertQuery);
-
-        // Returning ID of the new session added.
-        
-        final String query = "SELECT session_id FROM session WHERE session_hash = ?";
+        String sql = "INSERT INTO session(session_hash, state, context_id, start_timestamp, last_timestamp, last_state) VALUES (?,?,?,?,?,?);";
+        long now = (System.currentTimeMillis() + SESSION_STARTING_DELAY);
         
         try (
-                Connection connection = DatabaseInterface.getInstance().getDatasource().getConnection();
-                PreparedStatement stmt = connection.prepareStatement(query);
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                FileInputStream fis = new FileInputStream(lastState);
                 ) {
-            stmt.setString(1, sessionHash);
+            ps.setString(1, sessionHash);
+            ps.setInt(2, state);
+            ps.setInt(3, contextID);
+            ps.setLong(4, now);
+            ps.setLong(5, now);
+            ps.setBinaryStream(6, fis);
             
-            ResultSet rs = stmt.executeQuery();
-            rs.next();
-            identifier = rs.getInt(1);
-            rs.close();
+            ps.executeUpdate();
             
-            return identifier;
+            ResultSet rs = ps.getGeneratedKeys();
+            if(rs.next()) {
+                int last_inserted_id = rs.getInt(1);
+                rs.close();
+                return last_inserted_id;
+            }
+            else {
+                logger.error("unable to get the last generated ID for the session");
+                throw new SQLException("unable to get the last generated ID for the session");
+            }
+            
+        } catch (Exception e) {
+            throw new SQLException(e);
         }
     }
 
@@ -464,25 +457,25 @@ public class DatabaseInterface {
     /**
      * @throws SQLException
      */
-    public void saveNetwork(Integer sessionID, String last_state) throws SQLException {
+    public void saveNetwork(Integer sessionID, String lastState) throws SQLException {
 
-        String updateQuery, condition;
-
-        String[] cols = new String[2];
-        String[] vals = new String[2];
-
-        cols[0] = "last_timestamp";
-        cols[1] = "last_state"; // A "load_file" column must be the last in the
-        // string array
-
-        vals[0] = Long.toString(System.currentTimeMillis());
-        vals[1] = last_state;
-
-        condition = "session_id = '" + sessionID + "'";
-
-        updateQuery = generateUpdateQuery(TABLE_SESSION, cols, vals, condition, true);
-
-        this.throwUpdate(updateQuery);
+        String sql = "UPDATE session SET last_timestamp=?, last_state=? WHERE session_id=?;";
+        long now = System.currentTimeMillis();
+        
+        try (
+                Connection connection = datasource.getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql);
+                FileInputStream fis = new FileInputStream(lastState);
+                ) {
+            ps.setLong(1, now);
+            ps.setBinaryStream(2, fis);
+            ps.setInt(3, sessionID);
+            
+            ps.executeUpdate();
+            
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
     }
 
     public void setSessionState(Integer sessionID, Integer state) throws SQLException {
@@ -779,47 +772,8 @@ public class DatabaseInterface {
         }
     }
 
-    /*
-     * Example of usage
-     * 
-     * @SuppressWarnings("unchecked") public static void main(String args[])
-     * throws Exception { Connection connection = null; byte[]
-     * retrievedArrayObject = null; try { connection = getConnection();
-     * 
-     * List<Object> listToSaveInDB = new ArrayList<Object>();
-     * listToSaveInDB.add(new Date()); listToSaveInDB.add(new String(
-     * "KUMAR GAURAV")); listToSaveInDB.add(new Integer(55));
-     * 
-     * long persistObjectID = saveBlob(connection, listToSaveInDB);
-     * System.out.println(listToSaveInDB + " Object is saved sucessfully");
-     * 
-     * retrievedArrayObject = getBlob(connection, persistObjectID);
-     * 
-     * ObjectInputStream objectInputStream = null; if (retrievedArrayObject !=
-     * null) objectInputStream = new ObjectInputStream(new
-     * ByteArrayInputStream(retrievedArrayObject));
-     * 
-     * Object retrievingObject = objectInputStream.readObject();
-     * 
-     * List<Object> dataListFromDB = (List<Object>) retrievingObject; for
-     * (Object object : dataListFromDB) { System.out.println(
-     * "Retrieved Data is :->" + object.toString()); }
-     * 
-     * System.out.println("Successfully retrieved java Object from Database");
-     * 
-     * } catch (Exception e) { e.printStackTrace(); } finally {
-     * connection.close(); } }
-     */
-
-    // Private functions used by different public query functions.
 
     private String generateInsertQuery(String table, String[] cols, String[] vals) throws SQLException {
-
-        return generateInsertQuery(table, cols, vals, false);
-    }
-
-    private String generateInsertQuery(String table, String[] cols, String[] vals, boolean loadfile)
-            throws SQLException {
 
         String insertQuery = new String();
         String columns = new String();
@@ -832,10 +786,7 @@ public class DatabaseInterface {
         for (int i = 0; i < cols.length; i++) {
             columns += "`" + cols[i] + "`";
 
-            if (loadfile && i == cols.length - 1)
-                values += "LOAD_FILE ('" + vals[i] + "')";
-            else
-                values += "'" + vals[i] + "'";
+            values += "'" + vals[i] + "'";
 
             if (i < cols.length - 1) {
                 columns += ",";
@@ -853,12 +804,6 @@ public class DatabaseInterface {
     private String generateUpdateQuery(String table, String[] cols, String[] vals, String condition)
             throws SQLException {
 
-        return generateUpdateQuery(table, cols, vals, condition, false);
-    }
-
-    private String generateUpdateQuery(String table, String[] cols, String[] vals, String condition, boolean loadfile)
-            throws SQLException {
-
         String updateQuery = new String();
         String sets = new String();
 
@@ -867,10 +812,7 @@ public class DatabaseInterface {
 
         for (int i = 0; i < cols.length; i++) {
 
-            if (loadfile && i == cols.length - 1)
-                sets += "`" + cols[i] + "`=" + "LOAD_FILE('" + vals[i] + "')";
-            else
-                sets += "`" + cols[i] + "`=" + "'" + vals[i] + "'";
+            sets += "`" + cols[i] + "`=" + "'" + vals[i] + "'";
 
             if (i < cols.length - 1)
                 sets += ",";

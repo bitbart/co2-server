@@ -415,14 +415,22 @@ public class Tools {
             result.close();
             
             // 2d) Load network
-            query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
-                    + "';";
+            query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "';";
             result = stmt.executeQuery(query);
-            result.close();
+            
+            if (result.next()) {
+                byte[] data= result.getBytes(1);
+                
+                logger.trace("network from DB. size={}", data.length);
+                
+                FileUtils.writeByteArrayToFile(new File(fileName), data);
+            }
             
             result.close();
-            
             return true;
+            
+        } catch (IOException e) {
+            throw new SQLException(e);
         }
         
     }

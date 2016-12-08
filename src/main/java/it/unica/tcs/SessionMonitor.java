@@ -1119,8 +1119,7 @@ public class SessionMonitor {
 
 			case DatabaseInterface.ACTION_TYPE_INT:
 				try {
-					db.insertTrace(actionID, action, c1.getRole(), sessionID,
-							Integer.parseInt(value));
+					db.insertTrace(actionID, action, c1.getRole(), sessionID, Integer.parseInt(value));
 				} catch (NumberFormatException nfe) {
 
 					logger.warn(
@@ -1132,22 +1131,15 @@ public class SessionMonitor {
 				break;
 
 			case DatabaseInterface.ACTION_TYPE_STRING:
-				db.insertTrace(actionID, action, c1.getRole(), sessionID,
-						value, false);
-				break;
-
-			case DatabaseInterface.ACTION_TYPE_FILE:
-				db.insertTrace(actionID, action, c1.getRole(), sessionID,
-						value, true);
+				db.insertTrace(actionID, action, c1.getRole(), sessionID, value);
 				break;
 
 			case -1:
-				db.insertTrace(actionID, action, c1.getRole(), sessionID, value, false);
+				db.insertTrace(actionID, action, c1.getRole(), sessionID, value);
 				break;
 
 			default:
-				throw new DBException("Invalid action type found: "
-						+ actionType);
+				throw new DBException("Invalid action type found: " + actionType);
 			}
 
 			logger.info(
