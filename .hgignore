@@ -1,4 +1,10 @@
 syntax: glob
+
 *.war
-target/*
-.settings/org.eclipse.core.resources.prefs
+
+.settings
+.project
+.classpath
+
+target
+
