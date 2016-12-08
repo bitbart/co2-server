@@ -1,9 +1,12 @@
 package it.unica.tcs;
 
-import it.unica.tcs.Messages;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InternalException extends Exception {
 
+    private static final Logger logger = LoggerFactory.getLogger(InternalException.class);
+    
 	public static enum ErrorTypes {
 		TYPE_UNKNOWN, TYPE_NULL_CONTRACT, TYPE_EMPTY_CONTRACT, TYPE_CONTEXT_ERROR, TYPE_PERMISSION_DENIED, TYPE_TOO_ONDUTY, TYPE_ACTION_CULPABLE
 	};
@@ -39,13 +42,13 @@ public class InternalException extends Exception {
 			case TYPE_TOO_ONDUTY:
 				outputType= -1;
 				outputMessage = Messages.ERROR_GENERIC_INTERNAL;
-				Log.message().severe("Two participants found on duty in the same session!");
+				logger.error("Two participants found on duty in the same session!");
 				break;
 				
 			case TYPE_ACTION_CULPABLE:
 				outputType = 2;
 				outputMessage = Messages.ERROR_GENERIC_INTERNAL;
-				Log.message().fine("The participant has executed 'the culpable action': now he is culpable.");
+				logger.trace("The participant has executed 'the culpable action': now he is culpable.");
 				
 			default:
 				outputType = -1;

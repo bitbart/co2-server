@@ -1,11 +1,16 @@
 package it.unica.tcs;
 
 import java.util.ArrayList;
+
 import org.apache.commons.collections.MapIterator;
 import org.apache.commons.collections.map.LRUMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
  
 public class Cache<K, T> {
  
+    private static final Logger logger = LoggerFactory.getLogger(Cache.class);
+    
     private long timeToLive;
     private LRUMap cacheMap;
  
@@ -39,7 +44,7 @@ public class Cache<K, T> {
                                     Thread.sleep(timerInterval * 1000);
                                     cleanup();
                                 } catch (InterruptedException ex) {
-                                    Log.message().info("Cache. Interrupt received, terminating..");
+                                    logger.info("Cache. Interrupt received, terminating..");
                                     running = false;
                                 }
                             }

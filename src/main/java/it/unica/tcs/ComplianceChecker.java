@@ -23,15 +23,21 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import it.unica.tcs.database.DatabaseInterface;
 
 
 @Path("/compliance")
 public class ComplianceChecker {
 
+    private static final Logger logger = LoggerFactory.getLogger(ComplianceChecker.class);
+    
 	@POST
 	@Path("/areCompliant")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -60,13 +66,13 @@ public class ComplianceChecker {
         }
         catch (InternalException iie) {
 
-            Log.message().severe("InternalException thrown in localValidateXML: " + iie.getMessage());
+            logger.error("InternalException thrown in localValidateXML: " + iie.getMessage());
 
             return new ResponsePacket(-1, iie.getMessage());
         }
         catch (FileNotFoundException fnfe) {
 
-            Log.message().severe("File not found exception while validating both contracts:" + fnfe.getMessage());
+            logger.error("File not found exception while validating both contracts:" + fnfe.getMessage());
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
@@ -78,7 +84,7 @@ public class ComplianceChecker {
 
         try {
             // 2b) Saves XML automata (Uppaal software needs an input file)
-            fileName = Tools.getFile(c1.concat(c2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
+            fileName = Tools.getFile(c1.concat(c2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
             PrintWriter p = new PrintWriter(fileName);
             p.print(outputOcaml.getOutput());
             p.close();
@@ -86,36 +92,38 @@ public class ComplianceChecker {
         }
         catch (FileNotFoundException e) {
 
-            Log.message().severe("File not found exception while trying to save Uppaal's XML:" + e.getMessage());
+            logger.error("File not found exception while trying to save Uppaal's XML:" + e.getMessage());
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
 
         // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
+        path = Tools.PATH_UPPAAL +" "+ fileName +" "+ Tools.UPPAAL_PARAMS;
         outputUppaal = Tools.callApplication(path, null);
 
+        Tools.rm(fileName);
+        
         // 4) Returns XML response
         if (outputUppaal.getOutput().contains("is satisfied")) {
-            Log.message().fine("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": they are compliant!");
+            logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they are compliant!");
 
             return new ResponsePacket(1, Messages.PROPERTY_YES);
         }
         else if (outputUppaal.getOutput().contains("is NOT satisfied")) {
-            Log.message().fine("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": they aren't compliant!");
+            logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they aren't compliant!");
 
             return new ResponsePacket(0, Messages.PROPERTY_NO);
         }
         else {
-            Log.message().severe("Checked compliance for C1=" + Log.format(c1) + " and C2=" + Log.format(c2) + ": unknown response from Uppaal, more details below.");
+            logger.error("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": unknown response from Uppaal, more details below.");
 
             if (!outputUppaal.hasErrors()) {
 
-                Log.message().warning("Command executed: " + path);
-                Log.message().warning("Uppaal response: " + outputUppaal.getErrors());
+                logger.warn("Command executed: " + path);
+                logger.warn("Uppaal response: " + outputUppaal.getErrors());
             }
             else {
-                Log.message().warning("Command executed: " + path);
-                Log.message().warning("Uppaal response: " + outputUppaal.getOutput());
+                logger.warn("Command executed: " + path);
+                logger.warn("Uppaal response: " + outputUppaal.getOutput());
             }
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
@@ -168,7 +176,7 @@ public class ComplianceChecker {
                  
                 if (otherDelay != 0 && otherTimestamp + otherDelay <= System.currentTimeMillis()) {
                 	db.setContractState(otherID, DatabaseInterface.CONTRACT_EXPIRED);
-                	Log.message().info("Contract with ID=" + otherID + " is declared expired.");
+                	logger.info("Contract with ID=" + otherID + " is declared expired.");
                 	continue;
                 }
     
@@ -199,7 +207,7 @@ public class ComplianceChecker {
             rs.close();
         }
         
-        Log.message().finest("Searching a compliant for C1='" + Log.format(StringEscapeUtils.escapeHtml(contractXML)) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
+        logger.trace("Searching a compliant for C1='" + StringEscapeUtils.escapeXml(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
 
         // 3) Sort the contracts captured by the probability value calculated and the other contract's owner reputation.
         Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String[], Integer, Integer>>() {
@@ -229,7 +237,7 @@ public class ComplianceChecker {
             
             compliant = localAreCompliant(mapping, chanList, element.getSecond()[1], element.getSecond()[2]);
             
-            Log.message().finest("The checked contract has ID=" + element.getThird() + ". The compliance result is " + (compliant ? "yes" : "no") + ".");
+            logger.trace("The checked contract has ID=" + element.getThird() + ". The compliance result is " + (compliant ? "yes" : "no") + ".");
             
             if(compliant){
                 compliantData.set(element.getThird(), element.getSecond()[0]);
@@ -237,11 +245,11 @@ public class ComplianceChecker {
                 preCheckCalculus.remove(index);
             }
             
-            //Log.message().fine("New precheck list size: " + preCheckCalculus.size());
+            //logger.trace("New precheck list size: " + preCheckCalculus.size());
         
         }
         
-        Log.message().finest("Compliant search finished, returning the results.");
+        logger.trace("Compliant search finished, returning the results.");
 
         // If compliant isn't found, return empty data
         return compliantData;
@@ -273,21 +281,20 @@ public class ComplianceChecker {
         </nta>*/
 
         // 2) Saves XML automata (Uppaal software needs an input file)
-        fileName = Tools.getFile(mapping1.concat(mapping2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
-        Tools.chmod(fileName);
+        fileName = Tools.getFile(mapping1.concat(mapping2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
         
-        Log.message().finest("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
+        logger.trace("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 
         PrintWriter p = new PrintWriter(fileName);
         p.print(fusedMapping);
         p.close();
 
         // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL + fileName + Tools.UPPAAL_PARAMS;
+        path = Tools.PATH_UPPAAL + " " + fileName + " " + Tools.UPPAAL_PARAMS;
 
         outputUppaal = Tools.callApplication(path, null);
         
-        // Log.message().warning("OUTPUT: " + outputUppaal.getOutput() + " | ERRORS: " + outputUppaal.getErrors());
+        // logger.warn("OUTPUT: " + outputUppaal.getOutput() + " | ERRORS: " + outputUppaal.getErrors());
 
         // Remove the temp file
         Tools.rm(fileName); // TODO: check if it is working
@@ -318,7 +325,7 @@ public class ComplianceChecker {
             doc.getDocumentElement().normalize();
 
             name = doc.getFirstChild().getFirstChild().getNodeName();
-            Log.message().finest("Type pre_check: FirstElement: " + doc.getFirstChild().getNodeName() + "; SecondElement: " + name + ";");
+            logger.trace("Type pre_check: FirstElement: " + doc.getFirstChild().getNodeName() + "; SecondElement: " + name + ";");
 
             switch (name) {
                 case "intchoice":
@@ -337,7 +344,7 @@ public class ComplianceChecker {
         }
         catch (ParserConfigurationException | IOException | SAXException e) {
 
-            Log.message().severe("Unknow error while analyzing DOM: " + e.getMessage());
+            logger.error("Unknow error while analyzing DOM: " + e.getMessage());
 
             return Messages.ERROR_GENERIC_INTERNAL;
         }

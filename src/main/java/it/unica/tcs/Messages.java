@@ -1,9 +1,14 @@
 package it.unica.tcs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Supports communication between client and server. 1) Collects all messages that server uses to respond at client
  * requests. 2) Provides methods to build xml custom responses with one or more messages. */
 public class Messages {
-
+    
+    private static final Logger logger = LoggerFactory.getLogger(Messages.class);
+    
 	/* Possible types of response */
 	public static final String TYPE_AUTH_ERROR = "auth_error";
 	public static final String TYPE_GENERIC_ERROR = "error";
@@ -54,7 +59,8 @@ public class Messages {
 	public static final String ERROR_GENERIC_INTERNAL = "Service not available";
 	public static final String ERROR_NO_SUCH_ALGORITHM = "Service not available";
 	public static final String ERROR_TIME_EXPIRED = "Time expired";
-	public static final String ERROR_TRANSLATION = "Error during translation";
+    public static final String ERROR_TRANSLATION = "Error during translation";
+    public static final String ERROR_TO_STRING = "Error during the serialization of the contract";
 	public static final String ERROR_VALIDATION = "Error during validation";
 	public static final String ERROR_XML_PARSING = "Service not available";
 
@@ -95,7 +101,7 @@ public class Messages {
 		String tmp = new String("<xml>");
 
 		if (types.length != messages.length) {
-			Log.message().severe("Error passing types and messages to printMessage(): different array sizes!");
+			logger.error("Error passing types and messages to printMessage(): different array sizes!");
 			return "<response type=\"error\">Internal error.</response>";
 		}
 

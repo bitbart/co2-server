@@ -27,177 +27,125 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.FileBasedConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.database.DatabaseInterface;
 
 public class Tools {
 	
-	private static Random rng;
+    private static final Logger logger = LoggerFactory.getLogger(Tools.class);
+    private static final String CONF_PROPERTIES_PATH = "conf.properties";
+    private static final Configuration config;
+    private static final Random rng = new Random();
+
+    static {
+        Parameters params = new Parameters();
+        FileBasedConfigurationBuilder<FileBasedConfiguration> builder = 
+                new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class);
+        builder.configure(params.properties().setFileName(CONF_PROPERTIES_PATH));
+
+        try {
+            config = builder.getConfiguration();
+            
+            FileUtils.forceMkdir(new File(config.getString("tmp-dir")));
+            
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
     
-    public static final String HOME_DIR = "/home/ubuntu/debianadmin";
-//  public static final String CO2_DIR = "/var/lib/mysql/tmp/co2_server";
-
 	// CTU's (Convert To Uppaal) paths and files
-	public static final String PATH_CTU = HOME_DIR + "/ctu";
-//	public static final String PATH_CONS = CO2_DIR + "/cons";
-	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
-//	public static final String PATH_NETS = CO2_DIR + "/nets";
-	public static final String PATH_CTU_NETS = HOME_DIR + "/tmp/nets/OcamlNetworks_";
-//	public static final String PATH_AUTOMATA = CO2_DIR + "/automata";
-	public static final String PATH_CTU_AUTOMATA = HOME_DIR + "/tmp/nets/OcamlAutomata_";
-//	public static final String PATH_LABELS = CO2_DIR + "/labels";
-	public static final String PATH_CTU_LABELS = HOME_DIR + "/tmp/nets/OcamlLabels_";
-	public static final String CTU_PARAM_TRANSLATE = "-s";
-	public static final String CTU_PARAM_BINDING = "-v";
-	public static final String CTU_PARAM_CULPABLE = "-ic";
-	public static final String CTU_PARAM_DUTY = "-id";
-	public static final String CTU_PARAM_START = "-start";
-	public static final String CTU_PARAM_STEP = "-step";
-	public static final String CTU_PARAM_ADMITS_COMPLIANT = "-da";
-	public static final String CTU_PARAM_KIND_OF = "-dk";
-	public static final String CTU_PARAM_DUAL_OF = "-dd";
-	public static final String CTU_PARAM_BUILD_AUTOMATON = "-ba";
-	public static final String CTU_PARAM_GET_LABELS = "-gl";
-
+	private static final String CTU_EXEC =         config.getString("ctu.exec");
+	public static final String CTU_PATH_CONS =     config.getString("ctu.path.cons");
+	public static final String CTU_PATH_NETS =     config.getString("ctu.path.nets");
+	public static final String CTU_PATH_AUTOMATA = config.getString("ctu.path.automata");
+	public static final String CTU_PATH_LABELS =   config.getString("ctu.path.labels");
+	
+	public static final String CTU_PARAM_TRANSLATE =           config.getString("ctu.param.translate");
+	public static final String CTU_PARAM_BINDING =             config.getString("ctu.param.binding");
+	public static final String CTU_PARAM_CULPABLE =            config.getString("ctu.param.culpable");
+	public static final String CTU_PARAM_DUTY =                config.getString("ctu.param.duty");
+	public static final String CTU_PARAM_START =               config.getString("ctu.param.start");
+	public static final String CTU_PARAM_STEP =                config.getString("ctu.param.step");
+	public static final String CTU_PARAM_ADMITS_COMPLIANT =    config.getString("ctu.param.admit-compliant");
+	public static final String CTU_PARAM_KIND_OF =             config.getString("ctu.param.kind-of");
+	public static final String CTU_PARAM_DUAL_OF =             config.getString("ctu.param.dual-of");
+	public static final String CTU_PARAM_BUILD_AUTOMATON =     config.getString("ctu.param.build-automaton");
+	public static final String CTU_PARAM_GET_LABELS =          config.getString("ctu.param.get-labels");
+	public static final String CTU_PARAM_TO_STRING =           config.getString("ctu.param.to-string");
+    
 	// Uppaal's paths and files
-	public static final String PATH_UPPAAL = HOME_DIR + "/uppaal/bin-Linux/verifyta ";
-	public static final String UPPAAL_PARAMS = " " + HOME_DIR + "/uppaal/bin-Linux/test_compliance.q"; // | grep -e '--' | cut -d'-' -f 3"; // do not remove the initial space
+	public static final String PATH_UPPAAL =   config.getString("uppaal.exec");
+	public static final String UPPAAL_PARAMS = config.getString("uppaal.params");
 
 	// Xmllint's path and files
-	public static final String PATH_VALIDATOR = "xmllint --schema ";
-	public static final String PATH_VALIDATOR_FILES = HOME_DIR + "/tmp/validatorFiles/";
-	public static final String VALIDATOR_NAME_FILES = "ValidatorInput_";
-	public static final String PATH_VALIDATOR_SCHEMA = HOME_DIR + "/validator_sources/ContractSchema.xsd";
+	public static final String VALIDATOR_EXEC =            config.getString("validator.exec");
+	public static final String VALIDATOR_FILE_PREFIX =     config.getString("validator.file-prefix");
+	public static final String VALIDATOR_PATH_SCHEMA =     config.getString("validator.path.schema");
+	public static final String VALIDATOR_PATH_FILES =      config.getString("validator.path.files");
 
 	// File extensions
 	public static final String EXTENSION_NETS = ".nets";
 	public static final String EXTENSION_XML = ".xml";
 	public static final String EXTENSION_TXT = ".txt";
 
-	// TODO: Configuration properties should be written in a configuration file ...
 	// Configuration
 	public static final boolean CONF_MOVE_AFTER_CONTRACT_END = false;
 	
-	
 	// Input checking
-	public static final Integer USERNAME_REGEX = 0;
-	public static final Integer PASSWORD_REGEX = 1;
-	public static final Integer XML_CONTRACT_REGEX = 2;
+	public static final Regex USERNAME_REGEX = Regex.USERNAME_REGEX;
+	public static final Regex PASSWORD_REGEX = Regex.PASSWORD_REGEX;
+	public static final Regex XML_CONTRACT_REGEX = Regex.XML_CONTRACT_REGEX;
 	
-	public static String getCtuPath() {
-		
-		return PATH_CTU + MainApplication.getCtuID() + " ";
+	public enum Regex {USERNAME_REGEX, PASSWORD_REGEX, XML_CONTRACT_REGEX}
+	
+	
+	public static String getCtuPath() {		
+		return CTU_EXEC + (rng.nextInt(4) + 1) + " ";
 	}
 	
-	public static boolean isNotValid(String param, Integer type) {
+	public static boolean isNotValid(String param, Regex type) {
 	    
 	    switch (type) {
 	        
-	        case 0: return false;
-	        case 1: return false;
-	        case 2: return false;
+	        case USERNAME_REGEX: return false;
+	        case PASSWORD_REGEX: return false;
+	        case XML_CONTRACT_REGEX: return false;
 	        default: return false;
 	    }
 	    
 	}
 	
-	/* Chmods a file/dir */
-	public static void chmod(String path) {
-	    
-	    callApplication("chmod 777 " + path, null);
-	}
-	
-	/* Creates a directory in the server */
-	public static void mkdir(String dir) {
-	    
-	    callApplication("mkdir " + dir, null);
-	}
 	
 	/* Deletes all files and folders inside a specified directory */
-	public static void rm(String dir) {
+	public static void rm(String path) {
         
-        callApplication("rm " + dir, null);
+	    logger.trace("removing file/directory '{}'", path);
+	    
+	    if (! FileUtils.deleteQuietly(new File(path))) 
+	        logger.warn("unable to delete the file/directory '{}'", path);
 	}
-	/* OLD 
-	/** Launches a new process on server and returns process response. 
-	 * Throws a TimeExpiredException if process takes too much time.
-	 * 
-	 * @param path Path and name of the process to be executed
-	 * @param input Arguments array needed by the process.
-	 * @param errorStream If set as true then the method returns the errorStream; otherwise returns the outputStream
-	 * @return Process response *
-	public static String callApplication(String path, String[] input, boolean errorStream) {
-
-		StringBuffer outputApplication = new StringBuffer();
-		BufferedReader reader;
-		Process p;
-
-		String line = "", output;
-		long tStart, tEnd, tDelta;
-
-		tStart = System.currentTimeMillis();
-
-		try {
-
-			String[] cmd = { "/bin/sh", "-c", path };
-
-			// Launches a new process
-			p = Runtime.getRuntime().exec(cmd); // TODO Kill the process
-
-			if (errorStream)
-				reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			else
-				reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-			// Sends input
-			if (input != null) {
-
-				OutputStream printW = p.getOutputStream();
-
-				for (int i = 0; i < input.length; i++) {
-
-					printW.write((input[i]).getBytes());
-					printW.flush();
-				}
-
-				printW.close();
-			}
-
-			// Takes output process
-			while ((line = reader.readLine()) != null) {
-
-				outputApplication.append(line + "\n");
-			}
-			reader.close();
-
-			// Verifies process state
-			tEnd = System.currentTimeMillis();
-			tDelta = tEnd - tStart;
-
-			if ((tDelta / 1000.0) < 5.0)
-				output = outputApplication.toString();
-			else 
-				output = "";
-			// TODO: Time management
-
-		}
-		catch (Exception e) {
-
-			output = "Exception in the process " + path;
-		}
-
-		return output;
-	}*/
 	
 	public static AppResponse callApplication(String path, String input[]) {
 	
 		//StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		
 		//if (Log.isInitialized())
-			//Log.message().warning("Caller: " + ste[2].getMethodName() + " | Path: " + path);
+			//logger.warn("Caller: " + ste[2].getMethodName() + " | Path: " + path);
 		
 		String line;
 	    
@@ -250,8 +198,8 @@ public class Tools {
 		    
 		} catch (IOException e) {
 			
-			Log.message().severe("Cannot execute the process: " + path);
-			Log.message().warning("Exception message: " + e.getMessage());
+			logger.error("Cannot execute the process: " + path);
+			logger.warn("Exception message: " + e.getMessage());
 		}
 	    
 	    AppResponse ar = new AppResponse(response[0], response[1]);
@@ -270,7 +218,7 @@ public class Tools {
 		    Files.setOwner(path, userPrincipal);
 			
 		} catch (IOException e) {
-			Log.message().severe("Can change the group owner of " + filename + " to mysql: " + e.getMessage());
+			logger.error("Can change the group owner of " + filename + " to mysql: " + e.getMessage());
 		}
 	}
 
@@ -283,9 +231,6 @@ public class Tools {
 	 * @return Name of the file required */
 	public static String getFile(String seedInput, String path, String extension, boolean create) {
 		
-		if (rng == null)
-			rng = new Random();
-
 		boolean validFileName = false;
 		String fileName;
 		File f;
@@ -402,8 +347,8 @@ public class Tools {
 
         } catch (SQLException e) {
 
-            Log.message().warning("Cannot determine if USER_EMAIL=" + Log.format(username)
-                    + " is the owner of CONTRACT_HASH=" + Log.format(contractHash) + ". SQL says: " + e.getMessage());
+            logger.warn("Cannot determine if USER_EMAIL=" + username
+                    + " is the owner of CONTRACT_HASH=" + contractHash + ". SQL says: " + e.getMessage());
 
             return false;
         }
@@ -434,7 +379,7 @@ public class Tools {
 		}
 		catch (Exception e) {
 
-			Log.message().info(
+			logger.info(
 			        "A context retrieving was aborted because the passed contract (" + contract + ") have an error: " + e.getMessage());
 			result = DatabaseInterface.CONTEXT_EMPTY_NAME;
 		}
@@ -474,14 +419,22 @@ public class Tools {
             result.close();
             
             // 2d) Load network
-            query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "' INTO DUMPFILE '" + fileName
-                    + "';";
+            query = "SELECT last_state FROM session WHERE session_hash='" + sessionHash + "';";
             result = stmt.executeQuery(query);
-            result.close();
+            
+            if (result.next()) {
+                byte[] data= result.getBytes(1);
+                
+                logger.trace("network from DB. size={}", data.length);
+                
+                FileUtils.writeByteArrayToFile(new File(fileName), data);
+            }
             
             result.close();
-            
             return true;
+            
+        } catch (IOException e) {
+            throw new SQLException(e);
         }
         
     }
@@ -508,7 +461,7 @@ public class Tools {
 		}
 		catch (SQLException e) {
 
-			Log.message().warning("The contract with HASH='" + contractHash + "' and CONTEXT_ID="+ contextID + " can't perform the action with NAME='" + action + "'. SQL says: " + e.getMessage());
+			logger.warn("The contract with HASH='" + contractHash + "' and CONTEXT_ID="+ contextID + " can't perform the action with NAME='" + action + "'. SQL says: " + e.getMessage());
 			
 			return false;
 		}
@@ -557,17 +510,17 @@ public class Tools {
 		}
 		catch (Exception e) {
 			
-			Log.message().severe("The verifier cannot check if it is possible to perform ACTION=" + actionID + " with VALUE=" + Log.format("") + ". The returned exception is: " + e.getMessage());
+			logger.error("The verifier cannot check if it is possible to perform ACTION=" + actionID + " with VALUE=" + "" + ". The returned exception is: " + e.getMessage());
 			return false;
 		}
 		
 		if (verifierResponse == null) {
 			
-			Log.message().severe("The verifier returned a <i>null</i> response when validating the ACTION=" + actionID + " with VALUE=" + Log.format("") + ".");
+			logger.error("The verifier returned a <i>null</i> response when validating the ACTION=" + actionID + " with VALUE=" + "" + ".");
 			return false;
 		}
 		
-		Log.message().info("Response:" + verifierResponse);
+		logger.info("Response:" + verifierResponse);
 		
 		if (verifierResponse.equals("true"))
 			return true;

@@ -5,9 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import it.unica.tcs.database.DatabaseInterface;
+
 public class User {
 	
-	public static final Integer REP_TELL = -1;
+    private static final Logger logger = LoggerFactory.getLogger(User.class);
+    
+    public static final Integer REP_TELL = -1;
 	public static final Integer REP_SUCCESS = 3;
 	public static final Integer REP_CULPABLE = -10;
 
@@ -69,7 +76,7 @@ public class User {
             result.close();
         } catch (SQLException e) {
 
-            Log.message().severe("SQLException in getFTV: " + e.getMessage());
+            logger.error("SQLException in getFTV: " + e.getMessage());
             throw e;
         }
     }
@@ -216,23 +223,19 @@ public class User {
 	}
 	
 	public void reward() {
-		
+		logger.trace("rewarding user '{}' ({})", userID, username);
 		this.reputation = REP_SUCCESS;
 	}
 	
 	public void rewardAndStore() throws SQLException {
 		
-		Log.message().info("Fatto RAS 1");
 		reward();
-		Log.message().info("Fatto RAS 2");
 		updateReputation();
-		Log.message().info("Fatto RAS 3");
 		store();
-		Log.message().info("Fatto RAS 4");
 	}
 	
 	public void penalize() {
-		
+	    logger.trace("penalizing user '{}' ({})", userID, username);
 		this.reputation = REP_CULPABLE;
 	}
 	

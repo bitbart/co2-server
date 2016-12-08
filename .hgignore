@@ -1,4 +1,10 @@
 syntax: glob
-middleware.war
-target/*
-.settings/org.eclipse.core.resources.prefs
+
+*.war
+
+#.settings
+.project
+#.classpath
+
+target
+
