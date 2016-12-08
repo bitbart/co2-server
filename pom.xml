@@ -3,23 +3,17 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>it.unica.tcs</groupId>
 	<artifactId>co2-middleware</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<packaging>war</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
 	</properties>
 
 	<build>
 		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.4</version>
@@ -27,7 +21,7 @@
 					<warSourceDirectory>WebContent</warSourceDirectory>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 					<outputDirectory>./</outputDirectory>
-					<warName>middleware</warName>
+					<warName>middleware##${version}</warName>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -85,13 +79,14 @@
 			<groupId>tcs.unica.it</groupId>
 			<artifactId>co2api</artifactId>
 			<version>0.0.9</version>
+			<scope>test</scope>
 		</dependency>
 
 		<!-- Commons -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.4</version>
+			<version>3.5</version>
 		</dependency>
 
 		<dependency>

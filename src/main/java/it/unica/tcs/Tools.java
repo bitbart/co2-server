@@ -27,6 +27,12 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.FileBasedConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,49 +45,61 @@ import it.unica.tcs.database.DatabaseInterface;
 public class Tools {
 	
     private static final Logger logger = LoggerFactory.getLogger(Tools.class);
-    private static Random rng;
-    
-    public static final String HOME_DIR = "/home/ubuntu/debianadmin";
+    private static final String CONF_PROPERTIES_PATH = "conf.properties";
+    private static final Configuration config;
+    private static final Random rng = new Random();
 
-	// CTU's (Convert To Uppaal) paths and files
-	private static final String PATH_CTU = HOME_DIR + "/ctu";
-	public static final String PATH_CTU_CONS = HOME_DIR + "/tmp/cons/OcamlContracts_";
-	public static final String PATH_CTU_NETS = HOME_DIR + "/tmp/nets/OcamlNetworks_";
-	public static final String PATH_CTU_AUTOMATA = HOME_DIR + "/tmp/nets/OcamlAutomata_";
-	public static final String PATH_CTU_LABELS = HOME_DIR + "/tmp/nets/OcamlLabels_";
-	public static final String CTU_PARAM_TRANSLATE = "-s";
-	public static final String CTU_PARAM_BINDING = "-v";
-	public static final String CTU_PARAM_CULPABLE = "-ic";
-	public static final String CTU_PARAM_DUTY = "-id";
-	public static final String CTU_PARAM_START = "-start";
-	public static final String CTU_PARAM_STEP = "-step";
-	public static final String CTU_PARAM_ADMITS_COMPLIANT = "-da";
-	public static final String CTU_PARAM_KIND_OF = "-dk";
-	public static final String CTU_PARAM_DUAL_OF = "-dd";
-	public static final String CTU_PARAM_BUILD_AUTOMATON = "-ba";
-	public static final String CTU_PARAM_GET_LABELS = "-gl";
-	public static final String CTU_PARAM_TO_STRING = "--to-string";
+    static {
+        Parameters params = new Parameters();
+        FileBasedConfigurationBuilder<FileBasedConfiguration> builder = 
+                new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class);
+        builder.configure(params.properties().setFileName(CONF_PROPERTIES_PATH));
+
+        try {
+            config = builder.getConfiguration();
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     
-	
+	// CTU's (Convert To Uppaal) paths and files
+	private static final String CTU_EXEC =         config.getString("ctu.exec");
+	public static final String CTU_PATH_CONS =     config.getString("ctu.path.cons");
+	public static final String CTU_PATH_NETS =     config.getString("ctu.path.nets");
+	public static final String CTU_PATH_AUTOMATA = config.getString("ctu.path.automata");
+	public static final String CTU_PATH_LABELS =   config.getString("ctu.path.labels");
+	public static final String CTU_PARAM_TRANSLATE =           config.getString("ctu.param.translate");
+	public static final String CTU_PARAM_BINDING =             config.getString("ctu.param.binding");
+	public static final String CTU_PARAM_CULPABLE =            config.getString("ctu.param.culpable");
+	public static final String CTU_PARAM_DUTY =                config.getString("ctu.param.duty");
+	public static final String CTU_PARAM_START =               config.getString("ctu.param.start");
+	public static final String CTU_PARAM_STEP =                config.getString("ctu.param.step");
+	public static final String CTU_PARAM_ADMITS_COMPLIANT =    config.getString("ctu.param.admit-compliant");
+	public static final String CTU_PARAM_KIND_OF =             config.getString("ctu.param.kind-of");
+	public static final String CTU_PARAM_DUAL_OF =             config.getString("ctu.param.dual-of");
+	public static final String CTU_PARAM_BUILD_AUTOMATON =     config.getString("ctu.param.build-automaton");
+	public static final String CTU_PARAM_GET_LABELS =          config.getString("ctu.param.get-labels");
+	public static final String CTU_PARAM_TO_STRING =           config.getString("ctu.param.to-string");
+    
 	// Uppaal's paths and files
-	public static final String PATH_UPPAAL = HOME_DIR + "/uppaal/bin-Linux/verifyta ";
-	public static final String UPPAAL_PARAMS = HOME_DIR + "/uppaal/bin-Linux/test_compliance.q"; // | grep -e '--' | cut -d'-' -f 3";
+	public static final String PATH_UPPAAL =   config.getString("uppaal.exec");
+	public static final String UPPAAL_PARAMS = config.getString("uppaal.params");
 
 	// Xmllint's path and files
-	public static final String PATH_VALIDATOR = "xmllint --schema ";
-	public static final String PATH_VALIDATOR_FILES = HOME_DIR + "/tmp/validatorFiles/";
-	public static final String VALIDATOR_NAME_FILES = "ValidatorInput_";
-	public static final String PATH_VALIDATOR_SCHEMA = HOME_DIR + "/validator_sources/ContractSchema.xsd";
+	public static final String VALIDATOR_EXEC =            config.getString("validator.exec");
+	public static final String VALIDATOR_FILE_PREFIX =     config.getString("validator.file-prefix");
+	public static final String VALIDATOR_PATH_SCHEMA =     config.getString("validator.path.schema");
+	public static final String VALIDATOR_PATH_FILES =      config.getString("validator.path.files");
 
 	// File extensions
 	public static final String EXTENSION_NETS = ".nets";
 	public static final String EXTENSION_XML = ".xml";
 	public static final String EXTENSION_TXT = ".txt";
 
-	// TODO: Configuration properties should be written in a configuration file ...
 	// Configuration
 	public static final boolean CONF_MOVE_AFTER_CONTRACT_END = false;
-	
 	
 	// Input checking
 	public static final Regex USERNAME_REGEX = Regex.USERNAME_REGEX;
@@ -90,9 +108,9 @@ public class Tools {
 	
 	public enum Regex {USERNAME_REGEX, PASSWORD_REGEX, XML_CONTRACT_REGEX}
 	
-	public static String getCtuPath() {
-		
-		return PATH_CTU + MainApplication.getCtuID() + " ";
+	
+	public static String getCtuPath() {		
+		return CTU_EXEC + (rng.nextInt(4) + 1) + " ";
 	}
 	
 	public static boolean isNotValid(String param, Regex type) {
@@ -111,12 +129,6 @@ public class Tools {
 	public static void chmod(String path) {
 	    
 	    callApplication("chmod 777 " + path, null);
-	}
-	
-	/* Creates a directory in the server */
-	public static void mkdir(String dir) {
-	    
-	    callApplication("mkdir " + dir, null);
 	}
 	
 	/* Deletes all files and folders inside a specified directory */
@@ -216,9 +228,6 @@ public class Tools {
 	 * @return Name of the file required */
 	public static String getFile(String seedInput, String path, String extension, boolean create) {
 		
-		if (rng == null)
-			rng = new Random();
-
 		boolean validFileName = false;
 		String fileName;
 		File f;

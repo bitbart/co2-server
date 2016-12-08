@@ -205,7 +205,7 @@ public class Dualizer {
 			return out.toString();
 
 		} catch (Exception e) {
-			logger.warn("A dual building was aborted because the passed contract (" + StringEscapeUtils.escapeXml11(contract) + ") has an error: " + e.getMessage());
+			logger.warn("A dual building was aborted because the passed contract (" + StringEscapeUtils.escapeXml(contract) + ") has an error: " + e.getMessage());
 		}
 
 		return result;

@@ -84,7 +84,7 @@ public class ComplianceChecker {
 
         try {
             // 2b) Saves XML automata (Uppaal software needs an input file)
-            fileName = Tools.getFile(c1.concat(c2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
+            fileName = Tools.getFile(c1.concat(c2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
             PrintWriter p = new PrintWriter(fileName);
             p.print(outputOcaml.getOutput());
             p.close();
@@ -97,7 +97,7 @@ public class ComplianceChecker {
         }
 
         // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL + fileName +" "+ Tools.UPPAAL_PARAMS;
+        path = Tools.PATH_UPPAAL +" "+ fileName +" "+ Tools.UPPAAL_PARAMS;
         outputUppaal = Tools.callApplication(path, null);
 
         // 4) Returns XML response
@@ -205,7 +205,7 @@ public class ComplianceChecker {
             rs.close();
         }
         
-        logger.trace("Searching a compliant for C1='" + StringEscapeUtils.escapeXml11(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
+        logger.trace("Searching a compliant for C1='" + StringEscapeUtils.escapeXml(contractXML) + "'. The size of the precheck list is " + preCheckCalculus.size() + ".");
 
         // 3) Sort the contracts captured by the probability value calculated and the other contract's owner reputation.
         Collections.sort(preCheckCalculus, new Comparator<Quadruple<Double, String[], Integer, Integer>>() {
@@ -279,7 +279,7 @@ public class ComplianceChecker {
         </nta>*/
 
         // 2) Saves XML automata (Uppaal software needs an input file)
-        fileName = Tools.getFile(mapping1.concat(mapping2), Tools.PATH_CTU_CONS, Tools.EXTENSION_XML, true);
+        fileName = Tools.getFile(mapping1.concat(mapping2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
         Tools.chmod(fileName);
         
         logger.trace("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
@@ -289,7 +289,7 @@ public class ComplianceChecker {
         p.close();
 
         // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL + fileName + " " + Tools.UPPAAL_PARAMS;
+        path = Tools.PATH_UPPAAL + " " + fileName + " " + Tools.UPPAAL_PARAMS;
 
         outputUppaal = Tools.callApplication(path, null);
         

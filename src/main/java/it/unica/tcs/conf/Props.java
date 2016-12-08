@@ -9,32 +9,28 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 public class Props {
 
-    private static PropertiesConfiguration properties;
-    
+    private static final String CONF_PROPERTIES_PATH = "conf.properties";
+    private static final Configuration config;
+
     static {
-    }
-    
-    
-    public static void main(String[] args) {
         Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<FileBasedConfiguration> builder =
-            new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class)
-            .configure(params.properties()
-                .setFileName("conf.properties"));
-        try
-        {
-            Configuration config = builder.getConfiguration();
-            System.out.println(config.getString("home"));
-            System.out.println(config.getString("home-dir"));
-            System.out.println(config.getString("ctu.path"));
-            System.out.println(config.getString("ctu.path"));
-            
+        FileBasedConfigurationBuilder<FileBasedConfiguration> builder = 
+                new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class);
+        builder.configure(params.properties().setFileName(CONF_PROPERTIES_PATH));
+
+        try {
+            config = builder.getConfiguration();
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
         }
-        catch(ConfigurationException cex)
-        {
-            // loading of the configuration file failed
-        }
-        
-        
+
+    }
+
+    public static void main(String[] args) {
+        System.out.println(config.getClass());
+        System.out.println(config.getString("home"));
+        System.out.println(config.getString("base-dir"));
+        System.out.println(config.getString("ctu.exec"));
+        System.out.println(config.getString("ctu.exec"));
     }
 }

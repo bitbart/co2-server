@@ -123,14 +123,13 @@ public class Validator {
 
 		// 4) Checks syntax with xmllint
 		// 4a) Creates a temp file with the contract (xmllint needs an input file)
-		fileName = Tools.getFile(contract, (Tools.PATH_VALIDATOR_FILES + Tools.VALIDATOR_NAME_FILES),
-		        Tools.EXTENSION_XML, true);
+		fileName = Tools.getFile(contract, (Tools.VALIDATOR_PATH_FILES + Tools.VALIDATOR_FILE_PREFIX), Tools.EXTENSION_XML, true);
 		PrintWriter p = new PrintWriter(fileName);
 		p.print(contract);
 		p.close();
 
 		// 4b) Creates xmllint process
-		path = Tools.PATH_VALIDATOR + Tools.PATH_VALIDATOR_SCHEMA + " " + fileName;
+		path = Tools.VALIDATOR_EXEC + " " + Tools.VALIDATOR_PATH_SCHEMA + " " + fileName;
 		outputXmllint = Tools.callApplication(path, null); // Pay attention. It uses the errorStream as output
 		
 		//logger.error("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());
@@ -139,7 +138,9 @@ public class Validator {
 		//Tools.callApplication("rm " + fileName, null);
 		Tools.rm(fileName);
 		
-		if (outputXmllint.getErrors().contains(" validates"))  //TODO check for bugs
+		logger.trace("xmllint output: {}",outputXmllint.getErrors());
+		
+		if (outputXmllint.getErrors().contains("validates"))  //TODO check for bugs
 			return true;
 
 		return false;
@@ -152,7 +153,7 @@ public class Validator {
 	 * @return Message success or message error */
 	public static String validateContext(DatabaseInterface db, String contract) {
 		
-		logger.trace("ValidateContext of: " + StringEscapeUtils.escapeXml11(contract));
+		logger.trace("ValidateContext of: " + StringEscapeUtils.escapeXml(contract));
 
 		Set<String> elementsFound = new HashSet<>();
 		NodeList intaction, extaction;

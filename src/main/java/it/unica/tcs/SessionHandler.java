@@ -103,7 +103,7 @@ public class SessionHandler {
         // 4) Checking if the contract admits a compliant
         if (!Dualizer.localAdmitsCompliant(contractXML)){
 
-            logger.info("The contract C1= " + StringEscapeUtils.escapeXml11(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
+            logger.info("The contract C1= " + StringEscapeUtils.escapeXml(contractXML.replaceAll("\n", "")) + " does not admit a compliant!");
             
             return new ResponsePacket(-1, Messages.CONTRACT_DOESNT_ADMITS_COMPLIANT + " and cannot be registered.");
         }
@@ -706,7 +706,7 @@ public class SessionHandler {
 
         // 1) Creates Ocaml process to start session
         // 1a) Ocaml CTU needs a file where write output
-        fileName = Tools.getFile(Tools.CTU_PARAM_START + compliant + contract, Tools.PATH_CTU_NETS, Tools.EXTENSION_NETS, true);
+        fileName = Tools.getFile(Tools.CTU_PARAM_START + compliant + contract, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, true);
 
         // 1b) Creates process
         path = Tools.getCtuPath()+ Tools.CTU_PARAM_START + " " + fileName;
