@@ -46,7 +46,7 @@
 	</appender>
 
 
-	<root level="debug">
+	<root level="trace">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="GLOBAL_LOG" />
 		<appender-ref ref="SWEETLOG" />

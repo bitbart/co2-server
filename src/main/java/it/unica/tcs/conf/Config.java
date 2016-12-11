@@ -11,8 +11,10 @@ import org.apache.commons.io.FileUtils;
 
 public class Config {
 
-    public static final Configuration configuration;
     private static final String CONF_PROPERTIES_PATH = "conf.properties";
+
+    public static final Configuration configuration;
+    public static final File tmpDirFile;
 
     static {
         Parameters params = new Parameters();
@@ -23,11 +25,13 @@ public class Config {
         try {
             configuration = builder.getConfiguration();
             
-            FileUtils.forceMkdir(new File(configuration.getString("tmp-dir")));
+            tmpDirFile = new File(configuration.getString("tmp-dir"));
+            FileUtils.forceMkdir(tmpDirFile);
             
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
     }
+    
 }

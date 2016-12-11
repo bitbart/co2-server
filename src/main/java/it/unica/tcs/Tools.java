@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -39,13 +40,12 @@ public class Tools {
 
 	// CTU's (Convert To Uppaal) paths and files
 	private static final String CTU_EXEC =         Config.configuration.getString("ctu.exec");
-	public static final String CTU_PATH_CONS =     Config.configuration.getString("ctu.path.cons");
-	public static final String CTU_PATH_NETS =     Config.configuration.getString("ctu.path.nets");
-	public static final String CTU_PATH_AUTOMATA = Config.configuration.getString("ctu.path.automata");
-	public static final String CTU_PATH_LABELS =   Config.configuration.getString("ctu.path.labels");
 	
-	public static final String CTU_PARAM_TRANSLATE =           Config.configuration.getString("ctu.param.translate");
-	public static final String CTU_PARAM_BINDING =             Config.configuration.getString("ctu.param.binding");
+	public static final String CTU_CONTRACTS_PREFIX =  "OcamlContracts_";
+	public static final String CTU_NETWORKS_PREFIX =   "OcamlNetworks_";
+	public static final String CTU_AUTOMATA_PREFIX =   "OcamlAutomata_";
+	public static final String CTU_LABELS_PREFIX =     "OcamlLabels_";
+	
 	public static final String CTU_PARAM_CULPABLE =            Config.configuration.getString("ctu.param.culpable");
 	public static final String CTU_PARAM_DUTY =                Config.configuration.getString("ctu.param.duty");
 	public static final String CTU_PARAM_START =               Config.configuration.getString("ctu.param.start");
@@ -55,7 +55,6 @@ public class Tools {
 	public static final String CTU_PARAM_DUAL_OF =             Config.configuration.getString("ctu.param.dual-of");
 	public static final String CTU_PARAM_BUILD_AUTOMATON =     Config.configuration.getString("ctu.param.build-automaton");
 	public static final String CTU_PARAM_GET_LABELS =          Config.configuration.getString("ctu.param.get-labels");
-	public static final String CTU_PARAM_TO_STRING =           Config.configuration.getString("ctu.param.to-string");
     
 	// Uppaal's paths and files
 	public static final String PATH_UPPAAL =   Config.configuration.getString("uppaal.exec");
@@ -179,42 +178,17 @@ public class Tools {
 
 	/** Creates a new filename. To avoid collisions, it uses random values (where the seed is an input param) and current
 	 * time.
+	 * @param prefix Path where the file will be created
 	 * 
-	 * @param seedInput Input seed from the user to generate random values
-	 * @param path Path where the file will be created
-	 * @param create If true, create the file else create only the filename
 	 * @return Name of the file required */
-	public static String getFile(String seedInput, String path, String extension, boolean create) {
+	public static String getTempFile(String prefix, String suffix) {
 		
-		boolean validFileName = false;
-		String fileName;
-		File f;
-
-		do {
-			// Creates filename
-			fileName = path + (seedInput.hashCode()) + "_" + rng.nextLong() + extension;
-			f = new File(fileName);
-
-			// Checks if the file already exists.
-			if ((!f.exists()) && (create)) {
-				try {
-					f.createNewFile();
-					f.setReadable(true, false);
-					f.setWritable(true, false);
-
-				}
-				catch (IOException e) {}
-
-				validFileName = true;
-
-			}
-			else if (!f.exists()) 
-			    validFileName = true;
-
-		}
-		while (!validFileName);
-
-		return fileName;
+	    try {
+            File tmpFile = File.createTempFile(prefix, suffix, Config.tmpDirFile);
+            return tmpFile.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	/** Given a String generates its hash.

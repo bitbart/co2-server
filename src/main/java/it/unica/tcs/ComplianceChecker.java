@@ -30,6 +30,8 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import it.unica.tcs.ctu.CTU;
+import it.unica.tcs.ctu.CTUException;
 import it.unica.tcs.database.DatabaseInterface;
 
 
@@ -44,25 +46,36 @@ public class ComplianceChecker {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResponsePacket areCompliant(QueryPacket postData) {
 
-		AppResponse outputOcaml, outputUppaal;
-        String[] input = new String[2];
-        String path, fileName;
-        
         String c1 = postData.getFirstContract();
         String c2 = postData.getSecondContract();
 
         try {
-        	
-            // 1) Checks XML input
-            if (!Tools.getDeclaredStringContext(c1).equals(Tools.getDeclaredStringContext(c2)))
-                return new ResponsePacket(-1, Messages.CONTRACT_SAME_CONTEXT);
-            
-            if (!Validator.localValidateXML(c1))
-                return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
 
-            if (!Validator.localValidateXML(c2))
+            // 1) Checks XML input
+            if (!Tools.getDeclaredStringContext(c1).equals(Tools.getDeclaredStringContext(c2))) {
+                return new ResponsePacket(-1, Messages.CONTRACT_SAME_CONTEXT);
+            }
+            
+            if (!Validator.localValidateXML(c1)) {
                 return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
-        	
+            }
+            
+            if (!Validator.localValidateXML(c2)) {
+                return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
+            }
+            
+            // 2) Creates XML automata with Ocaml CTU
+            boolean compliant = CTU.checkCompliance(c1, c2);
+                        
+            if (compliant) {
+                logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they are compliant!");
+                return new ResponsePacket(1, Messages.PROPERTY_YES);
+            }
+            else {
+                logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they aren't compliant!");
+                return new ResponsePacket(0, Messages.PROPERTY_NO);
+            }
+            
         }
         catch (InternalException iie) {
 
@@ -76,58 +89,12 @@ public class ComplianceChecker {
 
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
-
-        // 2) Creates XML automata with Ocaml CTU
-        input[0] = c1 + "\n";
-        input[1] = c2 + "\n";
-        outputOcaml = Tools.callApplication(Tools.getCtuPath(), input);
-
-        try {
-            // 2b) Saves XML automata (Uppaal software needs an input file)
-            fileName = Tools.getFile(c1.concat(c2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
-            PrintWriter p = new PrintWriter(fileName);
-            p.print(outputOcaml.getOutput());
-            p.close();
-
-        }
-        catch (FileNotFoundException e) {
-
-            logger.error("File not found exception while trying to save Uppaal's XML:" + e.getMessage());
+        catch (CTUException e) {
+            
+            logger.error("CTUException: {}", e.getMessage());
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
-
-        // 3) Tests automata with Uppaal software
-        path = Tools.PATH_UPPAAL +" "+ fileName +" "+ Tools.UPPAAL_PARAMS;
-        outputUppaal = Tools.callApplication(path, null);
-
-        Tools.rm(fileName);
         
-        // 4) Returns XML response
-        if (outputUppaal.getOutput().contains("is satisfied")) {
-            logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they are compliant!");
-
-            return new ResponsePacket(1, Messages.PROPERTY_YES);
-        }
-        else if (outputUppaal.getOutput().contains("is NOT satisfied")) {
-            logger.trace("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": they aren't compliant!");
-
-            return new ResponsePacket(0, Messages.PROPERTY_NO);
-        }
-        else {
-            logger.error("Checked compliance for C1=" + c1 + " and C2=" + c2 + ": unknown response from Uppaal, more details below.");
-
-            if (!outputUppaal.hasErrors()) {
-
-                logger.warn("Command executed: " + path);
-                logger.warn("Uppaal response: " + outputUppaal.getErrors());
-            }
-            else {
-                logger.warn("Command executed: " + path);
-                logger.warn("Uppaal response: " + outputUppaal.getOutput());
-            }
-
-            return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
-        }
 	}
 	
 	 /** Given a contract, it look for a compliant contract stored in db.
@@ -281,7 +248,7 @@ public class ComplianceChecker {
         </nta>*/
 
         // 2) Saves XML automata (Uppaal software needs an input file)
-        fileName = Tools.getFile(mapping1.concat(mapping2), Tools.CTU_PATH_CONS, Tools.EXTENSION_XML, true);
+        fileName = Tools.getTempFile(Tools.CTU_CONTRACTS_PREFIX, Tools.EXTENSION_XML);
         
         logger.trace("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 
@@ -292,7 +259,7 @@ public class ComplianceChecker {
         // 3) Tests automata with Uppaal software
         path = Tools.PATH_UPPAAL + " " + fileName + " " + Tools.UPPAAL_PARAMS;
 
-        outputUppaal = Tools.callApplication(path, null);
+        outputUppaal = Tools.callApplication(path);
         
         // logger.warn("OUTPUT: " + outputUppaal.getOutput() + " | ERRORS: " + outputUppaal.getErrors());
 

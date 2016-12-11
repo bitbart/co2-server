@@ -26,6 +26,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.ctu.CTU;
 import it.unica.tcs.database.DBException;
 import it.unica.tcs.database.DatabaseInterface;
 
@@ -77,11 +78,10 @@ public class Validator {
 	 * @throws FileNotFoundException */
 	public static boolean localValidateXML(String contract) throws FileNotFoundException, InternalException {
 
-		String fileName, path, context, contextMessage;
+		String fileName, context, contextMessage;
 		
-		AppResponse outputOcaml, outputXmllint;
+		AppResponse outputXmllint;
 		DatabaseInterface db = DatabaseInterface.getInstance();
-		String[] input = new String[1];
 
 		// 1) Checks null or empty input
 		if (contract == null) 
@@ -105,31 +105,22 @@ public class Validator {
 		}
 
 		// 3) Checks binding variables
-		path = Tools.getCtuPath()+ Tools.CTU_PARAM_BINDING;
-		input[0] = contract;
-		outputOcaml = Tools.callApplication(path, input);
-
-		try {
-
-			if ((outputOcaml.isEmpty()) || (!outputOcaml.getOutput().contains("Contract is valid")))
-			    return false;
-
+		
+		boolean valid = CTU.validate(contract);
+		
+		if (!valid) {
+		    return false;
 		}
-		catch (Exception e) {
-
-			logger.error("Substring length exception in localValidateXML(): " + e.getMessage());
-			return false;
-		}
-
+		
 		// 4) Checks syntax with xmllint
 		// 4a) Creates a temp file with the contract (xmllint needs an input file)
-		fileName = Tools.getFile(contract, (Tools.VALIDATOR_PATH_FILES + Tools.VALIDATOR_FILE_PREFIX), Tools.EXTENSION_XML, true);
+		fileName = Tools.getTempFile((Tools.VALIDATOR_PATH_FILES + Tools.VALIDATOR_FILE_PREFIX), Tools.EXTENSION_XML);
 		PrintWriter p = new PrintWriter(fileName);
 		p.print(contract);
 		p.close();
 
 		// 4b) Creates xmllint process
-		path = Tools.VALIDATOR_EXEC + " " + Tools.VALIDATOR_PATH_SCHEMA + " " + fileName;
+		String path = Tools.VALIDATOR_EXEC + " " + Tools.VALIDATOR_PATH_SCHEMA + " " + fileName;
 		outputXmllint = Tools.callApplication(path, null); // Pay attention. It uses the errorStream as output
 		
 		//logger.error("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());

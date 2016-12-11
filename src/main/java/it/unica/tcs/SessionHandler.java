@@ -706,7 +706,7 @@ public class SessionHandler {
 
         // 1) Creates Ocaml process to start session
         // 1a) Ocaml CTU needs a file where write output
-        fileName = Tools.getFile(Tools.CTU_PARAM_START + compliant + contract, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, true);
+        fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 
         // 1b) Creates process
         path = Tools.getCtuPath()+ Tools.CTU_PARAM_START + " " + fileName;

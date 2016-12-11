@@ -11,6 +11,9 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import it.unica.tcs.ctu.CTU;
+import it.unica.tcs.ctu.CTUException;
+
 /** Translates a string contract to a xml contract. */
 @Path(value = "/translation")
 public class Translator {
@@ -23,26 +26,22 @@ public class Translator {
 	@Produces(MediaType.APPLICATION_JSON)
     public ResponsePacket translate(QueryPacket postData) {
 
-        String[] input = new String[1];
         String translated = null;
-        String path;
-        input[0] = postData.getFirstContract(); // TODO: check the input
+        String input = postData.getFirstContract(); // TODO: check the input
         
-        AppResponse ar;
-        
-        //logger.trace("Starting translator module.");
+        logger.trace("Starting translator module.");
 
         try {
             // 1) Creates Ocaml process
-            path = Tools.getCtuPath()+ Tools.CTU_PARAM_TRANSLATE;
+            
             
             Integer attempts = 10;
             
+            // TODO: (nicola) check if this loop is useful
             while (attempts > 0 && (translated == null)) {
                 
-                ar = Tools.callApplication(path, input); // TODO: split
                 
-                translated = ar.getOutput() + ar.getErrors();
+                translated = CTU.tstToXml(input);
                 
                 if (translated.equals(""))
                     translated = null;
@@ -52,25 +51,27 @@ public class Translator {
             
             if (translated == null) {
                 
-                logger.error("Error from CTU while translating contract C1=" + input[0] + ": response is empty.");
+                logger.error("Error from CTU while translating contract C1=" + input + ": response is empty.");
 
                 return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
             }
             else if (!translated.startsWith("<contract")) {
                 
-                ar = Tools.callApplication(path, input);
-                
-                translated = ar.getErrors();
-
-                logger.trace("Error from CTU while translating contract C1=" + input[0] + ": " + translated);
+                logger.trace("Error from CTU while translating contract C1=" + input + ": " + translated);
 
                 return new ResponsePacket(-1, translated);
             }
 
         }
+        catch (CTUException e) {
+
+            logger.error("CTU exception: " + e.getMessage());
+
+            return new ResponsePacket(-1, Messages.ERROR_TRANSLATION);
+        }
         catch (Exception e) {
 
-            logger.error("Unknown error while translating contract C1=" + input[0] + ": " + e.getMessage());
+            logger.error("Unknown error while translating contract C1=" + input + ": " + e.getMessage());
 
             return new ResponsePacket(-1, Messages.ERROR_TRANSLATION);
         }
@@ -115,6 +116,11 @@ public class Translator {
         try {
             if (!Validator.localValidateXML(contract))
                 return new ResponsePacket(-1, Messages.CONTRACT_INVALID);
+            
+            
+            String tst = CTU.xmlToTst(contract);
+            logger.trace("Contract serialized: "+tst);
+            return new ResponsePacket(1, tst);            
         }
         catch (InternalException iie) {
             
@@ -128,27 +134,9 @@ public class Translator {
             
             return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
         }
-        
-        AppResponse response = ctuXmlToString(contract);
-        
-        if (!response.hasErrors()) {
-            logger.trace("Contract serialized: "+response.getOutput());
-            return new ResponsePacket(1, response.getOutput());            
-        }
-        else {
-            logger.error("Error during the serialization of the contract: "+response.getErrors());
+        catch (CTUException e) {
+            logger.error("Error during the serialization of the contract: "+e.getMessage());
             return new ResponsePacket(-1, Messages.ERROR_TO_STRING);
         }
-        
-    }
-    
-    public static AppResponse ctuXmlToString(String contract) {
-        
-        String path;
-        String[] input = new String[1]; 
-
-        path = Tools.getCtuPath() + Tools.CTU_PARAM_TO_STRING;
-        input[0] = contract;
-        return Tools.callApplication(path, input);
     }
 }

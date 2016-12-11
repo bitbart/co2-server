@@ -118,13 +118,13 @@ public class SessionMonitor {
             role = c.getRole();
 
             // Gets a new filename
-            fileName = Tools.getFile(contractHash + role, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+            fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 
             // Loads the state of the session
             Tools.loadNetworkFromDB(db, contractHash, fileName);
                 
             // Gets a second new filename
-            newFileName = Tools.getFile(contractHash + role + 5, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+            newFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
             
             // Updates the state of the session with the delay
             Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
@@ -785,7 +785,7 @@ public class SessionMonitor {
         try {
             Contract c = new Contract().loadFromHash(contractHash);
             
-            String fileName = Tools.getFile(contractHash + c.getRole(), Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+            String fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
             
             Tools.loadNetworkFromDB(db, contractHash, fileName);
             
@@ -924,7 +924,7 @@ public class SessionMonitor {
         role = c.getRole();
 
         // 2c) MySQL needs a file to write network
-        fileName = Tools.getFile(sessionHash + role, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+        fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
         logger.trace("Written network: " + fileName);
 
         // 2d) Calls MySQL
@@ -932,7 +932,7 @@ public class SessionMonitor {
             Tools.loadNetworkFromDB(db, contractHash, fileName);
             
             // Updates network with time elapsed ... TODO: handle granularity different from 0
-            newFileName = Tools.getFile(sessionHash + role + 5, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+            newFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
             tmpResults = Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
             
             logger.trace("Updated network: " + newFileName);
@@ -1025,9 +1025,9 @@ public class SessionMonitor {
 		if (SessionMonitor.MONITOR_ENABLED) {
 			
 			// 3) Loads data from db to do the action
-			beforeFileName = Tools.getFile(contractHash + action, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+			beforeFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 			Tools.loadNetworkFromDB(db, contractHash, beforeFileName);
-			afterFileName = Tools.getFile(contractHash + action, Tools.CTU_PATH_NETS, Tools.EXTENSION_NETS, false);
+			afterFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 	
 			// 4) Calls CTU and does action		
 			path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
