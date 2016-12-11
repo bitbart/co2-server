@@ -9,12 +9,6 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.UserPrincipal;
-import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -27,11 +21,6 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.FileBasedConfiguration;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -40,61 +29,43 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import it.unica.tcs.InternalException.ErrorTypes;
+import it.unica.tcs.conf.Config;
 import it.unica.tcs.database.DatabaseInterface;
 
 public class Tools {
 	
     private static final Logger logger = LoggerFactory.getLogger(Tools.class);
-    private static final String CONF_PROPERTIES_PATH = "conf.properties";
-    private static final Configuration config;
     private static final Random rng = new Random();
 
-    static {
-        Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<FileBasedConfiguration> builder = 
-                new FileBasedConfigurationBuilder<FileBasedConfiguration>(PropertiesConfiguration.class);
-        builder.configure(params.properties().setFileName(CONF_PROPERTIES_PATH));
-
-        try {
-            config = builder.getConfiguration();
-            
-            FileUtils.forceMkdir(new File(config.getString("tmp-dir")));
-            
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-    
 	// CTU's (Convert To Uppaal) paths and files
-	private static final String CTU_EXEC =         config.getString("ctu.exec");
-	public static final String CTU_PATH_CONS =     config.getString("ctu.path.cons");
-	public static final String CTU_PATH_NETS =     config.getString("ctu.path.nets");
-	public static final String CTU_PATH_AUTOMATA = config.getString("ctu.path.automata");
-	public static final String CTU_PATH_LABELS =   config.getString("ctu.path.labels");
+	private static final String CTU_EXEC =         Config.configuration.getString("ctu.exec");
+	public static final String CTU_PATH_CONS =     Config.configuration.getString("ctu.path.cons");
+	public static final String CTU_PATH_NETS =     Config.configuration.getString("ctu.path.nets");
+	public static final String CTU_PATH_AUTOMATA = Config.configuration.getString("ctu.path.automata");
+	public static final String CTU_PATH_LABELS =   Config.configuration.getString("ctu.path.labels");
 	
-	public static final String CTU_PARAM_TRANSLATE =           config.getString("ctu.param.translate");
-	public static final String CTU_PARAM_BINDING =             config.getString("ctu.param.binding");
-	public static final String CTU_PARAM_CULPABLE =            config.getString("ctu.param.culpable");
-	public static final String CTU_PARAM_DUTY =                config.getString("ctu.param.duty");
-	public static final String CTU_PARAM_START =               config.getString("ctu.param.start");
-	public static final String CTU_PARAM_STEP =                config.getString("ctu.param.step");
-	public static final String CTU_PARAM_ADMITS_COMPLIANT =    config.getString("ctu.param.admit-compliant");
-	public static final String CTU_PARAM_KIND_OF =             config.getString("ctu.param.kind-of");
-	public static final String CTU_PARAM_DUAL_OF =             config.getString("ctu.param.dual-of");
-	public static final String CTU_PARAM_BUILD_AUTOMATON =     config.getString("ctu.param.build-automaton");
-	public static final String CTU_PARAM_GET_LABELS =          config.getString("ctu.param.get-labels");
-	public static final String CTU_PARAM_TO_STRING =           config.getString("ctu.param.to-string");
+	public static final String CTU_PARAM_TRANSLATE =           Config.configuration.getString("ctu.param.translate");
+	public static final String CTU_PARAM_BINDING =             Config.configuration.getString("ctu.param.binding");
+	public static final String CTU_PARAM_CULPABLE =            Config.configuration.getString("ctu.param.culpable");
+	public static final String CTU_PARAM_DUTY =                Config.configuration.getString("ctu.param.duty");
+	public static final String CTU_PARAM_START =               Config.configuration.getString("ctu.param.start");
+	public static final String CTU_PARAM_STEP =                Config.configuration.getString("ctu.param.step");
+	public static final String CTU_PARAM_ADMITS_COMPLIANT =    Config.configuration.getString("ctu.param.admit-compliant");
+	public static final String CTU_PARAM_KIND_OF =             Config.configuration.getString("ctu.param.kind-of");
+	public static final String CTU_PARAM_DUAL_OF =             Config.configuration.getString("ctu.param.dual-of");
+	public static final String CTU_PARAM_BUILD_AUTOMATON =     Config.configuration.getString("ctu.param.build-automaton");
+	public static final String CTU_PARAM_GET_LABELS =          Config.configuration.getString("ctu.param.get-labels");
+	public static final String CTU_PARAM_TO_STRING =           Config.configuration.getString("ctu.param.to-string");
     
 	// Uppaal's paths and files
-	public static final String PATH_UPPAAL =   config.getString("uppaal.exec");
-	public static final String UPPAAL_PARAMS = config.getString("uppaal.params");
+	public static final String PATH_UPPAAL =   Config.configuration.getString("uppaal.exec");
+	public static final String UPPAAL_PARAMS = Config.configuration.getString("uppaal.params");
 
 	// Xmllint's path and files
-	public static final String VALIDATOR_EXEC =            config.getString("validator.exec");
-	public static final String VALIDATOR_FILE_PREFIX =     config.getString("validator.file-prefix");
-	public static final String VALIDATOR_PATH_SCHEMA =     config.getString("validator.path.schema");
-	public static final String VALIDATOR_PATH_FILES =      config.getString("validator.path.files");
+	public static final String VALIDATOR_EXEC =            Config.configuration.getString("validator.exec");
+	public static final String VALIDATOR_FILE_PREFIX =     Config.configuration.getString("validator.file-prefix");
+	public static final String VALIDATOR_PATH_SCHEMA =     Config.configuration.getString("validator.path.schema");
+	public static final String VALIDATOR_PATH_FILES =      Config.configuration.getString("validator.path.files");
 
 	// File extensions
 	public static final String EXTENSION_NETS = ".nets";
@@ -138,7 +109,7 @@ public class Tools {
 	        logger.warn("unable to delete the file/directory '{}'", path);
 	}
 	
-	public static AppResponse callApplication(String path, String input[]) {
+	public static AppResponse callApplication(String path, String... input) {
 	
 		//StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		
@@ -205,20 +176,6 @@ public class Tools {
 	    return ar;
 	}
 	
-	public static void mysqlChown(String filename) {
-		
-		try {
-			Path path = Paths.get(filename);
-		    UserPrincipalLookupService lookupService = FileSystems.getDefault()
-		        .getUserPrincipalLookupService();
-		    UserPrincipal userPrincipal = lookupService.lookupPrincipalByName("mysql");
-	
-		    Files.setOwner(path, userPrincipal);
-			
-		} catch (IOException e) {
-			logger.error("Can change the group owner of " + filename + " to mysql: " + e.getMessage());
-		}
-	}
 
 	/** Creates a new filename. To avoid collisions, it uses random values (where the seed is an input param) and current
 	 * time.
