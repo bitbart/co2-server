@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>it.unica.tcs</groupId>
 	<artifactId>co2-middleware</artifactId>
-	<version>0.0.4-test</version>
+	<version>0.0.4</version>
 	<packaging>war</packaging>
 
 	<properties>
@@ -28,7 +28,7 @@
 					<warSourceDirectory>WebContent</warSourceDirectory>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 					<outputDirectory>./</outputDirectory>
-					<warName>middleware##${version}</warName>
+					<warName>middleware##${project.version}</warName>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -55,15 +54,13 @@ public class Validator {
 
 		}
 		catch (InternalException iie) {
-
 			logger.error("Illegal input in validateXML: " + iie.getMessage());
 			return new ResponsePacket(iie.getType(), iie.getMessage());
 
 		}
 		catch (FileNotFoundException fnfe) {
 			logger.error("File not found exception in validateXML: " + fnfe.getMessage());
-//			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
-			throw new InternalServerErrorException(fnfe);
+			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
 		}
 	}
 
