@@ -1,9 +1,10 @@
 package it.unica.tcs;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,6 +24,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +111,7 @@ public class ComplianceChecker {
      * @throws SQLException
      * @throws FileNotFoundException */
     public static BasicPair<Integer, String> getCompliant(DatabaseInterface db, String contractXML, String mapping, String chanList, Integer contextID, String preCheckType)
-                throws SQLException, FileNotFoundException {
+                throws SQLException, IOException {
 
         boolean compliant = false;
         String otherContractXML, queryText, otherPreCheckType, otherMapping, otherChanList;
@@ -227,10 +229,10 @@ public class ComplianceChecker {
      * @param c1 XML first contract
      * @param c2 XML second contract
      * @return True if contracts are compliant or error message
-     * @throws FileNotFoundException */
-    public static boolean localAreCompliant(String mapping1, String chanList1, String mapping2, String chanList2) throws FileNotFoundException {
+     * @throws IOException */
+    public static boolean localAreCompliant(String mapping1, String chanList1, String mapping2, String chanList2) throws IOException {
 
-        String fileName, fusedMapping, path;
+        String fusedMapping, path;
         AppResponse outputUppaal;
         
         fusedMapping = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
@@ -248,14 +250,12 @@ public class ComplianceChecker {
         </nta>*/
 
         // 2) Saves XML automata (Uppaal software needs an input file)
-        fileName = Tools.getTempFile(Tools.CTU_CONTRACTS_PREFIX, Tools.EXTENSION_XML);
+        File fileName = Tools.getTempFile(Tools.CTU_CONTRACTS_PREFIX, Tools.EXTENSION_XML);
         
         logger.trace("Checking compliance for two contracts, the UPPAAL template is stored in " + fileName);
 
-        PrintWriter p = new PrintWriter(fileName);
-        p.print(fusedMapping);
-        p.close();
-
+        FileUtils.writeStringToFile(fileName, fusedMapping, Charset.forName("UTF-8"));
+        
         // 3) Tests automata with Uppaal software
         path = Tools.PATH_UPPAAL + " " + fileName + " " + Tools.UPPAAL_PARAMS;
 

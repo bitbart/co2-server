@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -47,7 +48,6 @@ public class Validator {
 		try {
 			
 			// Verifies the syntax of the XML contract
-			
 			if (localValidateXML(contract))
 				return new ResponsePacket(1, Messages.CONTRACT_VALID);
 			else
@@ -57,16 +57,13 @@ public class Validator {
 		catch (InternalException iie) {
 
 			logger.error("Illegal input in validateXML: " + iie.getMessage());
-
 			return new ResponsePacket(iie.getType(), iie.getMessage());
 
 		}
 		catch (FileNotFoundException fnfe) {
-
 			logger.error("File not found exception in validateXML: " + fnfe.getMessage());
-
-			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
-
+//			return new ResponsePacket(-1, Messages.ERROR_GENERIC_INTERNAL);
+			throw new InternalServerErrorException(fnfe);
 		}
 	}
 
@@ -101,7 +98,7 @@ public class Validator {
 			contextMessage = validateContext(db, contract);
 
 			if (!contextMessage.equals(Messages.TYPE_SUCCESS)) 
-				throw new InternalException(ErrorTypes.TYPE_CONTEXT_ERROR); //TODO
+				throw new InternalException(ErrorTypes.TYPE_CONTEXT_ERROR);
 		}
 
 		// 3) Checks binding variables
@@ -114,14 +111,14 @@ public class Validator {
 		
 		// 4) Checks syntax with xmllint
 		// 4a) Creates a temp file with the contract (xmllint needs an input file)
-		fileName = Tools.getTempFile((Tools.VALIDATOR_PATH_FILES + Tools.VALIDATOR_FILE_PREFIX), Tools.EXTENSION_XML);
+		fileName = Tools.getTempPath((Tools.VALIDATOR_PATH_FILES + Tools.VALIDATOR_FILE_PREFIX), Tools.EXTENSION_XML);
 		PrintWriter p = new PrintWriter(fileName);
 		p.print(contract);
 		p.close();
 
 		// 4b) Creates xmllint process
 		String path = Tools.VALIDATOR_EXEC + " " + Tools.VALIDATOR_PATH_SCHEMA + " " + fileName;
-		outputXmllint = Tools.callApplication(path, null); // Pay attention. It uses the errorStream as output
+		outputXmllint = Tools.callApplication(path); // Pay attention. It uses the errorStream as output
 		
 		//logger.error("OUTPUT: " + outputXmllint.getOutput() + " | ERRORS: " + outputXmllint.getErrors());
 

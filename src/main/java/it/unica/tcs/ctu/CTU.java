@@ -23,10 +23,6 @@ public class CTU {
 
     // CTU's (Convert To Uppaal) paths and files
     private static final String CTU_EXEC =          Config.configuration.getString("ctu.exec");
-    private static final String CTU_PATH_CONS =     Config.configuration.getString("ctu.path.cons");
-    private static final String CTU_PATH_NETS =     Config.configuration.getString("ctu.path.nets");
-    private static final String CTU_PATH_AUTOMATA = Config.configuration.getString("ctu.path.automata");
-    private static final String CTU_PATH_LABELS =   Config.configuration.getString("ctu.path.labels");
     
     private static final String CTU_PARAM_XML_TO_TST =          Config.configuration.getString("ctu.param.xml-to-tst");
     private static final String CTU_PARAM_TST_TO_XML =          Config.configuration.getString("ctu.param.tst-to-xml");
@@ -47,28 +43,38 @@ public class CTU {
         return CTU_EXEC + (rand.nextInt(4) + 1) + " ";
     }
     
+    /**
+     * Translate a contract from the xml format to its tst representation.
+     * 
+     * @param xmlContract
+     * @return
+     */
     public static String xmlToTst(String xmlContract) {
-        
         AppResponse result = Tools.callApplication(getCtuPath()+CTU_PARAM_XML_TO_TST, xmlContract);
-        
         checkForErrors(result);
-        
         return result.getOutput()+"\n";
     } 
     
+    /**
+     * Translate a contract from the tst representation to the xml format.
+     * @param tstContract
+     * @return
+     */
     public static String tstToXml(String tstContract) {
         AppResponse result = Tools.callApplication(getCtuPath()+CTU_PARAM_TST_TO_XML, tstContract);
-        
         checkForErrors(result);
-        
         return result.getOutput()+"\n";
     }
     
+    /**
+     * Validate the given xml contract by checking binding variables
+     * 
+     * @param xmlContract
+     * @return
+     */
     public static boolean validate(String xmlContract) {
         AppResponse result = Tools.callApplication(getCtuPath()+CTU_PARAM_VALIDATE, xmlContract);
-        
         checkForErrors(result);
-        
         return !result.isEmpty() && result.getOutput().contains("Contract is valid");
     }
     
@@ -87,7 +93,7 @@ public class CTU {
         String automaton = CTU.contractsToUppaalAutomaton(c1, c2);
         
         // get a new temporary file to store the automaton
-        String fileName = Tools.getTempFile(Tools.CTU_CONTRACTS_PREFIX, Tools.EXTENSION_XML);
+        String fileName = Tools.getTempPath(Tools.CTU_CONTRACTS_PREFIX, Tools.EXTENSION_XML);
         
         try {
             //store the automaton

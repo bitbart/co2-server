@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -101,12 +100,16 @@ public class Tools {
 	
 	/* Deletes all files and folders inside a specified directory */
 	public static void rm(String path) {
-        
-	    logger.trace("removing file/directory '{}'", path);
-	    
-	    if (! FileUtils.deleteQuietly(new File(path))) 
-	        logger.warn("unable to delete the file/directory '{}'", path);
+        rm(new File(path));
 	}
+	
+	public static void rm(File file) {
+        
+        logger.trace("removing file/directory '{}'", file);
+        
+        if (! FileUtils.deleteQuietly(file)) 
+            logger.warn("unable to delete the file/directory '{}'", file);
+    }
 	
 	public static AppResponse callApplication(String path, String... input) {
 	
@@ -176,20 +179,32 @@ public class Tools {
 	}
 	
 
-	/** Creates a new filename. To avoid collisions, it uses random values (where the seed is an input param) and current
-	 * time.
-	 * @param prefix Path where the file will be created
-	 * 
-	 * @return Name of the file required */
-	public static String getTempFile(String prefix, String suffix) {
-		
-	    try {
+	/**
+	 * Create a temporary file.
+	 * @param prefix
+	 * @param suffix
+	 * @return the absolute path of a temporary file
+	 */
+	public static String getTempPath(String prefix, String suffix) {
+		return getTempFile(prefix, suffix).toString();
+	}
+	
+	
+	/**
+     * Create a temporary file.
+     * @param prefix
+     * @param suffix
+     * @return a temporary file
+     */
+    public static File getTempFile(String prefix, String suffix) {
+        
+        try {
             File tmpFile = File.createTempFile(prefix, suffix, Config.tmpDirFile);
-            return tmpFile.toString();
+            return tmpFile;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-	}
+    }
 
 	/** Given a String generates its hash.
 	 * 

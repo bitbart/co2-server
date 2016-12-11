@@ -2,6 +2,7 @@ package it.unica.tcs;
 
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -243,9 +244,9 @@ public class SessionHandler {
                 
                 return new ResponsePacket(-1, Messages.DB_INSERT_FAILED);
             }
-            catch (FileNotFoundException fnfe) {
+            catch (IOException fnfe) {
     
-                logger.error("FileNotFoundException thrown in tell(): " + fnfe.getMessage());
+                logger.error("IOException thrown in tell(): " + fnfe.getMessage());
                 
                 return new ResponsePacket(-1, Messages.TYPE_GENERIC_ERROR);
             }
@@ -706,7 +707,7 @@ public class SessionHandler {
 
         // 1) Creates Ocaml process to start session
         // 1a) Ocaml CTU needs a file where write output
-        fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+        fileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 
         // 1b) Creates process
         path = Tools.getCtuPath()+ Tools.CTU_PARAM_START + " " + fileName;

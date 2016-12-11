@@ -118,23 +118,23 @@ public class SessionMonitor {
             role = c.getRole();
 
             // Gets a new filename
-            fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+            fileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 
             // Loads the state of the session
             Tools.loadNetworkFromDB(db, contractHash, fileName);
                 
             // Gets a second new filename
-            newFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+            newFileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
             
             // Updates the state of the session with the delay
-            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
+            Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName);
             
             // Saves the updated network
             db.saveNetwork(c.getSessionID(), newFileName);
          
             
             String path = Tools.getCtuPath()+ "-pa" + " " + role + " " + newFileName;
-            AppResponse ocamlResult = Tools.callApplication(path, null);
+            AppResponse ocamlResult = Tools.callApplication(path);
             
             //Tools.callApplication(path, null, true);
             
@@ -785,11 +785,11 @@ public class SessionMonitor {
         try {
             Contract c = new Contract().loadFromHash(contractHash);
             
-            String fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+            String fileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
             
             Tools.loadNetworkFromDB(db, contractHash, fileName);
             
-            AppResponse ar = Tools.callApplication(Tools.getCtuPath()+ "-isa " + fileName + " " + c.getRole() + " " + action, null);
+            AppResponse ar = Tools.callApplication(Tools.getCtuPath()+ "-isa " + fileName + " " + c.getRole() + " " + action);
             
             Tools.rm(fileName);
             
@@ -883,7 +883,7 @@ public class SessionMonitor {
     // TODO: add comments
 	public boolean monitorContractProgress(DatabaseInterface db, String contractHash, String queryType) throws DBException, InternalException {
 
-        String path, fileName = "", newFileName = "", sessionHash = ""; //fix old_session_hash
+        String path, fileName = "", newFileName = "";
         AppResponse ocamlResult, tmpResults;
         Integer role;
         Contract c;
@@ -924,7 +924,7 @@ public class SessionMonitor {
         role = c.getRole();
 
         // 2c) MySQL needs a file to write network
-        fileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+        fileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
         logger.trace("Written network: " + fileName);
 
         // 2d) Calls MySQL
@@ -932,8 +932,8 @@ public class SessionMonitor {
             Tools.loadNetworkFromDB(db, contractHash, fileName);
             
             // Updates network with time elapsed ... TODO: handle granularity different from 0
-            newFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
-            tmpResults = Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName, null);
+            newFileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+            tmpResults = Tools.callApplication(Tools.getCtuPath()+ "-delay " + calculateDelay(db,c.getSessionID()) + " " + fileName + " " + newFileName);
             
             logger.trace("Updated network: " + newFileName);
             //logger.info("CTU Output: " + output);
@@ -952,7 +952,7 @@ public class SessionMonitor {
       
         // 3) Creates Ocaml process
         path = Tools.getCtuPath()+ queryType + " " + role + " " + newFileName;
-        ocamlResult = Tools.callApplication(path, null);
+        ocamlResult = Tools.callApplication(path);
         //Tools.callApplication(path, null, true);
         
         if (ocamlResult.isEmpty())
@@ -971,8 +971,8 @@ public class SessionMonitor {
         }
         
         // Remove the temp file
-        //Tools.callApplication("rm " + fileName, null);
-        //Tools.callApplication("rm " + newFileName, null);
+        //Tools.callApplication("rm " + fileName);
+        //Tools.callApplication("rm " + newFileName);
         String logmsg = "Checked if contract with HASH=" + contractHash;
         logmsg += queryType.equals(Tools.CTU_PARAM_CULPABLE) ? " is culpable: " : " is on duty: ";
 
@@ -1025,15 +1025,15 @@ public class SessionMonitor {
 		if (SessionMonitor.MONITOR_ENABLED) {
 			
 			// 3) Loads data from db to do the action
-			beforeFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+			beforeFileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 			Tools.loadNetworkFromDB(db, contractHash, beforeFileName);
-			afterFileName = Tools.getTempFile(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
+			afterFileName = Tools.getTempPath(Tools.CTU_NETWORKS_PREFIX, Tools.EXTENSION_NETS);
 	
 			// 4) Calls CTU and does action		
 			path = Tools.getCtuPath()+ Tools.CTU_PARAM_STEP + " " + c1.getRole() + " "
 					+ action + " " + calculateDelay(db, sessionID) + " "
 					+ beforeFileName + " " + afterFileName + " " + 0;
-			Tools.callApplication(path, null);
+			Tools.callApplication(path);
 	
 			// 5) Saves new network in db.
 			db.saveNetwork(sessionID, afterFileName);
@@ -1054,7 +1054,7 @@ public class SessionMonitor {
 							+ c1.getRole() + " " + action + " " + 0 + " "
 							+ beforeFileName + " " + afterFileName + " " + 1; 
 
-					Tools.callApplication(path, null);
+					Tools.callApplication(path);
 					db.saveNetwork(sessionID, afterFileName);
 					
 					logger.trace("Leaving EXECUTE_ACTION (with errors)");
